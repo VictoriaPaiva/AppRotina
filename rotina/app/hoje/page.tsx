@@ -12,12 +12,6 @@ export default function HojePage() {
           Sábado, 10 de outubro
         </p>
 
-        <h1
-  className="mt-1 text-3xl font-bold"
-  style={{ color: "var(--text-primary)" }}
->
-          Hoje
-        </h1>
       </header>
 
       <NowCard />

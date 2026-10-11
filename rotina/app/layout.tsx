@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import { TopBar } from "@/components/layout/TopBar";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { FloatingAddButton } from "@/components/navigation/FloatingAddButton";
@@ -42,6 +43,7 @@ export default function RootLayout({
             <Sidebar />
 
             <main className="min-w-0 flex-1 pb-20 md:pb-0">
+              <TopBar />
               <div className="mx-auto max-w-7xl p-4 md:p-8">
                 {children}
               </div>
