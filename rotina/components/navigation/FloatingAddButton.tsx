@@ -12,13 +12,11 @@ export function FloatingAddButton() {
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" side="top" sideOffset={8} className="w-64 max-w-[calc(100vw-2rem)] rounded-xl">
-      <DropdownMenuLabel>O que você quer adicionar?</DropdownMenuLabel>
+      <DropdownMenuLabel>Adicionar algo</DropdownMenuLabel>
       <DropdownMenuSeparator />
-      <DropdownMenuItem asChild><Link href="/banco-mestre/nova?category=checklist">Tarefa / checklist</Link></DropdownMenuItem>
-      <DropdownMenuItem asChild><Link href="/banco-mestre/nova?category=routine">Rotina</Link></DropdownMenuItem>
-      <DropdownMenuItem asChild><Link href="/banco-mestre/nova?category=punctual">Atividade pontual</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link href="/banco-mestre/nova">Item da rotina</Link></DropdownMenuItem>
       <DropdownMenuSeparator />
-      {['Compromisso', 'Projeto', 'Ideia'].map(label => <DropdownMenuItem key={label} disabled>{label}<span className="ml-auto text-xs">Em breve</span></DropdownMenuItem>)}
+      {['Projeto', 'Ideia'].map(label => <DropdownMenuItem key={label} disabled>{label}<span className="ml-auto text-xs">Em breve</span></DropdownMenuItem>)}
     </DropdownMenuContent>
   </DropdownMenu>;
 }

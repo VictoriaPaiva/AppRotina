@@ -3,44 +3,34 @@ export type LocalDate = string;
 export type LocalTime = string;
 export type Weekday = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
-/** Classificação independente da importância e das regras de recorrência. */
-export type ActivityType =
-  | 'punctual' // Sem repetição automática.
-  | 'routine' // Habitual; pode ter recorrência, meta ou comportamento flexível.
-  | 'desired'; // Desejada quando houver oportunidade, sem expectativa obrigatória regular.
+/** O tipo determina a futura apresentação; não há trackingMode redundante. */
+export type RoutineItemType = 'reminder' | 'commitment' | 'fixedActivity' | 'variableActivity' | 'checklistGoal';
+export type ActivityType = RoutineItemType;
 export type ActivityImportance = 'required' | 'important' | 'optional';
-export type TrackingMode = 'automatic' | 'checklist' | 'agenda';
 export type ActivityStatus = 'active' | 'inactive';
-
-/** Cada modo admite apenas seus valores. Valores positivos e ordem dos limites
- * deverão ser validados na futura entrada de dados; TypeScript não valida números. */
 export type Duration =
   | { mode: 'fixed'; minutes: number }
-  | { mode: 'range'; minMinutes: number; maxMinutes: number }
-  | { mode: 'minimum'; minMinutes: number }
   | { mode: 'minimumIdeal'; minMinutes: number; idealMinutes: number }
   | { mode: 'unknown' };
-
-export interface Area {
-  id: string;
-  name: string;
-  active: boolean;
+export interface Area { id: string; name: string; active: boolean }
+export interface TravelTime { outboundMinutes?: number; returnMinutes?: number }
+export interface PlanningContext { location?: string; preparationMinutes?: number; travel?: TravelTime }
+export interface FixedSchedule { id: string; weekdays: Weekday[]; startTime: LocalTime; endTime: LocalTime }
+interface ActivityBase {
+  id: string; name: string; description?: string; areaId: Area['id']; status: ActivityStatus;
+  defaultImportance: ActivityImportance; duration: Duration; createdAt: string; updatedAt: string;
 }
-
-export interface Activity {
-  id: string;
-  name: string;
-  description?: string;
-  areaId: Area['id'];
-  status: ActivityStatus;
-  type: ActivityType;
-  trackingMode: TrackingMode;
-  defaultImportance: ActivityImportance;
-  duration: Duration;
-  createdAt: string;
-  updatedAt: string;
-  // Fuso será herdado de UserPreferences; não pertence ao cadastro inicial.
-}
+/** Configuração por tipo. Relações Goal/RecurrenceRule/TimeWindow continuam separadas.
+ * reminder: data sem bloco; commitment: horário datado; fixedActivity: grupos semanais;
+ * variableActivity: horário só após planejamento; checklistGoal: fora da grade principal.
+ * Apenas cadastro local: não reserva tempo, gera ocorrências ou dispara avisos. */
+export type Activity = ActivityBase & (
+  | { type: 'reminder'; config: { referenceDate: LocalDate; reminderTime?: LocalTime } }
+  | { type: 'commitment'; config: PlanningContext & { date: LocalDate; startTime: LocalTime; endTime: LocalTime } }
+  | { type: 'fixedActivity'; config: PlanningContext & { schedules: FixedSchedule[] } }
+  | { type: 'variableActivity'; config: PlanningContext }
+  | { type: 'checklistGoal'; config: Record<string, never> }
+);
 
 interface RuleValidity {
   startsOn: LocalDate;

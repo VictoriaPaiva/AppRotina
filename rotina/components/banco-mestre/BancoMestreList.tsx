@@ -31,14 +31,14 @@ export function BancoMestreList() {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <p className="text-sm text-muted-foreground md:text-base">Gerencie as atividades, rotinas e regras que alimentam seu planejamento.</p>
+        <p className="text-sm text-muted-foreground md:text-base">Biblioteca e administração dos itens reutilizáveis da rotina.</p>
         <Badge variant="secondary" className="font-normal">Dados locais · sem persistência após recarregar</Badge>
-        <div><Button asChild><Link href="/banco-mestre/nova">Nova atividade</Link></Button></div>
+        <div><Button asChild><Link href="/banco-mestre/nova">Novo item</Link></Button></div>
       </header>
 
       <section aria-label="Busca e filtros de atividades" className="space-y-4 rounded-2xl border bg-card p-4 md:p-5">
         <div className="space-y-2">
-          <Label htmlFor="activity-search">Buscar atividade</Label>
+          <Label htmlFor="activity-search">Buscar item</Label>
           <div className="relative">
             <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input id="activity-search" type="search" placeholder="Pesquisar pelo nome…" value={filters.search} onChange={event => setFilters(current => ({ ...current, search: event.target.value }))} className="h-10 rounded-xl pl-9" />
@@ -75,13 +75,13 @@ export function BancoMestreList() {
       </section>
 
       <p role="status" aria-live="polite" aria-atomic="true" className="text-sm text-muted-foreground">
-        {activities.length} {activities.length === 1 ? 'atividade encontrada' : 'atividades encontradas'}
+        {activities.length} {activities.length === 1 ? 'item encontrado' : 'itens encontrados'}
       </p>
 
       {activities.length === 0 ? (
         <Card className="rounded-2xl border-dashed shadow-none">
           <CardContent className="space-y-2 p-6 text-center">
-            <h2 className="font-semibold">Nenhuma atividade encontrada</h2>
+            <h2 className="font-semibold">Nenhum item encontrado</h2>
             <p className="text-sm text-muted-foreground">Tente outro nome ou ajuste os filtros.</p>
             <Button type="button" variant="outline" onClick={() => setFilters(initialFilters)}>Limpar busca e filtros</Button>
           </CardContent>
@@ -98,7 +98,7 @@ export function BancoMestreList() {
                     <CardHeader className="space-y-3 p-5">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <h2 id={headingId} className="min-w-0 break-words text-base font-semibold">{activity.name}</h2>
-                        <Badge variant={activity.status === 'active' ? 'secondary' : 'outline'} className="shrink-0 font-normal">{statusLabels[activity.status]}</Badge>
+                        {activity.status === 'inactive' && <Badge variant="outline" className="shrink-0 font-normal">{statusLabels[activity.status]}</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground">{area?.name ?? 'Área não definida'}</p>
                       <div className="flex flex-wrap gap-2">
@@ -107,10 +107,10 @@ export function BancoMestreList() {
                       </div>
                     </CardHeader>
                     <CardContent className="flex-1 space-y-3 px-5 pb-5">
-                      {activity.description && <p className="text-sm text-muted-foreground">{activity.description}</p>}
+
                       <dl className="space-y-3 text-sm">
-                        <div><dt className="font-medium">Frequência e metas</dt><dd><ul className="mt-1 space-y-1 text-muted-foreground">{activitySummaries(activity, rules, goals).map(summary => <li key={summary}>{summary}</li>)}</ul></dd></div>
-                        <div><dt className="font-medium">Duração</dt><dd className="mt-1 text-muted-foreground">{formatDuration(activity.duration)}</dd></div>
+                        <div><dt className="font-medium">Resumo</dt><dd><ul className="mt-1 space-y-1 text-muted-foreground">{activitySummaries(activity, rules, goals).map(summary => <li key={summary}>{summary}</li>)}</ul></dd></div>
+                        {activity.duration.mode !== 'unknown' && activity.type !== 'checklistGoal' && <div><dt className="font-medium">Duração</dt><dd className="mt-1 text-muted-foreground">{formatDuration(activity.duration)}</dd></div>}
                       </dl>
                     </CardContent>
                     <CardFooter className="px-5 pb-5">
