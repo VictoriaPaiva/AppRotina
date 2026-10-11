@@ -6,8 +6,9 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**Fase:** V0.2 — início do primeiro módulo funcional  
-**Marco concluído:** V0.1 — fundação visual e estrutural
+**Etapa atual:** V0.2.3A — especificação do modelo relacional para revisão
+
+**Marco concluído:** V0.2.2 — interface local do Banco Mestre e fluxo de Item da Rotina, consolidada na V0.2.2D e aprovada após teste manual.
 
 ### V0.1 concluída
 
@@ -34,46 +35,46 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 As demais telas principais existem como rotas e placeholders. Seus protótipos de alta fidelidade já foram aprovados.
 
-## Próxima etapa
+## V0.2.2 concluída — Item da Rotina
 
-A V0.2 começa pelo **Banco Mestre**.
+O fluxo global é **+ → Item da rotina / Projeto / Ideia**. Item da rotina abre o mesmo formulário de **Novo item** do Banco Mestre; Projeto e Ideia estão desabilitados como “Em breve”. A usuária não precisa escolher um módulo técnico antes de criar um item.
 
-Sequência planejada:
+O Banco Mestre é a **biblioteca e administração dos itens reutilizáveis da rotina**. Já possui listagem, busca, filtros, detalhe único, criação, edição, ativação/desativação e validações. A troca de tipo mantém a identidade e pede confirmação antes de limpar dados específicos. Dados locais são compartilhados durante a navegação; recarregar restaura os mocks.
 
-1. **V0.2.1 — Modelagem do Banco Mestre**
-   - campos da atividade;
-   - tipo;
-   - importância;
-   - área;
-   - duração;
-   - recorrência;
-   - metas;
-   - janelas e restrições;
-   - estados e regras relacionadas.
+| Tipo | Comportamento do cadastro atual |
+|---|---|
+| Lembrete | Data de referência, aviso opcional e repetição opcional |
+| Compromisso | Data/início/fim, local, preparação/transporte e repetição opcional |
+| Atividade fixa | Grupos de dias com horários compartilhados |
+| Atividade variável | Metas e janelas preferenciais, sem criar dias obrigatórios |
+| Meta / Checklist | Vezes, quantidade ou tempo por dia/semana/mês |
 
-2. **V0.2.2 — Interface do Banco Mestre com dados fictícios**
-   - busca e filtros;
-   - listagem;
-   - detalhe;
-   - formulário;
-   - reutilização dos componentes UI existentes.
+Os literais técnicos são reminder, commitment, fixedActivity, variableActivity e checklistGoal. trackingMode foi removido por redundância. Importância continua independente; novos itens são ativos e status aparece na edição. Duração aceita Desconhecida, Fixa e Mínima + ideal, com horas/minutos convertidos em minutos totais. Preparação, ida e volta são estimativas locais, não reservas de agenda.
 
-3. **V0.2.3 — Modelo PostgreSQL/Supabase**
-   - tabelas;
-   - relacionamentos;
-   - migrations;
-   - políticas RLS.
+As demais telas mantêm sua estrutura visual inicial. Não há calendário/planejamento funcional, motor de recorrência, progresso real, notificações ou persistência dos itens no Supabase.
 
-4. **V0.2.4 — Primeiro ciclo real**
-   - formulário → Supabase → PostgreSQL → leitura no Banco Mestre.
+## Meta / Checklist e progresso diário futuro
 
-## Por que o Banco Mestre vem antes das demais telas funcionais?
+Meta / Checklist ficará em um card próprio, **fora da grade principal do Calendário**. Os quadradinhos representam registros de execução/progresso de uma data ou período, não subtarefas permanentes no cadastro.
 
-O Banco Mestre será a **fonte de verdade das atividades e regras**.
+Exemplo: escovar dentes ideal 3 vezes/dia, duas execuções em 11/10 → 2/3. Em 12/10, a apresentação considera os registros do novo dia; não zera nem recria a Activity e não gera dívida. Quantidade será registrada na unidade configurada; tempo será registrado por sessões/minutos. O código atual cadastra metas, mas ainda não implementa esses registros nem calcula progresso.
 
-Planejamento, Calendário e a Tela Hoje dependem de informações como recorrência, duração, metas, janelas e restrições. Implementar essas telas funcionalmente antes do Banco Mestre exigiria simular ou duplicar regras que depois precisariam ser refeitas.
+Metas e recorrências permanecem separadas: uma meta 3x/semana não cria dias ou horários fixos. Atividade variável só ocupará um horário depois de planejamento futuro; compromisso e atividade fixa já possuem configurações de horário.
 
-As estruturas visuais das outras telas já existem como protótipos aprovados e rotas placeholder; portanto, não é necessário completar todas as interfaces antes de consolidar o núcleo de dados.
+## Etapa atual e próxima etapa
+
+**V0.2.3A — especificação, sem implementação de banco.**
+
+O documento [Modelo relacional V0.2.3A](rotina/doc/V0.2.3A-modelo-relacional.md) descreve tabelas, colunas, PKs/FKs, integridade por tipo, ownership, RLS, datas, índices, mapeamento TypeScript e fronteiras futuras de Occurrence/ProgressLog. É uma proposta para aprovação; não descreve tabelas já criadas.
+
+Sequência:
+
+1. Revisar e aprovar o modelo da V0.2.3A.
+2. **V0.2.3B:** criar migrations do cadastro mestre, constraints, RLS e testes locais conforme o modelo aprovado. Nenhuma migration foi criada ou aplicada nesta etapa.
+3. **V0.2.4:** primeiro ciclo de persistência, formulário → Supabase → PostgreSQL → leitura, em etapa posterior autorizada.
+4. Planejamento, Calendário, Occurrence e registros de progresso terão etapas próprias; não entram implicitamente na primeira migration.
+
+O núcleo de dados vem antes das telas funcionais porque elas dependerão de tipos, metas, recorrências e preferências consistentes. O detalhe de um item permanece um destino único reutilizável, mesmo quando futuramente aberto a partir de outras telas.
 
 ## Princípios do projeto
 
@@ -120,7 +121,7 @@ Visões diária/semanal/mensal, compromissos, atividades, sessões de projeto e 
 Projetos, subtarefas, sessões, cronômetro e progresso calculado.
 
 ### Banco Mestre
-Cadastro/configuração das atividades, duração, importância, recorrência, metas, janelas e regras.
+Biblioteca e administração dos itens reutilizáveis: busca, filtros, detalhe e edição. A criação também pode partir do botão global +.
 
 ### Ideias
 Captura rápida, Inbox, organização e transformação em projeto, pesquisa, atividade, estudo ou lista.
@@ -137,8 +138,10 @@ AppRotina/
     ├── app/
     ├── components/
     ├── lib/
-    ├── types/          # conforme necessidade
-    ├── supabase/       # migrations/functions quando iniciado
+    ├── types/          # domínio atual
+    ├── tests/          # testes de domínio do Banco Mestre
+    ├── doc/            # especificações e documentos do projeto
+    ├── supabase/       # previsto: migrations/functions, ainda não criado
     ├── public/
     ├── .env.example
     ├── .gitignore
@@ -181,6 +184,14 @@ npm install
 npm run dev
 ```
 
+Validações disponíveis na aplicação:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
 Abrir:
 
 ```text
@@ -219,15 +230,15 @@ O `.gitignore` deve proteger esses itens.
 Versionar apenas um exemplo sem segredos:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-or-anon-key
 ```
 
 ## Banco de dados
 
 O banco real ficará no Supabase.
 
-O GitHub armazenará **como o banco é estruturado**, por exemplo:
+A etapa atual mantém o cadastro em memória. Os clientes Supabase/Auth do starter já existem, mas não persistem itens do Banco Mestre. O GitHub armazenará **como o banco será estruturado**, por exemplo:
 
 ```text
 supabase/
@@ -249,9 +260,8 @@ Os dados reais da usuária não devem ser armazenados no repositório.
 - posição do dia da semana;
 - recorrência baseada em calendário;
 - recorrência baseada na última conclusão;
-- metas X vezes por período;
-- mínimo e ideal;
-- quando necessário.
+
+Metas X vezes por período, mínimo/ideal e atividades sem repetição automática são conceitos separados da recorrência. Anual é representada atualmente por intervalo de 12 meses; não há motor de geração.
 
 ## Projetos e sessões
 
@@ -287,20 +297,22 @@ O projeto mantém três documentos oficiais:
    - dívida técnica;
    - status e prioridades.
 
-Os três devem ser revisados após marcos relevantes.
+O Markdown versionado principal é este README. Documento Mestre e Backlog estão presentes em DOCX em rotina/doc/; foram preservados nesta etapa. A especificação Markdown V0.2.3A registra as decisões técnicas atuais e o planejamento dos próximos marcos.
 
 ## Pendências técnicas conhecidas
 
-- Validar manualmente a V0.1 em navegador nos modos claro/escuro, larguras desktop/mobile e navegação por teclado.
 - Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
-- Busca, Configurações, ações dos cards e botão `+` permanecem placeholders.
+- Busca e Configurações globais e ações fictícias da tela Hoje ainda são preparatórias. Busca/filtros do Banco Mestre e botão + para Item da rotina já funcionam localmente.
 - Autenticação herdada do starter Supabase ainda será validada quando entrar no escopo.
+- Ampliar a proteção de `.env.*` antes de introduzir arquivos reais adicionais de ambiente; o `.gitignore` atual cobre `.env` e `.env*.local`.
 
 ## Estado de retomada
 
-**Último marco:** V0.1 concluída e subida para a branch `desenvolvimento`.
+**Último marco funcional:** V0.2.2D aprovada, concluindo a V0.2.2 com cinco tipos de Item da Rotina.
 
-**Próxima ação:** V0.2.1 — modelar o Banco Mestre antes de criar o formulário definitivo e o banco de dados.
+**Ponto atual:** revisar a especificação V0.2.3A.
+
+**Próxima ação após aprovação:** V0.2.3B — migrations e validação local do modelo relacional, sem antecipar calendário, planejamento ou progresso.
 
 ---
 
