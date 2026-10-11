@@ -2,200 +2,179 @@
 
 Aplicação pessoal de organização de rotina, planejamento, projetos, ideias e compromissos.
 
-O **Rotina** está sendo desenvolvido como uma plataforma modular para centralizar atividades do dia a dia, metas, recorrências, projetos, planejamento e futuras extensões.
+O **Rotina** está sendo desenvolvido como uma plataforma modular para centralizar atividades do dia a dia, metas, recorrências, projetos, planejamento e futuras extensões, sem transformar automaticamente todo tempo livre em produtividade.
 
 ## Status atual
 
-**Fase:** desenvolvimento inicial / fundação técnica  
-**Versão de trabalho:** V0.1
+**Fase:** V0.2 — início do primeiro módulo funcional  
+**Marco concluído:** V0.1 — fundação visual e estrutural
 
-Já implementado:
-- Next.js rodando localmente
-- TypeScript
-- Tailwind CSS
-- Rotas principais: `/hoje`, `/planejamento`, `/calendario`, `/projetos`, `/banco-mestre`, `/ideias`
-- Sidebar desktop
-- Navegação inferior mobile
+### V0.1 concluída
+
+- Next.js + React + TypeScript + Tailwind CSS
+- Seis rotas principais:
+  - `/hoje`
+  - `/planejamento`
+  - `/calendario`
+  - `/projetos`
+  - `/banco-mestre`
+  - `/ideias`
+- Sidebar para desktop
+- Bottom Navigation mobile
+- Menu `Mais` com acesso a Planejamento, Banco Mestre e Ideias
+- TopBar compartilhado
 - Botão `+` flutuante
-- Tela Hoje inicial com dados fictícios
+- Tema claro/escuro com persistência
+- Fonte Geist aplicada
 - Layout responsivo inicial
-- Modo claro/escuro com persistência
-- Design System visual da V1 definido
-- Wireframes e telas de alta fidelidade aprovados para Hoje, Planejamento, Projetos, Calendário, Banco Mestre e Ideias
+- Tela Hoje com dados fictícios
+- Componentes reutilizáveis existentes do shadcn/ui/Radix reaproveitados
+- Acessibilidade básica e semântica de progresso
+- Lint, TypeScript e build validados
 
-## Objetivo
+As demais telas principais existem como rotas e placeholders. Seus protótipos de alta fidelidade já foram aprovados.
 
-Criar uma aplicação pessoal que ajude a organizar a rotina sem tentar preencher automaticamente todo o tempo livre.
+## Próxima etapa
 
-O sistema deve permitir:
-- cadastrar atividades pontuais e recorrentes;
-- organizar compromissos;
-- acompanhar metas;
-- planejar atividades flexíveis;
-- criar e acompanhar projetos;
-- registrar sessões de projeto;
-- calcular progresso automaticamente;
-- capturar e organizar ideias;
-- consultar calendário;
-- sugerir atividades quando houver tempo disponibilizado;
-- manter histórico;
-- futuramente gerar insights.
+A V0.2 começa pelo **Banco Mestre**.
+
+Sequência planejada:
+
+1. **V0.2.1 — Modelagem do Banco Mestre**
+   - campos da atividade;
+   - tipo;
+   - importância;
+   - área;
+   - duração;
+   - recorrência;
+   - metas;
+   - janelas e restrições;
+   - estados e regras relacionadas.
+
+2. **V0.2.2 — Interface do Banco Mestre com dados fictícios**
+   - busca e filtros;
+   - listagem;
+   - detalhe;
+   - formulário;
+   - reutilização dos componentes UI existentes.
+
+3. **V0.2.3 — Modelo PostgreSQL/Supabase**
+   - tabelas;
+   - relacionamentos;
+   - migrations;
+   - políticas RLS.
+
+4. **V0.2.4 — Primeiro ciclo real**
+   - formulário → Supabase → PostgreSQL → leitura no Banco Mestre.
+
+## Por que o Banco Mestre vem antes das demais telas funcionais?
+
+O Banco Mestre será a **fonte de verdade das atividades e regras**.
+
+Planejamento, Calendário e a Tela Hoje dependem de informações como recorrência, duração, metas, janelas e restrições. Implementar essas telas funcionalmente antes do Banco Mestre exigiria simular ou duplicar regras que depois precisariam ser refeitas.
+
+As estruturas visuais das outras telas já existem como protótipos aprovados e rotas placeholder; portanto, não é necessário completar todas as interfaces antes de consolidar o núcleo de dados.
 
 ## Princípios do projeto
 
-- O aplicativo deve organizar, não maximizar produtividade.
+- Organizar sem maximizar produtividade.
 - Tempo livre não deve ser automaticamente preenchido.
 - Atividades podem ser flexíveis e não precisam sempre ter horário.
 - Importância e urgência são conceitos diferentes.
 - A usuária mantém a decisão final sobre planejamento e sugestões.
-- Projetos possuem subtarefas internas, mas o calendário mostra sessões de projeto, não subtarefas individuais.
+- Projetos possuem subtarefas internas; o calendário mostra sessões de projeto, não subtarefas individuais.
 - A captura de ideias deve ser rápida.
-- O sistema deve ser modular e preparado para crescer.
+- O sistema deve crescer de forma incremental e modular.
+- Antes de criar componentes novos, verificar e reutilizar os componentes existentes quando adequados.
 
-## Stack
+## Stack oficial
 
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- Supabase
+- **Next.js**
+- **React**
+- **TypeScript**
+- **Tailwind CSS**
+- **Supabase**
   - PostgreSQL
   - Auth
-  - serviços de backend
-- Vercel
-- Git + GitHub
+- **Vercel**
+- **Git + GitHub**
 
-Planejado para etapas futuras:
+Futuro:
 - PWA
-- notificações Web Push
+- Web Push
 - histórico e insights
 - integrações externas
 
 ## Estrutura funcional da V1
 
 ### Hoje
-- agenda;
-- atividades do dia;
-- tarefas flexíveis;
-- checklist;
-- metas;
-- pendências.
+Agenda, atividades do dia, tarefas flexíveis, checklist, metas e pendências.
 
 ### Planejamento
-- fechamento do dia;
-- planejamento de amanhã;
-- contexto semanal;
-- pendências;
-- sugestões.
+Fechamento do dia, amanhã, contexto semanal, metas, pendências e sugestões.
 
 ### Calendário
-- visualização diária, semanal e mensal;
-- compromissos;
-- atividades;
-- sessões de projeto;
-- recorrências.
+Visões diária/semanal/mensal, compromissos, atividades, sessões de projeto e recorrências.
 
 ### Projetos
-- projetos ativos, pausados e concluídos;
-- subtarefas;
-- sessões;
-- cronômetro;
-- progresso automático.
+Projetos, subtarefas, sessões, cronômetro e progresso calculado.
 
 ### Banco Mestre
-- cadastro e configuração das atividades;
-- duração;
-- importância;
-- recorrência;
-- metas;
-- janelas de horário;
-- regras.
+Cadastro/configuração das atividades, duração, importância, recorrência, metas, janelas e regras.
 
 ### Ideias
-- captura rápida;
-- inbox;
-- organização;
-- transformação em projeto, pesquisa, atividade, estudo ou lista.
+Captura rápida, Inbox, organização e transformação em projeto, pesquisa, atividade, estudo ou lista.
 
-## Progresso de projetos
+## Arquitetura do repositório
 
-O progresso de um projeto é calculado com base nas subtarefas existentes.
-
-Exemplo:
+Estrutura atual/esperada:
 
 ```text
-Projeto: Tarot
-
-Subtarefas:
-- Cortar cartas
-- Desenhar
-- Pintar
-- Moldes
-- Finalizações
-- Pesquisas
+AppRotina/
+├── README.md
+├── .gitattributes
+└── rotina/
+    ├── app/
+    ├── components/
+    ├── lib/
+    ├── types/          # conforme necessidade
+    ├── supabase/       # migrations/functions quando iniciado
+    ├── public/
+    ├── .env.example
+    ├── .gitignore
+    └── package.json
 ```
 
-Subtarefas também podem ter progresso próprio calculado por:
-- quantidade;
-- etapas;
-- checklist;
-- conclusão binária.
+## Fluxo Git
 
-Exemplo:
+O projeto utiliza duas branches principais:
+
+- `main` — versão estável;
+- `desenvolvimento` — alterações em construção, integração e testes.
+
+Fluxo esperado:
 
 ```text
-Cortar cartas
-20 / 78 cartas
-≈ 25% concluído
+desenvolvimento
+    ↓
+implementação
+    ↓
+testes/validação
+    ↓
+merge para main
 ```
 
-A interface pode exibir valores arredondados enquanto o cálculo interno mantém precisão.
-
-## Recorrências
-
-O Rotina deverá suportar:
-- diária;
-- semanal;
-- mensal;
-- trimestral;
-- a cada X dias;
-- dias específicos da semana;
-- dia fixo do mês;
-- primeira/segunda/etc. ocorrência de um dia da semana no mês;
-- recorrência baseada em calendário;
-- recorrência baseada na última conclusão;
-- metas X vezes por semana;
-- mínimo e ideal por período;
-- quando necessário.
-
-## Projetos e sessões
-
-Projetos possuem:
-- nome;
-- descrição;
-- status;
-- prioridade;
-- progresso;
-- estimativa;
-- sessão mínima;
-- sessão ideal;
-- subtarefas;
-- histórico de sessões.
-
-Uma sessão pode ser iniciada com cronômetro.
-
-Ao encerrar, o tempo efetivamente trabalhado pode ser corrigido manualmente caso o cronômetro tenha ficado aberto por engano.
-
-As subtarefas não precisam ser escolhidas antes da sessão.
+Branches temporárias por funcionalidade podem ser adotadas futuramente se o volume de desenvolvimento justificar.
 
 ## Desenvolvimento local
 
 Pré-requisitos:
+
 - Node.js
 - npm
 - Git
 
-Executar:
+Na pasta `rotina`:
 
 ```bash
 npm install
@@ -210,101 +189,91 @@ http://localhost:3000
 
 ## Git e segurança
 
-### Nunca subir para o GitHub
+### Nunca versionar
 
-Não fazer commit de:
 - `.env`
 - `.env.local`
 - `.env.*` com valores reais
 - senhas
 - tokens
 - chaves privadas
-- service-role keys
+- Supabase service-role keys
 - credenciais de banco
-- dumps de banco contendo dados pessoais
-- arquivos contendo dados pessoais reais
 - certificados privados
-- arquivos de configuração com segredos embutidos
+- dumps contendo dados pessoais
+- dados pessoais reais exportados da aplicação
 
 Também não é necessário versionar:
+
 - `node_modules/`
 - `.next/`
 - builds gerados
 - caches
-- logs locais
+- logs
 - arquivos temporários
 
-Esses itens devem ser controlados pelo `.gitignore`.
+O `.gitignore` deve proteger esses itens.
 
 ### Variáveis de ambiente
 
-Manter um arquivo de exemplo:
-
-```text
-.env.example
-```
-
-Exemplo:
+Versionar apenas um exemplo sem segredos:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
-
-Sem valores reais.
 
 ## Banco de dados
 
-O banco real ficará hospedado no Supabase.
+O banco real ficará no Supabase.
 
-O GitHub armazenará a estrutura e o histórico técnico do banco, como:
+O GitHub armazenará **como o banco é estruturado**, por exemplo:
 
 ```text
 supabase/
-  migrations/
-  functions/
+├── migrations/
+└── functions/
 ```
 
-Os dados pessoais da aplicação não devem ser armazenados no repositório.
+Os dados reais da usuária não devem ser armazenados no repositório.
 
-## Organização do repositório
+## Recorrências previstas
 
-Estrutura esperada:
+- diária;
+- semanal;
+- mensal;
+- trimestral;
+- intervalo;
+- dias específicos;
+- dia fixo do mês;
+- posição do dia da semana;
+- recorrência baseada em calendário;
+- recorrência baseada na última conclusão;
+- metas X vezes por período;
+- mínimo e ideal;
+- quando necessário.
 
-```text
-rotina/
-├── app/
-├── components/
-├── modules/
-├── lib/
-├── types/
-├── public/
-├── supabase/
-│   ├── migrations/
-│   └── functions/
-├── docs/
-├── .env.example
-├── .gitignore
-└── README.md
-```
+## Projetos e sessões
 
-A estrutura pode evoluir.
+Projetos terão subtarefas internas e progresso derivado da estrutura.
+
+Uma sessão registra tempo dedicado ao projeto. Ao encerrar, o tempo efetivamente trabalhado poderá ser corrigido manualmente, e as subtarefas trabalhadas poderão ser registradas sem exigir seleção antecipada.
 
 ## Documentação viva
 
-O projeto mantém três documentos principais:
+O projeto mantém três documentos oficiais:
 
 1. **README.md**
    - visão geral;
    - instalação;
    - stack;
    - arquitetura;
-   - status;
-   - instruções técnicas.
+   - status técnico;
+   - fluxo Git.
 
 2. **Documento Mestre / Template do Projeto**
    - contexto;
-   - objetivos;
+   - objetivo;
    - requisitos;
    - decisões;
    - regras;
@@ -312,25 +281,27 @@ O projeto mantém três documentos principais:
    - ponto de retomada.
 
 3. **Backlog**
-   - funcionalidades futuras;
-   - melhorias;
    - módulos;
-   - explorações;
-   - status e prioridade.
+   - funcionalidades;
+   - melhorias;
+   - dívida técnica;
+   - status e prioridades.
 
-Esses documentos devem ser atualizados após evoluções relevantes do projeto.
+Os três devem ser revisados após marcos relevantes.
 
-## Próximos passos
+## Pendências técnicas conhecidas
 
-- consolidar o layout compartilhado;
-- revisar componentes UI existentes e finalizar fundação visual V0.1;
-- finalizar a fundação visual V0.1;
-- conectar Supabase;
-- estruturar o banco;
-- implementar Banco Mestre;
-- implementar recorrências e ocorrências;
-- alimentar a Tela Hoje com dados reais.
+- Validar manualmente a V0.1 em navegador nos modos claro/escuro, larguras desktop/mobile e navegação por teclado.
+- Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
+- Busca, Configurações, ações dos cards e botão `+` permanecem placeholders.
+- Autenticação herdada do starter Supabase ainda será validada quando entrar no escopo.
 
-## Observação
+## Estado de retomada
 
-O Rotina está em desenvolvimento ativo. Estrutura, funcionalidades e arquitetura podem evoluir conforme novos requisitos forem validados.
+**Último marco:** V0.1 concluída e subida para a branch `desenvolvimento`.
+
+**Próxima ação:** V0.2.1 — modelar o Banco Mestre antes de criar o formulário definitivo e o banco de dados.
+
+---
+
+O Rotina está em desenvolvimento ativo. Estrutura, regras e funcionalidades podem evoluir conforme o uso e a validação do produto.
