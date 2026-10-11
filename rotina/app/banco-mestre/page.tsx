@@ -1,7 +1,5 @@
-export default function HojePage() {
-  return (
-    <div>
-      <p>Página em construção</p>
-    </div>
-  );
+import { BancoMestreList } from '@/components/banco-mestre/BancoMestreList';
+
+export default function BancoMestrePage() {
+  return <BancoMestreList />;
 }

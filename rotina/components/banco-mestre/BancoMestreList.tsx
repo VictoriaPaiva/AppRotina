@@ -1,0 +1,126 @@
+"use client";
+
+import { useState } from 'react';
+import { Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { mockActivities, mockAreas, mockGoals, mockRecurrenceRules } from '@/lib/banco-mestre/mock-data';
+import { activitySummaries, activityTypeLabels, filterActivities, formatDuration, importanceLabels, importanceStyles, statusLabels, type ActivityFilters } from '@/lib/banco-mestre/presentation';
+
+const initialFilters: ActivityFilters = { search: '', areaId: 'all', type: 'all', importance: 'all', status: 'all' };
+
+export function BancoMestreList() {
+  const [filters, setFilters] = useState<ActivityFilters>(initialFilters);
+  const activities = filterActivities(mockActivities, filters);
+  const hasFilters = Object.entries(filters).some(([key, value]) => key === 'search' ? value.trim().length > 0 : value !== 'all');
+
+  // Configuração local da tela, não um novo componente genérico de filtros.
+  const filterControls = [
+    { key: 'areaId' as const, label: 'Área', options: [{ value: 'all', label: 'Todas as áreas' }, ...mockAreas.map(area => ({ value: area.id, label: area.name }))] },
+    { key: 'type' as const, label: 'Tipo', options: [{ value: 'all', label: 'Todos os tipos' }, ...Object.entries(activityTypeLabels).map(([value, label]) => ({ value, label }))] },
+    { key: 'importance' as const, label: 'Importância', options: [{ value: 'all', label: 'Todas as importâncias' }, ...Object.entries(importanceLabels).map(([value, label]) => ({ value, label }))] },
+    { key: 'status' as const, label: 'Status', options: [{ value: 'all', label: 'Todos os status' }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))] },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <p className="text-sm text-muted-foreground md:text-base">Gerencie as atividades, rotinas e regras que alimentam seu planejamento.</p>
+        <Badge variant="secondary" className="font-normal">Dados de demonstração · sem persistência</Badge>
+      </header>
+
+      <section aria-label="Busca e filtros de atividades" className="space-y-4 rounded-2xl border bg-card p-4 md:p-5">
+        <div className="space-y-2">
+          <Label htmlFor="activity-search">Buscar atividade</Label>
+          <div className="relative">
+            <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input id="activity-search" type="search" placeholder="Pesquisar pelo nome…" value={filters.search} onChange={event => setFilters(current => ({ ...current, search: event.target.value }))} className="h-10 rounded-xl pl-9" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {filterControls.map(control => {
+            const selected = control.options.find(option => option.value === filters[control.key]);
+            return (
+              <div key={control.key} className="space-y-2">
+                <Label htmlFor={'filter-' + control.key}>{control.label}</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button id={'filter-' + control.key} type="button" variant="outline" className="h-auto min-h-10 w-full justify-between whitespace-normal rounded-xl bg-surface text-left" aria-label={control.label + ': ' + selected?.label}>
+                      <span>{selected?.label}</span><span aria-hidden="true" className="ml-2 text-muted-foreground">⌄</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="z-[60] max-w-[calc(100vw-2rem)]" aria-label={control.label}>
+                    <DropdownMenuRadioGroup value={filters[control.key]} onValueChange={value => {
+                      // O menu só emite os valores das opções conhecidas deste filtro.
+                      if (control.options.some(option => option.value === value)) {
+                        setFilters(current => ({ ...current, [control.key]: value }) as ActivityFilters);
+                      }
+                    }}>
+                      {control.options.map(option => <DropdownMenuRadioItem key={option.value} value={option.value}>{option.label}</DropdownMenuRadioItem>)}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            );
+          })}
+        </div>
+        {hasFilters && <Button type="button" variant="ghost" size="sm" onClick={() => setFilters(initialFilters)}>Limpar busca e filtros</Button>}
+      </section>
+
+      <p role="status" aria-live="polite" aria-atomic="true" className="text-sm text-muted-foreground">
+        {activities.length} {activities.length === 1 ? 'atividade encontrada' : 'atividades encontradas'}
+      </p>
+
+      {activities.length === 0 ? (
+        <Card className="rounded-2xl border-dashed shadow-none">
+          <CardContent className="space-y-2 p-6 text-center">
+            <h2 className="font-semibold">Nenhuma atividade encontrada</h2>
+            <p className="text-sm text-muted-foreground">Tente outro nome ou ajuste os filtros.</p>
+            <Button type="button" variant="outline" onClick={() => setFilters(initialFilters)}>Limpar busca e filtros</Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <ul aria-label="Atividades do Banco Mestre" className="grid gap-4 lg:grid-cols-2">
+          {activities.map(activity => {
+            const area = mockAreas.find(item => item.id === activity.areaId);
+            const headingId = 'activity-' + activity.id;
+            return (
+              <li key={activity.id} className="min-w-0">
+                <article aria-labelledby={headingId} className="h-full">
+                  <Card className="flex h-full flex-col rounded-2xl shadow-sm">
+                    <CardHeader className="space-y-3 p-5">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h2 id={headingId} className="min-w-0 break-words text-base font-semibold">{activity.name}</h2>
+                        <Badge variant={activity.status === 'active' ? 'secondary' : 'outline'} className="shrink-0 font-normal">{statusLabels[activity.status]}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{area?.name ?? 'Área não definida'}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="font-normal">{activityTypeLabels[activity.type]}</Badge>
+                        <Badge variant="outline" className={importanceStyles[activity.defaultImportance]}>{importanceLabels[activity.defaultImportance]}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 space-y-3 px-5 pb-5">
+                      {activity.description && <p className="text-sm text-muted-foreground">{activity.description}</p>}
+                      <dl className="space-y-3 text-sm">
+                        <div><dt className="font-medium">Frequência e metas</dt><dd><ul className="mt-1 space-y-1 text-muted-foreground">{activitySummaries(activity, mockRecurrenceRules, mockGoals).map(summary => <li key={summary}>{summary}</li>)}</ul></dd></div>
+                        <div><dt className="font-medium">Duração</dt><dd className="mt-1 text-muted-foreground">{formatDuration(activity.duration)}</dd></div>
+                      </dl>
+                    </CardContent>
+                    <CardFooter className="px-5 pb-5">
+                      {/* Placeholder: detalhes e edição serão desenvolvidos em V0.2.2B. */}
+                      <Button type="button" variant="outline" disabled className="rounded-xl" aria-label={'Ver detalhes de ' + activity.name}>Ver detalhes</Button>
+                    </CardFooter>
+                  </Card>
+                </article>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
