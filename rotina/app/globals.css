@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --chart-1-rgb: 234 88 12;
+    --chart-2-rgb: 13 148 136;
+    --chart-3-rgb: 14 116 144;
+    --chart-4-rgb: 202 138 4;
+    --chart-5-rgb: 190 24 93;
+
+    --background-rgb: 248 250 252;
+    --surface-rgb: 255 255 255;
+    --surface-soft-rgb: 241 245 249;
+
+    --text-primary-rgb: 15 23 42;
+    --text-secondary-rgb: 100 116 139;
+
+    --border-rgb: 226 232 240;
+
+    --primary-rgb: 15 102 216;
+    --primary-hover-rgb: 13 86 184;
+    --primary-soft-rgb: 234 243 255;
+
+    --success-rgb: 34 197 94;
+
+    --radius-card: 16px;
+    --radius-control: 12px;
+    --primary-foreground-rgb: 255 255 255;
+    --warning-rgb: 194 65 12;
+    --warning-soft-rgb: 255 247 237;
+    --warning-border-rgb: 254 215 170;
+    --danger-rgb: 220 38 38;
+    --project-rgb: 124 58 237;
+    --project-hover-rgb: 109 40 217;
+    --project-border-rgb: 221 214 254;
+    --project-foreground-rgb: 255 255 255;
+    --destructive-foreground-rgb: 255 255 255;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --chart-1-rgb: 96 165 250;
+    --chart-2-rgb: 52 211 153;
+    --chart-3-rgb: 251 191 36;
+    --chart-4-rgb: 192 132 252;
+    --chart-5-rgb: 251 113 133;
+
+    --background-rgb: 15 20 27;
+    --surface-rgb: 24 33 43;
+    --surface-soft-rgb: 32 43 55;
+
+    --text-primary-rgb: 244 246 248;
+    --text-secondary-rgb: 170 180 192;
+
+    --border-rgb: 43 55 68;
+
+    --primary-rgb: 76 154 255;
+    --primary-hover-rgb: 103 168 255;
+    --primary-soft-rgb: 23 40 61;
+
+    --success-rgb: 74 222 128;
+    --danger-rgb: 248 113 113;
+    --project-rgb: 167 139 250;
+    --primary-foreground-rgb: 15 20 27;
+    --warning-rgb: 253 186 116;
+    --warning-soft-rgb: 51 36 24;
+    --warning-border-rgb: 102 64 30;
+    --project-hover-rgb: 196 181 253;
+    --project-border-rgb: 70 53 105;
+    --project-foreground-rgb: 15 20 27;
+    --destructive-foreground-rgb: 15 20 27;
+  }
+
+
+  /* CSS colors support inline styles; channels support Tailwind opacity. */
+  :root, .dark {
+    --background: rgb(var(--background-rgb));
+    --surface: rgb(var(--surface-rgb));
+    --surface-soft: rgb(var(--surface-soft-rgb));
+    --text-primary: rgb(var(--text-primary-rgb));
+    --text-secondary: rgb(var(--text-secondary-rgb));
+    --border: rgb(var(--border-rgb));
+    --primary: rgb(var(--primary-rgb));
+    --primary-hover: rgb(var(--primary-hover-rgb));
+    --primary-soft: rgb(var(--primary-soft-rgb));
+    --success: rgb(var(--success-rgb));
+    --warning: rgb(var(--warning-rgb));
+    --danger: rgb(var(--danger-rgb));
+    --project: rgb(var(--project-rgb));
+    --primary-foreground: rgb(var(--primary-foreground-rgb));
+    --warning-soft: rgb(var(--warning-soft-rgb));
+    --warning-border: rgb(var(--warning-border-rgb));
+    --project-hover: rgb(var(--project-hover-rgb));
+    --project-border: rgb(var(--project-border-rgb));
+    --project-foreground: rgb(var(--project-foreground-rgb));
+    --destructive-foreground: rgb(var(--destructive-foreground-rgb));
+    --foreground-rgb: var(--text-primary-rgb);
+    --card-rgb: var(--surface-rgb);
+    --card-foreground-rgb: var(--text-primary-rgb);
+    --popover-rgb: var(--surface-rgb);
+    --popover-foreground-rgb: var(--text-primary-rgb);
+    --secondary-rgb: var(--surface-soft-rgb);
+    --secondary-foreground-rgb: var(--text-primary-rgb);
+    --muted-rgb: var(--surface-soft-rgb);
+    --muted-foreground-rgb: var(--text-secondary-rgb);
+    --accent-rgb: var(--surface-soft-rgb);
+    --accent-foreground-rgb: var(--text-primary-rgb);
+    --destructive-rgb: var(--danger-rgb);
+    --input-rgb: var(--border-rgb);
+    --ring-rgb: var(--primary-rgb);
+  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
