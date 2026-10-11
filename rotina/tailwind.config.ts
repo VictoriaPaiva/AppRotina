@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
 export default {
   darkMode: ["class"],
@@ -11,6 +12,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+      },
       colors: {
         surface: "rgb(var(--surface-rgb) / <alpha-value>)",
         "surface-soft": "rgb(var(--surface-soft-rgb) / <alpha-value>)",

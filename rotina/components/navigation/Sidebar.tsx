@@ -18,7 +18,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="hidden min-h-screen w-64 border-r p-4 md:block"
+      className="hidden min-h-screen w-64 shrink-0 border-r p-4 md:block"
       style={{
         background: "var(--surface)",
         color: "var(--text-primary)",
@@ -32,7 +32,7 @@ export function Sidebar() {
         Rotina
       </div>
 
-      <nav className="space-y-2">
+      <nav aria-label="Navegação principal desktop" className="space-y-2">
         {items.map((item) => {
           const active = pathname === item.href;
 
@@ -40,7 +40,8 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`block rounded-xl px-4 py-3 transition ${
+              aria-current={active ? "page" : undefined}
+              className={`block rounded-xl px-4 py-3 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 active
                   ? "bg-[var(--primary-soft)] font-medium text-[var(--primary)]"
                   : "text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"

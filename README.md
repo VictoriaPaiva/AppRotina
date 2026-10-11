@@ -324,7 +324,6 @@ Esses documentos devem ser atualizados após evoluções relevantes do projeto.
 
 - consolidar o layout compartilhado;
 - revisar componentes UI existentes e finalizar fundação visual V0.1;
-- revisar e reutilizar os componentes UI já existentes;
 - finalizar a fundação visual V0.1;
 - conectar Supabase;
 - estruturar o banco;

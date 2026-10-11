@@ -1,7 +1,7 @@
 export default function HojePage() {
   return (
-    <main>
+    <div>
       <p>Página em construção</p>
-    </main>
+    </div>
   );
 }

@@ -27,6 +27,7 @@ export function TopBar() {
         </h1>
 
         <div className="flex shrink-0 items-center gap-2" role="group" aria-label="Ações globais">
+          {/* Placeholders: busca e configurações ainda não implementadas. */}
           <Button type="button" variant="ghost" size="icon" disabled aria-label="Buscar" title="Buscar">
             <Search aria-hidden="true" />
           </Button>

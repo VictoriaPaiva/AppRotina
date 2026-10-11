@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${geistSans.variable} bg-background text-foreground`}>
+      <body className={`${geistSans.variable} bg-background font-sans text-foreground`}>
         <ThemeProvider
           attribute="class"
           storageKey="rotina-theme"

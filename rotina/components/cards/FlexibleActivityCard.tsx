@@ -1,9 +1,18 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+
 type FlexibleActivityCardProps = {
   title: string;
   duration: string;
   meta?: string;
   importance?: "Obrigatório" | "Importante" | "Opcional";
 };
+
+const importanceStyles = {
+  Obrigatório: "border-destructive/20 bg-destructive/10 text-destructive",
+  Importante: "border-warning-border bg-warning-soft text-warning",
+  Opcional: "border-border bg-surface-soft text-muted-foreground",
+} as const;
 
 export function FlexibleActivityCard({
   title,
@@ -36,9 +45,9 @@ export function FlexibleActivityCard({
           </p>
         </div>
 
-        <span className="rounded-full bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning">
+        <Badge variant="outline" className={`rounded-full py-1 font-medium ${importanceStyles[importance]}`}>
           {importance}
-        </span>
+        </Badge>
       </div>
 
       {meta && (
@@ -47,14 +56,15 @@ export function FlexibleActivityCard({
         </p>
       )}
 
+      {/* Placeholder: ações aguardam a implementação dos fluxos de atividades. */}
       <div className="flex flex-wrap gap-2">
-        <button className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
+        <Button type="button" className="h-auto rounded-xl px-4 py-2 hover:bg-primary-hover">
           Fazer agora
-        </button>
+        </Button>
 
-        <button className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent">
+        <Button type="button" variant="outline" className="h-auto rounded-xl bg-surface px-4 py-2">
           Planejar
-        </button>
+        </Button>
       </div>
     </article>
   );
