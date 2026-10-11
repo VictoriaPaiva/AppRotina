@@ -1,0 +1,3 @@
+npm run dev -> para executar a aplicação localmente (utilizar o git bash dentro na pasta rotina)
+
+localhost:3000 -> ambiente de execução local 
