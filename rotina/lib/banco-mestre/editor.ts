@@ -1,20 +1,26 @@
 import type { Activity, Area, Duration, Goal, RecurrenceRule, TimeWindow, Weekday, MonthOrdinal, InvalidDatePolicy } from '@/types/banco-mestre';
 
+/** Categorias de entrada são presets de UX, não novas entidades do domínio. */
+export type CreationCategory = 'checklist' | 'routine' | 'timedRoutine' | 'recurringTask' | 'punctual';
+export const creationCategoryLabels: Record<CreationCategory, string> = { checklist: 'Tarefa / checklist', routine: 'Rotina flexível', timedRoutine: 'Rotina com horários definidos', recurringTask: 'Tarefa recorrente', punctual: 'Atividade pontual' };
+export function creationPreset(category: CreationCategory = 'routine'): Pick<ActivityDraft, 'type' | 'trackingMode'> {
+  return { type: category === 'punctual' ? 'punctual' : 'routine', trackingMode: category === 'checklist' ? 'checklist' : category === 'timedRoutine' ? 'agenda' : 'automatic' };
+}
 export interface ActivityBundle { activity: Activity; goals: Goal[]; rules: RecurrenceRule[]; windows: TimeWindow[] }
 export interface GoalDraft { id: string; enabled: boolean; metric: Goal['metric']; unit: string; minimum: string; ideal: string; period: Goal['period']; startsOn: string; endsOn: string }
 export interface RuleDraft { id: string; enabled: boolean; label: string; kind: 'interval' | 'weekdays' | 'monthDay' | 'monthWeekday' | 'completion'; interval: string; unit: 'day' | 'week' | 'month'; anchorDate: string; weekdays: Weekday[]; dayOfMonth: string; ordinal: MonthOrdinal; weekday: Weekday; invalidDatePolicy: InvalidDatePolicy; startsOn: string; endsOn: string }
 export interface WindowDraft { id: string; recurrenceRuleId: string; kind: TimeWindow['kind']; effect: TimeWindow['effect']; coverage: TimeWindow['coverage']; weekdays: Weekday[]; startTime: string; endTime: string; endDayOffset: '0' | '1'; startsOn: string; endsOn: string }
-export interface ActivityDraft { name: string; description: string; areaId: string; status: Activity['status']; type: Activity['type']; importance: Activity['defaultImportance']; durationMode: Duration['mode']; minutes: string; minimum: string; maximum: string; ideal: string; goals: GoalDraft[]; rules: RuleDraft[]; windows: WindowDraft[] }
+export interface ActivityDraft { name: string; description: string; areaId: string; status: Activity['status']; type: Activity['type']; trackingMode: Activity['trackingMode']; importance: Activity['defaultImportance']; durationMode: Duration['mode']; hours: string; minutes: string; minimumHours: string; minimum: string; maximumHours: string; maximum: string; idealHours: string; ideal: string; goals: GoalDraft[]; rules: RuleDraft[]; windows: WindowDraft[] }
 export type FieldErrors = Record<string, string>;
 
-export function createDraft(bundle?: ActivityBundle): ActivityDraft {
+export function createDraft(bundle?: ActivityBundle, category?: CreationCategory): ActivityDraft {
   const activity = bundle?.activity;
   const duration = activity?.duration;
   return {
     name: activity?.name ?? '', description: activity?.description ?? '', areaId: activity?.areaId ?? '',
-    status: activity?.status ?? 'active', type: activity?.type ?? 'routine', importance: activity?.defaultImportance ?? 'important',
-    durationMode: duration?.mode ?? 'unknown', minutes: duration && 'minutes' in duration ? String(duration.minutes) : '',
-    minimum: duration && 'minMinutes' in duration ? String(duration.minMinutes) : '', maximum: duration && 'maxMinutes' in duration ? String(duration.maxMinutes) : '', ideal: duration && 'idealMinutes' in duration ? String(duration.idealMinutes) : '',
+    status: activity?.status ?? 'active', type: activity?.type ?? creationPreset(category).type, trackingMode: activity?.trackingMode ?? creationPreset(category).trackingMode, importance: activity?.defaultImportance ?? 'important',
+    durationMode: duration?.mode ?? 'unknown', hours: duration && 'minutes' in duration ? String(Math.floor(duration.minutes / 60)) : '0', minutes: duration && 'minutes' in duration ? String(duration.minutes % 60) : '0',
+    minimumHours: duration && 'minMinutes' in duration ? String(Math.floor(duration.minMinutes / 60)) : '0', minimum: duration && 'minMinutes' in duration ? String(duration.minMinutes % 60) : '0', maximumHours: duration && 'maxMinutes' in duration ? String(Math.floor(duration.maxMinutes / 60)) : '0', maximum: duration && 'maxMinutes' in duration ? String(duration.maxMinutes % 60) : '0', idealHours: duration && 'idealMinutes' in duration ? String(Math.floor(duration.idealMinutes / 60)) : '0', ideal: duration && 'idealMinutes' in duration ? String(duration.idealMinutes % 60) : '0',
     goals: bundle?.goals.map(goal => ({ id: goal.id, enabled: goal.enabled, metric: goal.metric, unit: goal.unit, minimum: String(goal.minimumTarget), ideal: goal.idealTarget === undefined ? '' : String(goal.idealTarget), period: goal.period, startsOn: goal.startsOn, endsOn: goal.endsOn ?? '' })) ?? [],
     rules: bundle?.rules.map(rule => ({ id: rule.id, enabled: rule.enabled, label: rule.label ?? '', kind: rule.basis === 'completion' ? 'completion' : rule.pattern, interval: String(rule.interval), unit: rule.unit, anchorDate: 'anchorDate' in rule ? rule.anchorDate ?? '' : '', weekdays: 'weekdays' in rule ? [...rule.weekdays] : [], dayOfMonth: 'dayOfMonth' in rule ? String(rule.dayOfMonth) : '2', ordinal: 'ordinal' in rule ? rule.ordinal : 1, weekday: 'weekday' in rule ? rule.weekday : 'wednesday', invalidDatePolicy: 'invalidDatePolicy' in rule ? rule.invalidDatePolicy : 'lastValidDay', startsOn: rule.startsOn, endsOn: rule.endsOn ?? '' })) ?? [],
     windows: bundle?.windows.map(window => ({ id: window.id, recurrenceRuleId: window.recurrenceRuleId ?? '', kind: window.kind, effect: window.effect, coverage: window.coverage, weekdays: 'weekdays' in window ? [...(window.weekdays ?? [])] : [], startTime: 'startTime' in window ? window.startTime : '', endTime: 'endTime' in window ? window.endTime : '', endDayOffset: 'endDayOffset' in window && window.endDayOffset === 1 ? '1' : '0', startsOn: window.startsOn, endsOn: window.endsOn ?? '' })) ?? [],
@@ -43,16 +49,25 @@ export function buildBundle(draft: ActivityDraft, areas: readonly Area[], id: st
   if (!draft.name.trim()) errors.name = 'Informe o nome da atividade.';
   if (!areas.some(area => area.id === draft.areaId && (area.active || original?.areaId === area.id))) errors.areaId = 'Selecione uma área válida.';
   if (draft.type === 'punctual' && draft.rules.length) errors.type = 'Atividades pontuais não possuem repetição automática. Remova as recorrências ou revise o tipo.';
+  if (!['automatic', 'checklist', 'agenda'].includes(draft.trackingMode)) errors.trackingMode = 'Selecione como acompanhar esta atividade.';
+  const totalMinutes = (hours: string, minutes: string, hoursKey: string, minutesKey: string) => {
+    const h = Number(hours.trim()), m = Number(minutes.trim().replace(',', '.'));
+    if (!hours.trim() || !Number.isSafeInteger(h) || h < 0) errors[hoursKey] = 'Informe horas inteiras iguais ou maiores que zero.';
+    if (!minutes.trim() || !Number.isFinite(m) || m < 0 || m > 59) errors[minutesKey] = 'Informe minutos entre 0 e 59.';
+    const total = h * 60 + m;
+    if (!Number.isFinite(total) || total <= 0 || total > Number.MAX_SAFE_INTEGER) errors[minutesKey] = 'A duração total deve ser maior que zero e ter um valor válido.';
+    return total;
+  };
   let duration: Duration = { mode: 'unknown' };
-  if (draft.durationMode === 'fixed') duration = { mode: 'fixed', minutes: positive(draft.minutes, 'minutes') };
-  if (draft.durationMode === 'minimum') duration = { mode: 'minimum', minMinutes: positive(draft.minimum, 'minimum') };
+  if (draft.durationMode === 'fixed') duration = { mode: 'fixed', minutes: totalMinutes(draft.hours, draft.minutes, 'hours', 'minutes') };
+  if (draft.durationMode === 'minimum') duration = { mode: 'minimum', minMinutes: totalMinutes(draft.minimumHours, draft.minimum, 'minimumHours', 'minimum') };
   if (draft.durationMode === 'range') {
-    const minMinutes = positive(draft.minimum, 'minimum'), maxMinutes = positive(draft.maximum, 'maximum');
+    const minMinutes = totalMinutes(draft.minimumHours, draft.minimum, 'minimumHours', 'minimum'), maxMinutes = totalMinutes(draft.maximumHours, draft.maximum, 'maximumHours', 'maximum');
     if (maxMinutes < minMinutes) errors.maximum = 'O máximo deve ser igual ou maior que o mínimo.';
     duration = { mode: 'range', minMinutes, maxMinutes };
   }
   if (draft.durationMode === 'minimumIdeal') {
-    const minMinutes = positive(draft.minimum, 'minimum'), idealMinutes = positive(draft.ideal, 'ideal');
+    const minMinutes = totalMinutes(draft.minimumHours, draft.minimum, 'minimumHours', 'minimum'), idealMinutes = totalMinutes(draft.idealHours, draft.ideal, 'idealHours', 'ideal');
     if (idealMinutes < minMinutes) errors.ideal = 'O ideal deve ser igual ou maior que o mínimo.';
     duration = { mode: 'minimumIdeal', minMinutes, idealMinutes };
   }
@@ -105,7 +120,7 @@ export function buildBundle(draft: ActivityDraft, areas: readonly Area[], id: st
     return { ...base, kind: 'timeRange', ...weekdays, startTime: row.startTime, endTime: row.endTime, endDayOffset: row.endDayOffset === '1' ? 1 : 0 };
   });
   if (Object.keys(errors).length) return { ok: false, errors };
-  const activity: Activity = { id, name: draft.name.trim(), ...(draft.description.trim() ? { description: draft.description.trim() } : {}), areaId: draft.areaId, status: draft.status, type: draft.type, defaultImportance: draft.importance, duration, createdAt: original?.createdAt ?? timestamp, updatedAt: timestamp };
+  const activity: Activity = { id, name: draft.name.trim(), ...(draft.description.trim() ? { description: draft.description.trim() } : {}), areaId: draft.areaId, status: draft.status, type: draft.type, trackingMode: draft.trackingMode, defaultImportance: draft.importance, duration, createdAt: original?.createdAt ?? timestamp, updatedAt: timestamp };
   return { ok: true, bundle: { activity, goals, rules, windows } };
 }
 

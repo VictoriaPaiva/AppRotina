@@ -9,6 +9,7 @@ export type ActivityType =
   | 'routine' // Habitual; pode ter recorrência, meta ou comportamento flexível.
   | 'desired'; // Desejada quando houver oportunidade, sem expectativa obrigatória regular.
 export type ActivityImportance = 'required' | 'important' | 'optional';
+export type TrackingMode = 'automatic' | 'checklist' | 'agenda';
 export type ActivityStatus = 'active' | 'inactive';
 
 /** Cada modo admite apenas seus valores. Valores positivos e ordem dos limites
@@ -33,6 +34,7 @@ export interface Activity {
   areaId: Area['id'];
   status: ActivityStatus;
   type: ActivityType;
+  trackingMode: TrackingMode;
   defaultImportance: ActivityImportance;
   duration: Duration;
   createdAt: string;

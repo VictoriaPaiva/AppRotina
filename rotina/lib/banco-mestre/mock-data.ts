@@ -15,14 +15,14 @@ export const mockAreas: Area[] = [
 ];
 const timestamps = { createdAt: '2026-10-11T12:00:00Z', updatedAt: '2026-10-11T12:00:00Z' };
 export const mockActivities: Activity[] = [
-  { ...timestamps, id: 'academia', name: 'Academia', description: 'Treinos flexíveis, sem dias fixos.', areaId: 'saude', status: 'active', type: 'routine', defaultImportance: 'important', duration: { mode: 'minimumIdeal', minMinutes: 30, idealMinutes: 60 } },
-  { ...timestamps, id: 'agua', name: 'Beber água', description: 'Acompanhar o volume ao longo do dia.', areaId: 'saude', status: 'active', type: 'routine', defaultImportance: 'required', duration: { mode: 'unknown' } },
-  { ...timestamps, id: 'passeio', name: 'Passear com os cachorros', description: 'Saídas de manhã, tarde e noite.', areaId: 'pets', status: 'active', type: 'routine', defaultImportance: 'required', duration: { mode: 'range', minMinutes: 20, maxMinutes: 40 } },
-  { ...timestamps, id: 'faxina', name: 'Faxina pesada', description: 'Estimativa de seis horas para uma limpeza completa.', areaId: 'casa', status: 'active', type: 'routine', defaultImportance: 'important', duration: { mode: 'fixed', minutes: 360 } },
-  { ...timestamps, id: 'cabelo', name: 'Cortar cabelo', areaId: 'autocuidado', status: 'active', type: 'routine', defaultImportance: 'important', duration: { mode: 'fixed', minutes: 40 } },
-  { ...timestamps, id: 'excel', name: 'Estudar Excel', areaId: 'estudos', status: 'active', type: 'desired', defaultImportance: 'important', duration: { mode: 'minimum', minMinutes: 20 } },
-  { ...timestamps, id: 'fotos', name: 'Organizar fotos', areaId: 'organizacao', status: 'inactive', type: 'desired', defaultImportance: 'optional', duration: { mode: 'unknown' } },
-  { ...timestamps, id: 'filtro', name: 'Comprar filtro de água', description: 'Compra pontual de demonstração.', areaId: 'casa', status: 'active', type: 'punctual', defaultImportance: 'required', duration: { mode: 'fixed', minutes: 10 } },
+  { ...timestamps, id: 'academia', name: 'Academia', description: 'Treinos flexíveis, sem dias fixos.', areaId: 'saude', status: 'active', type: 'routine', trackingMode: 'automatic', defaultImportance: 'important', duration: { mode: 'minimumIdeal', minMinutes: 30, idealMinutes: 60 } },
+  { ...timestamps, id: 'agua', name: 'Beber água', description: 'Acompanhar o volume ao longo do dia.', areaId: 'saude', status: 'active', type: 'routine', trackingMode: 'automatic', defaultImportance: 'required', duration: { mode: 'unknown' } },
+  { ...timestamps, id: 'passeio', name: 'Passear com os cachorros', description: 'Saídas de manhã, tarde e noite.', areaId: 'pets', status: 'active', type: 'routine', trackingMode: 'agenda', defaultImportance: 'required', duration: { mode: 'range', minMinutes: 20, maxMinutes: 40 } },
+  { ...timestamps, id: 'faxina', name: 'Faxina pesada', description: 'Estimativa de seis horas para uma limpeza completa.', areaId: 'casa', status: 'active', type: 'routine', trackingMode: 'automatic', defaultImportance: 'important', duration: { mode: 'fixed', minutes: 360 } },
+  { ...timestamps, id: 'cabelo', name: 'Cortar cabelo', areaId: 'autocuidado', status: 'active', type: 'routine', trackingMode: 'automatic', defaultImportance: 'important', duration: { mode: 'fixed', minutes: 40 } },
+  { ...timestamps, id: 'excel', name: 'Estudar Excel', areaId: 'estudos', status: 'active', type: 'desired', trackingMode: 'automatic', defaultImportance: 'important', duration: { mode: 'minimum', minMinutes: 20 } },
+  { ...timestamps, id: 'fotos', name: 'Organizar fotos', areaId: 'organizacao', status: 'inactive', type: 'desired', trackingMode: 'automatic', defaultImportance: 'optional', duration: { mode: 'unknown' } },
+  { ...timestamps, id: 'filtro', name: 'Comprar filtro de água', description: 'Compra pontual de demonstração.', areaId: 'casa', status: 'active', type: 'punctual', trackingMode: 'checklist', defaultImportance: 'required', duration: { mode: 'fixed', minutes: 10 } },
 ];
 
 export const mockRecurrenceRules: RecurrenceRule[] = [

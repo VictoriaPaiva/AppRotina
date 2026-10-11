@@ -1,6 +1,8 @@
-import type { Activity, ActivityImportance, ActivityStatus, ActivityType, Duration, Goal, RecurrenceRule, Weekday } from '@/types/banco-mestre';
+import type { Activity, ActivityImportance, ActivityStatus, ActivityType, TrackingMode, Duration, Goal, RecurrenceRule, Weekday } from '@/types/banco-mestre';
 
 export const activityTypeLabels: Record<ActivityType, string> = { punctual: 'Pontual', routine: 'Rotina', desired: 'Desejada' };
+export const trackingModeLabels: Record<TrackingMode, string> = { automatic: 'Automático', checklist: 'Checklist', agenda: 'Agenda' };
+export const goalMetricLabels: Record<Goal['metric'], string> = { count: 'Vezes realizadas', duration: 'Tempo total', quantity: 'Quantidade acumulada' };
 export const importanceLabels: Record<ActivityImportance, string> = { required: 'Obrigatório', important: 'Importante', optional: 'Opcional' };
 export const statusLabels: Record<ActivityStatus, string> = { active: 'Ativa', inactive: 'Inativa' };
 export const importanceStyles: Record<ActivityImportance, string> = {
@@ -27,7 +29,7 @@ export function formatDuration(duration: Duration): string {
 const weekdayLabels: Record<Weekday, string> = { monday: 'segunda', tuesday: 'terça', wednesday: 'quarta', thursday: 'quinta', friday: 'sexta', saturday: 'sábado', sunday: 'domingo' };
 export function formatRecurrence(rule: RecurrenceRule): string {
   const suffix = rule.label ? ' · ' + rule.label : '';
-  if (rule.basis === 'completion') return 'A cada ' + rule.interval + (rule.unit === 'day' ? ' dias' : ' meses') + ' após conclusão' + suffix;
+  if (rule.basis === 'completion') return rule.interval + (rule.unit === 'day' ? (rule.interval === 1 ? ' dia' : ' dias') : (rule.interval === 1 ? ' mês' : ' meses')) + ' após a última realização' + suffix;
   switch (rule.pattern) {
     case 'interval': {
       const units = { day: ['dia', 'dias'], week: ['semana', 'semanas'], month: ['mês', 'meses'] };
@@ -41,7 +43,7 @@ export function formatRecurrence(rule: RecurrenceRule): string {
 }
 function formatGoalValue(goal: Goal, value: number): string {
   if (goal.metric === 'duration') return minutesLabel(value);
-  if (goal.metric === 'count') return numberFormat.format(value) + (value === 1 ? ' execução' : ' execuções');
+  if (goal.metric === 'count') return numberFormat.format(value) + (value === 1 ? ' vez' : ' vezes');
   if (goal.unit === 'ml') return numberFormat.format(value / 1000) + ' L';
   return numberFormat.format(value) + ' ' + goal.unit;
 }
