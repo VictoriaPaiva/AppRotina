@@ -1,15 +1,33 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
 import { NowCard } from "@/components/cards/NowCard";
 import { FlexibleActivityCard } from "@/components/cards/FlexibleActivityCard";
 import { ProjectCard } from "@/components/cards/ProjectCard";
 import { GoalCard } from "@/components/cards/GoalCard";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 
+
+
+async function TodayDate() {
+  await connection();
+  const formattedDate = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
+  const todayLabel = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+  return <>{todayLabel}</>;
+}
+
 export default function HojePage() {
   return (
     <div className="space-y-8">
       <header>
         <p className="text-sm text-muted-foreground">
-          Sábado, 10 de outubro
+          <Suspense fallback={<span aria-hidden="true">&nbsp;</span>}>
+            <TodayDate />
+          </Suspense>
         </p>
 
       </header>
