@@ -8,19 +8,21 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { mockActivities, mockAreas, mockGoals, mockRecurrenceRules } from '@/lib/banco-mestre/mock-data';
+import Link from 'next/link';
+import { useBancoMestre } from './BancoMestreProvider';
 import { activitySummaries, activityTypeLabels, filterActivities, formatDuration, importanceLabels, importanceStyles, statusLabels, type ActivityFilters } from '@/lib/banco-mestre/presentation';
 
 const initialFilters: ActivityFilters = { search: '', areaId: 'all', type: 'all', importance: 'all', status: 'all' };
 
 export function BancoMestreList() {
+  const { activities: localActivities, areas, goals, rules } = useBancoMestre();
   const [filters, setFilters] = useState<ActivityFilters>(initialFilters);
-  const activities = filterActivities(mockActivities, filters);
+  const activities = filterActivities(localActivities, filters);
   const hasFilters = Object.entries(filters).some(([key, value]) => key === 'search' ? value.trim().length > 0 : value !== 'all');
 
   // Configuração local da tela, não um novo componente genérico de filtros.
   const filterControls = [
-    { key: 'areaId' as const, label: 'Área', options: [{ value: 'all', label: 'Todas as áreas' }, ...mockAreas.map(area => ({ value: area.id, label: area.name }))] },
+    { key: 'areaId' as const, label: 'Área', options: [{ value: 'all', label: 'Todas as áreas' }, ...areas.map(area => ({ value: area.id, label: area.name }))] },
     { key: 'type' as const, label: 'Tipo', options: [{ value: 'all', label: 'Todos os tipos' }, ...Object.entries(activityTypeLabels).map(([value, label]) => ({ value, label }))] },
     { key: 'importance' as const, label: 'Importância', options: [{ value: 'all', label: 'Todas as importâncias' }, ...Object.entries(importanceLabels).map(([value, label]) => ({ value, label }))] },
     { key: 'status' as const, label: 'Status', options: [{ value: 'all', label: 'Todos os status' }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))] },
@@ -30,7 +32,8 @@ export function BancoMestreList() {
     <div className="space-y-6">
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground md:text-base">Gerencie as atividades, rotinas e regras que alimentam seu planejamento.</p>
-        <Badge variant="secondary" className="font-normal">Dados de demonstração · sem persistência</Badge>
+        <Badge variant="secondary" className="font-normal">Dados locais · sem persistência após recarregar</Badge>
+        <div><Button asChild><Link href="/banco-mestre/nova">Nova atividade</Link></Button></div>
       </header>
 
       <section aria-label="Busca e filtros de atividades" className="space-y-4 rounded-2xl border bg-card p-4 md:p-5">
@@ -86,7 +89,7 @@ export function BancoMestreList() {
       ) : (
         <ul aria-label="Atividades do Banco Mestre" className="grid gap-4 lg:grid-cols-2">
           {activities.map(activity => {
-            const area = mockAreas.find(item => item.id === activity.areaId);
+            const area = areas.find(item => item.id === activity.areaId);
             const headingId = 'activity-' + activity.id;
             return (
               <li key={activity.id} className="min-w-0">
@@ -106,13 +109,13 @@ export function BancoMestreList() {
                     <CardContent className="flex-1 space-y-3 px-5 pb-5">
                       {activity.description && <p className="text-sm text-muted-foreground">{activity.description}</p>}
                       <dl className="space-y-3 text-sm">
-                        <div><dt className="font-medium">Frequência e metas</dt><dd><ul className="mt-1 space-y-1 text-muted-foreground">{activitySummaries(activity, mockRecurrenceRules, mockGoals).map(summary => <li key={summary}>{summary}</li>)}</ul></dd></div>
+                        <div><dt className="font-medium">Frequência e metas</dt><dd><ul className="mt-1 space-y-1 text-muted-foreground">{activitySummaries(activity, rules, goals).map(summary => <li key={summary}>{summary}</li>)}</ul></dd></div>
                         <div><dt className="font-medium">Duração</dt><dd className="mt-1 text-muted-foreground">{formatDuration(activity.duration)}</dd></div>
                       </dl>
                     </CardContent>
                     <CardFooter className="px-5 pb-5">
-                      {/* Placeholder: detalhes e edição serão desenvolvidos em V0.2.2B. */}
-                      <Button type="button" variant="outline" disabled className="rounded-xl" aria-label={'Ver detalhes de ' + activity.name}>Ver detalhes</Button>
+
+                      <Button asChild variant="outline" className="rounded-xl"><Link href={'/banco-mestre/' + activity.id} aria-label={'Ver detalhes de ' + activity.name}>Ver detalhes</Link></Button>
                     </CardFooter>
                   </Card>
                 </article>

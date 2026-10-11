@@ -15,7 +15,7 @@ const pageTitles: Record<string, string> = {
 
 export function TopBar() {
   const pathname = usePathname();
-  const title = pageTitles[pathname];
+  const title = pageTitles[pathname] ?? (pathname.startsWith("/banco-mestre/") ? "Banco Mestre" : undefined);
 
   if (!title) return null;
 

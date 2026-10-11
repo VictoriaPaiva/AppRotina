@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import { BancoMestreProvider } from "@/components/banco-mestre/BancoMestreProvider";
 import { TopBar } from "@/components/layout/TopBar";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -40,17 +42,17 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen">
-            <Sidebar />
+            <Suspense fallback={<div aria-hidden="true" className="hidden min-h-screen w-64 shrink-0 border-r bg-surface md:block" />}><Sidebar /></Suspense>
 
             <main className="min-w-0 flex-1 pb-20 md:pb-0">
-              <TopBar />
+              <Suspense fallback={<div aria-hidden="true" className="h-16 border-b bg-surface" />}><TopBar /></Suspense>
               <div className="mx-auto max-w-7xl p-4 md:p-8">
-                {children}
+                <BancoMestreProvider>{children}</BancoMestreProvider>
               </div>
             </main>
 
             <FloatingAddButton />
-            <BottomNavigation />
+            <Suspense fallback={<div aria-hidden="true" className="fixed bottom-0 left-0 right-0 h-14 border-t bg-card md:hidden" />}><BottomNavigation /></Suspense>
           </div>
         </ThemeProvider>
       </body>
