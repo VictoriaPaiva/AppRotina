@@ -11,7 +11,8 @@ export function GoalCard({
   target,
   unit,
 }: GoalCardProps) {
-  const progress = Math.min((current / target) * 100, 100);
+  const ratio = target > 0 ? (current / target) * 100 : 0;
+  const progress = Number.isFinite(ratio) ? Math.min(Math.max(ratio, 0), 100) : 0;
 
   return (
     <article
@@ -31,7 +32,15 @@ export function GoalCard({
         </span>
       </div>
 
-      <div className="h-2 overflow-hidden rounded-full bg-surface-soft">
+      <div
+        role="progressbar"
+        aria-label={`Progresso da meta ${title}`}
+        aria-valuenow={progress}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuetext={`${current} de ${target} ${unit}`}
+        className="h-2 overflow-hidden rounded-full bg-surface-soft"
+      >
         <div
           className="h-full rounded-full bg-primary"
           style={{ width: `${progress}%` }}

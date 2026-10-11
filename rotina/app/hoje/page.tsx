@@ -1,23 +1,38 @@
+import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { connection } from "next/server";
 import { NowCard } from "@/components/cards/NowCard";
 import { FlexibleActivityCard } from "@/components/cards/FlexibleActivityCard";
 import { ProjectCard } from "@/components/cards/ProjectCard";
 import { GoalCard } from "@/components/cards/GoalCard";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 
+
+
+async function TodayDate() {
+  await connection();
+  const formattedDate = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
+  const todayLabel = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+  return <>{todayLabel}</>;
+}
+
 export default function HojePage() {
   return (
     <div className="space-y-8">
       <header>
         <p className="text-sm text-muted-foreground">
-          Sábado, 10 de outubro
+          <Suspense fallback={<span aria-hidden="true">&nbsp;</span>}>
+            <TodayDate />
+          </Suspense>
         </p>
 
-        <h1
-  className="mt-1 text-3xl font-bold"
-  style={{ color: "var(--text-primary)" }}
->
-          Hoje
-        </h1>
       </header>
 
       <NowCard />
@@ -76,20 +91,14 @@ export default function HojePage() {
               "Arrumar cama",
               "Escovar os dentes",
               "Fio dental",
-            ].map((item) => (
-              <label
-                key={item}
-                className="flex cursor-pointer items-center gap-3"
-              >
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-input accent-primary"
-                />
+            ].map((item, index) => (
+              <div key={item} className="flex items-center gap-3">
+                <Checkbox id={`today-checklist-${index}`} />
 
-                <span className="text-sm text-foreground">
+                <Label htmlFor={`today-checklist-${index}`} className="cursor-pointer text-sm font-normal text-foreground">
                   {item}
-                </span>
-              </label>
+                </Label>
+              </div>
             ))}
           </div>
         </div>
@@ -109,9 +118,10 @@ export default function HojePage() {
             </p>
           </div>
 
-          <button className="text-sm font-medium text-warning">
+          {/* Placeholder: visualização de pendências ainda não implementada. */}
+          <Button type="button" variant="ghost" size="sm" className="text-warning hover:text-warning">
             Ver
-          </button>
+          </Button>
         </div>
       </section>
     </div>
