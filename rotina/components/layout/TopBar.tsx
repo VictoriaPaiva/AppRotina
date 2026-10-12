@@ -1,5 +1,6 @@
 "use client";
 
+import { LogoutButton } from '@/components/logout-button';
 import { Search, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function TopBar() {
         </h1>
 
         <div className="flex shrink-0 items-center gap-2" role="group" aria-label="Ações globais">
+          <LogoutButton variant="ghost" size="icon" />
           {/* Placeholders: busca e configurações ainda não implementadas. */}
           <Button type="button" variant="ghost" size="icon" disabled aria-label="Buscar" title="Buscar">
             <Search aria-hidden="true" />

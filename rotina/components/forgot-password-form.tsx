@@ -1,6 +1,7 @@
 "use client";
+import { authErrorMessage } from '@/lib/auth/policy';
 
-import { cn } from "@/lib/utils";
+import { cn, hasEnvVars } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,19 +29,19 @@ export function ForgotPasswordForm({
     e: React.SubmitEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
     try {
+      const supabase = createClient();
       // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: `${window.location.origin}/auth/confirm?next=/auth/update-password`,
       });
       if (error) throw error;
       setSuccess(true);
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(authErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -51,51 +52,55 @@ export function ForgotPasswordForm({
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Check Your Email</CardTitle>
-            <CardDescription>Password reset instructions sent</CardDescription>
+            <CardTitle className="text-2xl">Confira seu e-mail</CardTitle>
+            <CardDescription>Enviamos as instruções para recuperar sua senha.</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              If you registered using your email and password, you will receive
-              a password reset email.
+              Se houver uma conta com este e-mail, você receberá um link para redefinir sua senha.
             </p>
           </CardContent>
         </Card>
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Reset Your Password</CardTitle>
+            <CardTitle className="text-2xl">Redefinir senha</CardTitle>
             <CardDescription>
-              Type in your email and we&apos;ll send you a link to reset your
-              password
+              Informe seu e-mail para receber um link de recuperação.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {!hasEnvVars && (
+              <p role="status" className="mb-4 text-sm text-muted-foreground">
+                A conexão de autenticação ainda não está disponível neste ambiente.
+              </p>
+            )}
             <form onSubmit={handleForgotPassword}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">E-mail</Label>
                   <Input
                     id="email"
+                    autoComplete="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="voce@exemplo.com"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send reset email"}
+                <Button type="submit" className="w-full" disabled={isLoading || !hasEnvVars}>
+                  {isLoading ? "Enviando…" : "Enviar link de recuperação"}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
-                Already have an account?{" "}
+                Já tem uma conta?{" "}
                 <Link
                   href="/auth/login"
                   className="underline underline-offset-4"
                 >
-                  Login
+                  Entrar
                 </Link>
               </div>
             </form>

@@ -305,7 +305,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 - Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
 - Busca e Configurações globais e ações fictícias da tela Hoje ainda são preparatórias. Busca/filtros do Banco Mestre e botão + para Item da rotina já funcionam localmente.
-- Autenticação herdada do starter Supabase ainda será validada quando entrar no escopo.
+- Autenticação do starter adaptada ao Rotina; falta validar login, confirmação, recuperação, refresh e isolamento entre contas no Supabase real. Veja [V0.2.3B.2B.1](rotina/doc/V0.2.3B.2B.1-auth-smoke.md).
 - Gerar Database types oficialmente quando a stack Supabase/Docker estiver disponível; os tipos B.2A são provisórios e conferidos contra o catálogo PostgreSQL.
 - Validar PostgREST/GoTrue e concorrência entre sessões na stack completa. `.env.*` já está protegido, com exceção de `.env.example`.
 
@@ -313,9 +313,9 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Último marco funcional:** V0.2.2D aprovada, concluindo a V0.2.2 com cinco tipos de Item da Rotina.
 
-**Ponto atual:** revisar o hardening B.2A.1; UI permanece local, com mocks.
+**Ponto atual:** preparação V0.2.3B.2B.1 de autenticação e smoke implementada; validação no Supabase real pendente. UI do Banco Mestre permanece local, com mocks.
 
-**Próxima ação após aprovação:** V0.2.3B.2B — validar tipos/stack local e definir integração UI/repository conforme escopo aprovado.
+**Próxima ação:** configurar e autorizar um projeto Supabase de desenvolvimento e executar o [roteiro de autenticação e smoke](rotina/doc/V0.2.3B.2B.1-auth-smoke.md). Não houve conexão ou alteração remota nesta etapa.
 
 ---
 
