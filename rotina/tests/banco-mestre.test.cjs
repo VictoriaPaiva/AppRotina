@@ -103,3 +103,14 @@ test('estado local substitui relações atomicamente; filtros combinam tipo/busc
   assert.equal(view.filterActivities(next.activities, { search: 'ACADEMIA', areaId: 'all', type: 'fixedActivity', importance: 'all', status: 'all' }).length, 1);
   const inactive = editor.createDraft(initial); inactive.status = 'inactive'; assert.equal(build(inactive, initial.activity).bundle.activity.status, 'inactive');
 });
+
+test('minutos inteiros em duração/planejamento/metas; quantity continua decimal', () => {
+  for (const minutes of ['0.5','1,5','59.5']) {
+    assert(!build({...draft(),durationMode:'fixed',hours:'0',minutes}).ok);
+    for (const field of ['preparationMinutes','outboundMinutes','returnMinutes']) assert(!build({...draft(),[field]:minutes}).ok);
+    const g = {id:'g',enabled:true,metric:'duration',unit:'minute',minimumHours:'0',minimum:minutes,idealHours:'',ideal:'',period:'week',startsOn:'2026-10-11',endsOn:''};
+    assert(!build({...draft(),goals:[g]}).ok);
+    assert(build({...draft(),goals:[{...g,metric:'quantity',unit:'km',minimum:'1.5'}]}).ok);
+  }
+  assert(!build({...draft(),durationMode:'fixed',hours:'35791394',minutes:'8'}).ok);
+});

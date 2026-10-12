@@ -6,7 +6,7 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**Etapa atual:** V0.2.3A — especificação do modelo relacional para revisão
+**Etapa atual:** V0.2.3B.1 — schema, integridade, RLS e testes locais
 
 **Marco concluído:** V0.2.2 — interface local do Banco Mestre e fluxo de Item da Rotina, consolidada na V0.2.2D e aprovada após teste manual.
 
@@ -63,14 +63,14 @@ Metas e recorrências permanecem separadas: uma meta 3x/semana não cria dias ou
 
 ## Etapa atual e próxima etapa
 
-**V0.2.3A — especificação, sem implementação de banco.**
+**V0.2.3B.1 — banco implementado em migrations, sem integração da interface.**
 
-O documento [Modelo relacional V0.2.3A](rotina/doc/V0.2.3A-modelo-relacional.md) descreve tabelas, colunas, PKs/FKs, integridade por tipo, ownership, RLS, datas, índices, mapeamento TypeScript e fronteiras futuras de Occurrence/ProgressLog. É uma proposta para aprovação; não descreve tabelas já criadas.
+O documento [Modelo relacional V0.2.3A](rotina/doc/V0.2.3A-modelo-relacional.md) descreve tabelas, colunas, PKs/FKs, integridade por tipo, ownership, RLS, datas, índices, mapeamento TypeScript e fronteiras futuras de Occurrence/ProgressLog. A ressalva aprovada exige minutos inteiros. As nove tabelas agora estão implementadas em migrations locais; detalhes em [Banco local B.1](rotina/doc/V0.2.3B.1-banco-local.md).
 
 Sequência:
 
-1. Revisar e aprovar o modelo da V0.2.3A.
-2. **V0.2.3B:** criar migrations do cadastro mestre, constraints, RLS e testes locais conforme o modelo aprovado. Nenhuma migration foi criada ou aplicada nesta etapa.
+1. Revisar o schema e os resultados locais da V0.2.3B.1.
+2. **V0.2.3B.2, após aprovação:** gerar tipos Database e preparar a integração transacional sem antecipar motores de agenda/progresso. Mocks/provider continuam sendo a fonte da interface.
 3. **V0.2.4:** primeiro ciclo de persistência, formulário → Supabase → PostgreSQL → leitura, em etapa posterior autorizada.
 4. Planejamento, Calendário, Occurrence e registros de progresso terão etapas próprias; não entram implicitamente na primeira migration.
 
@@ -310,9 +310,9 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Último marco funcional:** V0.2.2D aprovada, concluindo a V0.2.2 com cinco tipos de Item da Rotina.
 
-**Ponto atual:** revisar a especificação V0.2.3A.
+**Ponto atual:** validar a V0.2.3B.1; consultar o guia de banco local.
 
-**Próxima ação após aprovação:** V0.2.3B — migrations e validação local do modelo relacional, sem antecipar calendário, planejamento ou progresso.
+**Próxima ação após aprovação:** V0.2.3B.2 — integração de persistência conforme escopo aprovado, sem antecipar calendário, planejamento ou progresso.
 
 ---
 

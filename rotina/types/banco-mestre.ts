@@ -1,3 +1,5 @@
+// Contrato V0.2.3B.1: duração/preparação/deslocamento e metas duration usam minutos inteiros.
+// Metas quantity preservam valores decimais; o editor e o banco validam os limites.
 /** Datas civis YYYY-MM-DD e horários locais HH:mm; não são instantes UTC. */
 export type LocalDate = string;
 export type LocalTime = string;

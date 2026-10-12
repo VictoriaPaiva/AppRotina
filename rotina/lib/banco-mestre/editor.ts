@@ -68,9 +68,9 @@ export function buildBundle(draft: ActivityDraft, areas: readonly Area[], id: st
   const totalMinutes = (hours: string, minutes: string, hoursKey: string, minutesKey: string) => {
     const h = Number(hours.trim()), m = Number(minutes.trim().replace(',', '.'));
     if (!hours.trim() || !Number.isSafeInteger(h) || h < 0) errors[hoursKey] = 'Informe horas inteiras iguais ou maiores que zero.';
-    if (!minutes.trim() || !Number.isFinite(m) || m < 0 || m > 59) errors[minutesKey] = 'Informe minutos entre 0 e 59.';
+    if (!minutes.trim() || !Number.isInteger(m) || m < 0 || m > 59) errors[minutesKey] = 'Informe minutos inteiros entre 0 e 59.';
     const total = h * 60 + m;
-    if (!Number.isFinite(total) || total <= 0 || total > Number.MAX_SAFE_INTEGER) errors[minutesKey] = 'A duração total deve ser maior que zero e ter um valor válido.';
+    if (!Number.isFinite(total) || total <= 0 || total > 2147483647) errors[minutesKey] = 'A duração total deve ser maior que zero e ter um valor válido.';
     return total;
   };
   const validTime = (value: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
