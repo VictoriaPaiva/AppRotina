@@ -52,9 +52,9 @@ function proxyHarness({configured=true,sub=null,error=null,throws=false,refresh=
       if(throws) throw Error('unavailable');return {data:{claims:{sub}},error};
     }}};}}
   };
-  return async(route)=>{
+  return async(route,{method='GET',headers={}}={})=>{
     const url=new URL('http://localhost:3000'+route);url.clone=()=>new URL(url);
-    return withStubs('lib/supabase/proxy.ts',stubs).updateSession({nextUrl:url,cookies:{getAll:()=>[],set(){}}});
+    return withStubs('lib/supabase/proxy.ts',stubs).updateSession({method,headers:new Headers(headers),nextUrl:url,cookies:{getAll:()=>[],set(){}}});
   };
 }
 test('proxy falha fechado sem configuração, sessão expirada ou falha de autenticação',async()=>{
@@ -71,6 +71,23 @@ test('redirect de sessão expirada preserva cookies e headers de renovação',as
   assert.equal(response.cookies.getAll()[0].httpOnly,true);
   assert.equal(response.headers.get('expires'),'0');assert.equal(response.headers.get('pragma'),'no-cache');
   assert.equal(response.headers.get('cache-control'),'private, no-store');
+});
+
+test('only POST editor Server Actions defer session denial to the authenticated action',async()=>{
+  const edit='/banco-mestre/11111111-1111-4111-8111-111111111111/editar';
+  for(const settings of [{},{error:{code:'expired'}},{throws:true}]) {
+    const proxy=proxyHarness(settings);
+    for(const route of [edit,'/banco-mestre/nova']) {
+      const response=await proxy(route,{method:'POST',headers:{'Next-Action':'test-action'}});
+      assert.equal(response.location,undefined);assert.equal(response.headers.get('cache-control'),'private, no-store');
+      for(const options of [{},{method:'POST'},{method:'GET',headers:{'Next-Action':'test-action'}},{method:'POST',headers:{'Next-Action':' '}}]) {
+        assert.equal((await proxy(route,options)).location,'http://localhost:3000/auth/login');
+      }
+    }
+    for(const route of ['/hoje','/banco-mestre','/banco-mestre/11111111-1111-4111-8111-111111111111']) {
+      assert.equal((await proxy(route,{method:'POST',headers:{'Next-Action':'spoofed'}})).location,'http://localhost:3000/auth/login');
+    }
+  }
 });
 test('confirmação aceita PKCE e OTP, força recuperação interna e não repassa erro/token',async()=>{
   for(const [query,expected,method] of [

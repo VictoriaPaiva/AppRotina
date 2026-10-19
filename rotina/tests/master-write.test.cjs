@@ -155,3 +155,30 @@ test('edit success uses original revision and redirects to the repository result
     assert(!/localStorage|useBancoMestre/.test(source));
   }
 });
+
+test('logout in another tab: editor POST passes proxy, action denies write and form retains draft with login',async()=>{
+  const bundle=fixture('academia');let session=true;let action;
+  const policy=load('lib/auth/policy.ts');
+  const response=()=>({headers:new Headers(),cookies:{getAll:()=>[],set(){}}});
+  const {updateSession}=withStubs('lib/supabase/proxy.ts',{
+    'next/server':{NextResponse:{next:response,redirect:()=>({...response(),redirected:true})}},
+    './configuration':{getSupabasePublicConfig:()=>({url:'https://example.com',key:'test-only'})},
+    '@/lib/auth/policy':policy,
+    '@supabase/ssr':{createServerClient:()=>({auth:{getClaims:async()=>({data:{claims:{sub:session?owner:null}},error:null})}})},
+  });
+  const request=method=>{const url=new URL('http://localhost:3000/banco-mestre/'+bundle.activity.id+'/editar');url.clone=()=>new URL(url);return {method,nextUrl:url,headers:new Headers({'Next-Action':'test-action'}),cookies:{getAll:()=>[],set(){}}};};
+  assert(!((await updateSession(request('GET'))).redirected));
+  const h=formHarness({initial:bundle,expectedRevision:7,areas:[{id:bundle.activity.areaId,name:'Real area',active:true}]},async input=>{
+    const gate=await updateSession(request('POST'));
+    assert(!gate.redirected,'redirect would turn the Server Action result into a transport failure');
+    action=actionHarness({sub:session?owner:null});return action.saveMasterActivity(input);
+  });
+  let tree=h.render();h.field(tree,'name').props.onChange({target:{value:'Unsaved after logout'}});
+  session=false; // Normal logout removes the session shared by both tabs.
+  assert((await updateSession(request('GET'))).redirected);
+  tree=h.render();await tree.props.onSubmit(h.event);tree=h.render();
+  assert.equal(h.field(tree,'name').props.value,'Unsaved after logout');
+  assert(h.text(tree).includes('Entrar novamente'));assert(h.nodes(tree,n=>n.props?.href==='/auth/login').length);
+  assert(!h.text(tree).includes('Não foi possível concluir a operação'));
+  assert.deepEqual(action.calls,['auth']);assert.deepEqual(action.invalidated,[]);assert.deepEqual(h.navigations,[]);
+});

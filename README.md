@@ -319,7 +319,9 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **UX atual:** Novo/Editar habilitados, áreas e snapshots reais. Envio com loading e trava contra duplo submit; navegação somente após confirmação do banco. Conflito mantém o rascunho e exige recarga explícita, sem sobrescrita automática. Provider restrito a `/banco-mestre`, sem escrita local; leitura preservada.
 
-**Verificação B.2B.2B:** 67 testes unitários, 54 testes SQL, lint, TypeScript, build e diff-check passaram. Nova escrita pela UI ainda pendente de validação no navegador real; roteiro em [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
+**Verificação B.2B.2B:** 69 testes unitários, 54 testes SQL, lint, TypeScript, build e diff-check passaram. Nova escrita pela UI ainda pendente de validação no navegador real; roteiro em [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
+
+**Correção de sessão expirada:** POSTs de Server Actions nas rotas do editor chegam à verificação de sessão da action e retornam Unauthorized, preservando o rascunho e oferecendo “Entrar novamente”. GET sem sessão continua redirecionando para login. Repetir no navegador o logout em outra aba antes de salvar; regressão automatizada incluída.
 
 **Verificação histórica B.2B.2A:** 57 testes unitários, 50 testes SQL, lint, TypeScript, build e diff-check passaram; os cinco cenários de navegador relatados pela usuária estão concluídos. Resultados e roteiro da escrita ficam na documentação B.2B.2B.
 
