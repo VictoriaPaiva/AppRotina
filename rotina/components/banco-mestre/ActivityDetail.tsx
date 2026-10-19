@@ -18,8 +18,7 @@ export function ActivityRouteView({result}:{result:DetailReadResult}) {
   const {activity,goals,rules,windows}=result.item.bundle;
   const context = activity.type === 'commitment' || activity.type === 'fixedActivity' || activity.type === 'variableActivity' ? activity.config : undefined;
   return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="min-w-0 break-words text-xl font-semibold">{activity.name}</h2><div className="flex flex-wrap gap-2"><Button disabled>Editar item</Button><Button asChild variant="outline"><Link href="/banco-mestre">Voltar à lista</Link></Button></div></div>
-    <p className="text-sm text-muted-foreground">Somente leitura.</p>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="min-w-0 break-words text-xl font-semibold">{activity.name}</h2><div className="flex flex-wrap gap-2"><Button asChild><Link href={'/banco-mestre/'+activity.id+'/editar'}>Editar item</Link></Button><Button asChild variant="outline"><Link href="/banco-mestre">Voltar à lista</Link></Button></div></div>
     {section('Geral', <><dl className="grid gap-4 sm:grid-cols-2">{[
       ['Área', result.areas.find(area => area.id === activity.areaId)?.name || 'Área não definida'], ['Tipo', activityTypeLabels[activity.type]], ['Importância', importanceLabels[activity.defaultImportance]], ['Status', statusLabels[activity.status]],
     ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-sm font-medium">{label}</dt><dd className="mt-1 break-words text-sm text-muted-foreground">{value}</dd></div>)}</dl><p className="text-sm text-muted-foreground">{itemTypeDescriptions[activity.type]}</p>{activity.description && <p className="whitespace-pre-wrap break-words text-sm">{activity.description}</p>}</>)}

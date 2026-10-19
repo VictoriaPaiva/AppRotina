@@ -1,23 +1,13 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- Node tests, no remote configuration. */
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const fs=require('node:fs');
-const ts=require('typescript');
+const {withStubs}=require('./helpers/load-with-stubs.cjs');
 const React=require('react');
 const {renderToStaticMarkup}=require('react-dom/server');
 const {load}=require('./helpers/load-typescript.cjs');
 const {fixture}=require('./helpers/data-fixtures.cjs');
 const {readBancoMestreList,readBancoMestreActivity}=load('lib/banco-mestre/data/read-model.ts');
 const {PersistenceError}=load('lib/banco-mestre/data/errors.ts');
-function withStubs(file,stubs) {
-  const source=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-  const mod={exports:{}};
-  new Function('exports','require','module',source)(mod.exports,name=>{
-    if(name==='react'||name==='react/jsx-runtime')return require(name);
-    assert(name in stubs,'Missing stub: '+name);return stubs[name];
-  },mod);
-  return mod.exports;
-}
 test('server reader exposes only the three existing reads and uses a fresh session client',async()=>{
   let instances=0;
   const repo={listAreas:async()=>[],listActivities:async()=>[],getActivity:async()=>null,saveActivity(){throw Error('write');}};
@@ -72,7 +62,7 @@ const renderList=(activities=[],areas=[],error)=>renderToStaticMarkup(React.crea
 test('existing list renders real summary without config, genuine empty and safe errors',()=>{
   const b=fixture('trabalho');const {config:ignored,...activity}=b.activity;void ignored;
   const html=renderList([activity],[{id:activity.areaId,name:'Remote area',active:true}]);
-  assert(html.includes(activity.name));assert(html.includes('Remote area'));assert(html.includes('/banco-mestre/'+activity.id));assert(html.includes('disabled'));assert(!html.includes('Dados locais'));
+  assert(html.includes(activity.name));assert(html.includes('Remote area'));assert(html.includes('/banco-mestre/'+activity.id));assert(html.includes('/banco-mestre/nova'));assert(!html.includes('Dados locais'));
   assert(renderList().includes('Seu Banco Mestre está vazio'));
   const failed=renderList([],[],{status:'error',kind:'Unauthorized',message:'Entre na sua conta.'});assert(failed.includes('/auth/login'));assert(!failed.includes('está vazio'));
   const network=renderList([],[],{status:'error',kind:'Unknown',message:'Não foi possível concluir a operação.'});assert(network.includes('role="alert"'));assert(network.includes('Tentar novamente'));assert(!network.includes('está vazio'));
@@ -130,7 +120,7 @@ test('existing detail renders all five types with full aggregate, and safe unava
     }
     bundle.goals=bundle.goals.map(g=>({...g,minimumTarget:987,idealTarget:undefined}));
     const html=renderToStaticMarkup(React.createElement(ActivityRouteView,{result:{status:'ready',areas:[],item:{bundle,revision:1}}}));
-    assert(html.includes(bundle.activity.name));assert(html.includes('Somente leitura'));assert(!html.includes('/editar'));assert(html.includes('disabled'));
+    assert(html.includes(bundle.activity.name));assert(html.includes('/banco-mestre/'+bundle.activity.id+'/editar'));assert(!html.includes('Somente leitura'));
     if(bundle.activity.type==='reminder') {assert(html.includes('11/03/2027'));if(bundle.rules.length)assert(html.includes('24 meses'));}
     if(bundle.activity.type==='commitment') assert(html.includes('12:17'));
     if(bundle.activity.type==='fixedActivity') assert(html.includes('07:13'));
@@ -140,13 +130,17 @@ test('existing detail renders all five types with full aggregate, and safe unava
   const html=renderToStaticMarkup(React.createElement(ActivityRouteView,{result:{status:'error',kind:'NotFound',message:'Este item não está disponível.'}}));
   assert(html.includes('Item não encontrado'));assert(!html.includes('demonstração'));
 });
-test('existing form blocks create/edit, and provider rejects local save without mutation',()=>{
+test('existing form uses supplied areas, no seed, and provider has no local save',()=>{
   const {ActivityForm}=withStubs('components/banco-mestre/ActivityForm.tsx',{
     ...uiStubs,'next/link':{default:Link},'next/navigation':{useRouter:()=>({push(){throw Error('unexpected navigation');}})},
-    './BancoMestreProvider':provider,'@/lib/banco-mestre/editor':load('lib/banco-mestre/editor.ts'),'@/lib/banco-mestre/presentation':presentation,
+    '@/app/banco-mestre/actions':{saveMasterActivity(){throw Error('unexpected write during render');}},
+    '@/lib/banco-mestre/data/errors':load('lib/banco-mestre/data/errors.ts'),
+    '@/lib/banco-mestre/editor':load('lib/banco-mestre/editor.ts'),'@/lib/banco-mestre/presentation':presentation,
   });
-  const html=renderToStaticMarkup(React.createElement(BancoMestreLayout,null,React.createElement(ActivityForm)));
-  assert(html.includes('modo de leitura'));assert(!html.includes('<form'));assert(!html.includes('Salvar item'));
-  function Probe(){const ctx=provider.useBancoMestre();assert.throws(()=>ctx.save(fixture('academia')),/somente para leitura/);assert.deepEqual(ctx.activities,[]);return null;}
+  const html=renderToStaticMarkup(React.createElement(BancoMestreLayout,null,React.createElement(ActivityForm,{areas:[]})));
+  assert(html.includes('Nenhuma área disponível'));assert(!html.includes('<form'));
+  const form=renderToStaticMarkup(React.createElement(ActivityForm,{areas:[{id:crypto.randomUUID(),name:'Only real area',active:true}]}));
+  assert(form.includes('<form'));assert(form.includes('Only real area'));assert(form.includes('Salvar item'));
+  function Probe(){const ctx=provider.useBancoMestre();assert.equal(ctx.save,undefined);assert.deepEqual(ctx.activities,[]);return null;}
   renderToStaticMarkup(React.createElement(provider.BancoMestreProvider,null,React.createElement(Probe)));
 });

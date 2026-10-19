@@ -43,7 +43,9 @@ export function pgliteClient(db,tables) {
         assert(['get_activity_aggregate','save_activity_aggregate'].includes(name));
         const result=name==='get_activity_aggregate'
           ? await db.query('select public.get_activity_aggregate($1::uuid) result',[args.p_activity_id])
-          : await db.query('select public.save_activity_aggregate($1::jsonb,$2::jsonb,$3::integer) result',[JSON.stringify(args.p_activity),JSON.stringify(args.p_relations),args.p_expected_revision]);
+          : Object.hasOwn(args,'p_expected_revision')
+            ? await db.query('select public.save_activity_aggregate($1::jsonb,$2::jsonb,$3::integer) result',[JSON.stringify(args.p_activity),JSON.stringify(args.p_relations),args.p_expected_revision])
+            : await db.query('select public.save_activity_aggregate($1::jsonb,$2::jsonb) result',[JSON.stringify(args.p_activity),JSON.stringify(args.p_relations)]);
         return {data:result.rows[0].result,error:null};
       } catch(error) {return {data:null,error};}
     },

@@ -8,10 +8,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useBancoMestre } from './BancoMestreProvider';
+import { saveMasterActivity } from '@/app/banco-mestre/actions';
+import type { SaveActivityResult } from '@/lib/banco-mestre/data/write-model';
+import type { ReadFailure } from '@/lib/banco-mestre/data/read-model';
+import { toPersistenceError } from '@/lib/banco-mestre/data/errors';
 import { buildBundle, createDraft, changeItemType, hasSpecificData, type ActivityBundle, type ActivityDraft, type FieldErrors, type GoalDraft, type RuleDraft, type WindowDraft, type ScheduleDraft } from '@/lib/banco-mestre/editor';
 import { activityTypeLabels, itemTypeDescriptions, importanceLabels, statusLabels } from '@/lib/banco-mestre/presentation';
-import type { Weekday, MonthOrdinal } from '@/types/banco-mestre';
+import type { Weekday, MonthOrdinal, Area } from '@/types/banco-mestre';
 
 const weekdays: Record<Weekday, string> = { monday: 'Segunda', tuesday: 'Terça', wednesday: 'Quarta', thursday: 'Quinta', friday: 'Sexta', saturday: 'Sábado', sunday: 'Domingo' };
 const ruleLabels = { annual: 'Anual', interval: 'A cada dias, semanas ou meses', weekdays: 'Dias da semana', monthDay: 'Dia do mês', monthWeekday: 'Dia e posição no mês', completion: 'Após a última realização' };
@@ -19,14 +22,19 @@ const policyLabels = { lastValidDay: 'Usar último dia válido', skip: 'Pular aq
 const durationLabels = { unknown: 'Desconhecida', fixed: 'Fixa', minimumIdeal: 'Mínima + ideal' };
 function today() { return new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(new Date()); }
 
-export function ActivityForm({ initial }: { initial?: ActivityBundle }) {
-  const master = useBancoMestre();
+export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:ActivityBundle;expectedRevision?:number;areas:Area[];failure?:ReadFailure}) {
   const router = useRouter();
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
   const [draft, setDraft] = useState<ActivityDraft>(() => createDraft(initial));
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [saving,setSaving]=useState(false);
+  const [saveError,setSaveError]=useState<Extract<SaveActivityResult,{ok:false}>|null>(null);
+  const [saved,setSaved]=useState<Extract<SaveActivityResult,{ok:true}>|null>(null);
+  const inFlight=useRef(false);
+  const completed=useRef(false);
+  const activityId=useRef<string|null>(initial?.activity.id??null);
   const change = <K extends keyof ActivityDraft>(key: K, value: ActivityDraft[K]) => setDraft(current => ({ ...current, [key]: value }));
   const patchGoal = (index: number, patch: Partial<GoalDraft>) => setDraft(current => ({ ...current, goals: current.goals.map((row, i) => i === index ? { ...row, ...patch } : row) }));
   const patchRule = (index: number, patch: Partial<RuleDraft>) => setDraft(current => ({ ...current, rules: current.rules.map((row, i) => i === index ? { ...row, ...patch } : row) }));
@@ -52,10 +60,11 @@ export function ActivityForm({ initial }: { initial?: ActivityBundle }) {
     if (hasSpecificData(draft) && !window.confirm('Trocar o tipo limpará metas, repetição, horários, local e tempos de preparação/transporte deste formulário. Nome, descrição, área, importância, duração e status serão preservados. Continuar?')) return;
     setDraft(changeItemType(draft, type)); setErrors({}); setSubmitted(false);
   }
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
-    if(master.readOnly) return;
-    const result = buildBundle(draft, master.areas, initial?.activity.id ?? crypto.randomUUID(), new Date().toISOString(), initial?.activity);
+    if(inFlight.current || completed.current || saveError?.kind==='Conflict') return;
+    if(activityId.current===null) activityId.current=crypto.randomUUID();
+    const result = buildBundle(draft, areas, activityId.current, new Date().toISOString(), initial?.activity);
     if (!result.ok) {
       setErrors(result.errors); setSubmitted(true);
       requestAnimationFrame(() => {
@@ -65,22 +74,38 @@ export function ActivityForm({ initial }: { initial?: ActivityBundle }) {
       });
       return;
     }
-    master.save(result.bundle); if (!initial) setDraft(createDraft()); setErrors({}); setSubmitted(false);
-    router.push('/banco-mestre/' + result.bundle.activity.id);
+    inFlight.current=true;setSaving(true);setSaveError(null);setErrors({});setSubmitted(false);
+    try {
+      const response=await saveMasterActivity(initial?{mode:'edit',bundle:result.bundle,expectedRevision}:{mode:'create',bundle:result.bundle});
+      if(!response.ok) {setSaveError(response);return;}
+      completed.current=true;setSaved(response);
+      // Navigate using the authoritative result, never an optimistic local item.
+      router.replace('/banco-mestre/'+response.activityId);
+    } catch(error) {
+      if(!completed.current) {
+        const mapped=toPersistenceError(error);
+        setSaveError({ok:false,kind:mapped.kind,message:mapped.message});
+      }
+    } finally {inFlight.current=false;setSaving(false);}
   }
   const agenda = ['commitment', 'fixedActivity', 'variableActivity'].includes(draft.type);
   const metas = draft.type === 'variableActivity' || draft.type === 'checklistGoal';
   const repetition = draft.type === 'reminder' || draft.type === 'commitment';
 
-  if(master.readOnly) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-xl font-semibold">Banco Mestre em modo de leitura</h2><p className="text-sm text-muted-foreground">Criação e edição de itens ainda não estão disponíveis.</p><Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button></CardContent></Card>;
+  if(failure) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-xl font-semibold">Não foi possível carregar o formulário</h2><p role="alert">{failure.message}</p>{failure.kind==='Unauthorized'?<Button asChild><Link href="/auth/login">Entrar</Link></Button>:<Button type="button" variant="outline" onClick={()=>router.refresh()}>Tentar novamente</Button>}</CardContent></Card>;
+  if(saved) return <Card><CardContent className="space-y-3 p-5"><p role="status">Item salvo.</p><Button asChild><Link href={'/banco-mestre/'+saved.activityId}>Ver item salvo</Link></Button></CardContent></Card>;
+  if(!areas.some(area=>area.active || initial?.activity.areaId===area.id)) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-xl font-semibold">Nenhuma área disponível</h2><p>É necessário ter uma área ativa para cadastrar um item. Nenhuma área será criada automaticamente.</p><Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button></CardContent></Card>;
 
-  return <form ref={formRef} onSubmit={submit} noValidate className="space-y-5">
-    <div className="space-y-2"><h2 className="text-xl font-semibold">{initial ? 'Editar item da rotina' : 'Novo item da rotina'}</h2><p className="text-sm text-muted-foreground">Criação e edição estão indisponíveis durante o modo de leitura.</p></div>
+  return <form ref={formRef} onSubmit={submit} noValidate aria-busy={saving} className="space-y-5">
+    {saving && <p role="status" aria-live="polite">Salvando item…</p>}
+    {saveError && <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm"><p>{saveError.message}</p>{saveError.kind==='Conflict' ? <><p>Suas alterações foram mantidas neste formulário. Confira a versão salva antes de continuar; recarregar descartará este rascunho.</p><Button type="button" variant="outline" onClick={()=>{if(window.confirm('Recarregar a versão salva e descartar as alterações deste formulário?'))window.location.reload();}}>Recarregar versão salva</Button><Button asChild variant="outline"><Link href={'/banco-mestre/'+activityId.current}>Verificar item salvo</Link></Button></> : saveError.kind==='Unauthorized'?<Button asChild variant="outline"><Link href="/auth/login">Entrar novamente</Link></Button> : saveError.kind==='Unknown'?<p>Antes de tentar novamente, confira o Banco Mestre caso a conexão tenha sido interrompida durante o salvamento.</p>:null}</div>}
+    <fieldset disabled={saving} className="min-w-0 space-y-5">
+    <div className="space-y-2"><h2 className="text-xl font-semibold">{initial ? 'Editar item da rotina' : 'Novo item da rotina'}</h2><p className="text-sm text-muted-foreground">As alterações serão salvas na sua conta ao confirmar.</p></div>
     {submitted && Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Revise os campos indicados antes de salvar.</p>}
     {section('Sobre o item', <>
       {field('name', 'Nome', draft.name, v => change('name', v))}
       {field('description', 'Descrição (opcional)', draft.description, v => change('description', v), undefined, 'textarea')}
-      {field('areaId', 'Área', draft.areaId, v => change('areaId', v), { '': 'Selecione uma área', ...Object.fromEntries(master.areas.filter(area => area.active || area.id === draft.areaId).map(area => [area.id, area.name])) })}
+      {field('areaId', 'Área', draft.areaId, v => change('areaId', v), { '': 'Selecione uma área', ...Object.fromEntries(areas.filter(area => area.active || area.id === initial?.activity.areaId).map(area => [area.id, area.name])) })}
       {field('type', 'Tipo', draft.type, switchType, activityTypeLabels)}
       <p className="text-sm text-muted-foreground">{itemTypeDescriptions[draft.type]}</p>
       {field('importance', 'Importância', draft.importance, v => change('importance', v as ActivityDraft['importance']), importanceLabels)}
@@ -132,6 +157,7 @@ export function ActivityForm({ initial }: { initial?: ActivityBundle }) {
       <div className="grid gap-4 sm:grid-cols-2">{timeFields('Preparação (opcional)', 'preparationHours', 'preparationMinutes', draft.preparationHours, draft.preparationMinutes, v => change('preparationHours', v), v => change('preparationMinutes', v))}{timeFields('Ida (opcional)', 'outboundHours', 'outboundMinutes', draft.outboundHours, draft.outboundMinutes, v => change('outboundHours', v), v => change('outboundMinutes', v))}{timeFields('Volta (opcional)', 'returnHours', 'returnMinutes', draft.returnHours, draft.returnMinutes, v => change('returnHours', v), v => change('returnMinutes', v))}</div>
     </>)}
     {repetition && section('Itens relacionados', <p className="text-sm text-muted-foreground">{draft.type === 'reminder' ? 'Adicionar ação relacionada — em breve' : 'Adicionar lembrete/tarefa relacionada — em breve'}</p>)}
-    <div className="flex flex-wrap gap-3"><Button type="submit">Salvar item</Button><Button type="button" variant="outline" onClick={() => { setDraft(createDraft(initial)); setErrors({}); setSubmitted(false); router.push(initial ? '/banco-mestre/' + initial.activity.id : '/banco-mestre'); }}>Cancelar</Button></div>
+    <div className="flex flex-wrap gap-3"><Button type="submit" disabled={saving || saveError?.kind==='Conflict'}>{saving?'Salvando…':'Salvar item'}</Button><Button type="button" variant="outline" onClick={() => { router.push(initial ? '/banco-mestre/' + initial.activity.id : '/banco-mestre'); }}>Cancelar</Button></div>
+    </fieldset>
   </form>;
 }

@@ -2,7 +2,7 @@ export type PersistenceErrorKind = 'Unauthorized' | 'NotFound' | 'Conflict' | 'V
 const messages: Record<PersistenceErrorKind, string> = {
   Unauthorized: 'Entre na sua conta para continuar.',
   NotFound: 'Este item não está disponível.',
-  Conflict: 'Este item foi alterado. Atualize os dados antes de salvar novamente.',
+  Conflict: 'Este item foi alterado em outra sessão. Recarregue os dados mais recentes antes de salvar novamente.',
   Validation: 'Revise os dados do item antes de continuar.',
   Unknown: 'Não foi possível concluir a operação. Tente novamente.',
 };
