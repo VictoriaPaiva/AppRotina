@@ -239,5 +239,5 @@ export function aggregateToRpc(bundle: ActivityBundle, expectedRevision?: number
   aggregateFromDatabase({activity:{...p_activity,user_id:owner,revision:revision ?? 1,created_at:a.createdAt,updated_at:a.updatedAt},
     reminder_config:child(p_relations.reminder_config),commitment_config:child(p_relations.commitment_config),planning_context:child(p_relations.planning_context),
     fixed_schedules:p_relations.fixed_schedules.map(child),goals:p_relations.goals.map(child),recurrence_rules:p_relations.recurrence_rules.map(child),time_windows:p_relations.time_windows.map(child)});
-  return {p_activity:json(p_activity,'p_activity'),p_relations:json(p_relations,'p_relations'),p_expected_revision:revision};
+  return {p_activity:json(p_activity,'p_activity'),p_relations:json(p_relations,'p_relations'),...(revision === null ? {} : {p_expected_revision:revision})};
 }

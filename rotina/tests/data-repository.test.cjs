@@ -43,7 +43,7 @@ test('save usa uma única RPC com snapshot completo e expectedRevision explícit
   assert.deepEqual(await repo.saveActivity(b,7),{bundle:b,revision:10});
   assert.equal(calls.length,1);assert.equal(calls[0][1],'save_activity_aggregate');
   assert.equal(calls[0][2].p_expected_revision,7);assert.equal(calls[0][2].p_relations.goals[0].id,b.goals[0].id);
-  const created=fake({data}); await created.repo.saveActivity(b);assert.equal(created.calls[0][2].p_expected_revision,null);
+  const created=fake({data}); await created.repo.saveActivity(b);assert.equal(Object.hasOwn(created.calls[0][2],'p_expected_revision'),false);
 });
 test('SQLSTATE, auth e mapper errors viram mensagens seguras com cause técnico preservado',async()=>{
   const b=fixture('academia');

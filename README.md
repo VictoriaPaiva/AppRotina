@@ -6,7 +6,7 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**Etapa atual:** V0.2.3B.2B.1.2 — harness para concluir RLS real; UI em mocks
+**Etapa atual:** V0.2.3B.2B.1.3 — tipos oficiais adotados; B.2B.2 não iniciada; UI em mocks
 
 **Marco concluído:** V0.2.2 — interface local do Banco Mestre e fluxo de Item da Rotina, consolidada na V0.2.2D e aprovada após teste manual.
 
@@ -63,7 +63,7 @@ Metas e recorrências permanecem separadas: uma meta 3x/semana não cria dias ou
 
 ## Etapa atual e próxima etapa
 
-**V0.2.3B.2B.1.2 — Auth e smoke básicos confirmados remotamente; harness para concluir escrita cruzada e anon, sem integração da interface.**
+**V0.2.3B.2B.1.3 — validações remotas de persistência confirmadas pela usuária e tipos oficiais incorporados, sem integração da interface.**
 
 O documento [Modelo relacional V0.2.3A](rotina/doc/V0.2.3A-modelo-relacional.md) descreve tabelas, colunas, PKs/FKs, integridade por tipo, ownership, RLS, datas, índices, mapeamento TypeScript e fronteiras futuras de Occurrence/ProgressLog. A ressalva aprovada exige minutos inteiros. As nove tabelas agora estão implementadas em migrations locais; detalhes em [Banco local B.1](rotina/doc/V0.2.3B.1-banco-local.md).
 
@@ -72,7 +72,7 @@ Sequência:
 1. B.1 aprovada: nove tabelas, constraints, RLS e escrita agregada.
 2. **B.2A:** tipos Database provisórios derivados das migrations, DTOs/mappers, metadata revision, repository browser/server injetável, RPC segura de leitura e testes. Consulte [Camada de dados B.2A](rotina/doc/V0.2.3B.2A-camada-dados.md). Mocks/provider continuam sendo a fonte da interface.
 3. **B.2A.1:** migration incremental revoga grants genéricos e USAGE de routine_private; mantém get/save públicas invoker e apenas EXECUTE técnico dos três CHECK validators. Defaults por owner foram ajustados, com alcance global documentado. Consulte [Hardening no guia de banco](rotina/doc/V0.2.3B.1-banco-local.md).
-4. **B.2B.1.2 atual:** concluir RLS real com o harness de escrita cruzada e anon. Auth/sessão, seis migrations, PT409, POST e leitura cruzada já confirmados. B.2B.2 e tipos oficiais não foram iniciados nesta entrega; nenhuma conexão da UI foi feita.
+4. **B.2B.1.3 atual:** Auth/sessão, seis migrations, PT409, POST, leitura/escrita cruzada, integridade e anon confirmados remotamente pela usuária. Tipos oficiais adotados com aliases compatíveis; B.2B.2 não iniciada e nenhuma conexão da UI feita. Consulte a [comparação e decisão](rotina/doc/V0.2.3B.2B.1.3-database-types.md).
 5. **V0.2.4:** primeiro ciclo de persistência, formulário → Supabase → PostgreSQL → leitura, em etapa posterior autorizada.
 6. Planejamento, Calendário, Occurrence e registros de progresso terão etapas próprias; não entram implicitamente na primeira migration.
 
@@ -306,18 +306,20 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 - Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
 - Busca e Configurações globais e ações fictícias da tela Hoje ainda são preparatórias. Busca/filtros do Banco Mestre e botão + para Item da rotina já funcionam localmente.
 - Auth/sessão/refresh e leitura cruzada já confirmados no Supabase real; faltam os testes adicionais de escrita cruzada/anon e cenários de e-mail/recuperação não relatados. Veja [V0.2.3B.2B.1](rotina/doc/V0.2.3B.2B.1-auth-smoke.md).
-- Gerar Database types oficialmente quando a stack Supabase/Docker estiver disponível; os tipos B.2A são provisórios e conferidos contra o catálogo PostgreSQL.
+- Tipos oficiais do schema public gerados e adotados na B.2B.1.3, preservando aliases e validações de transporte. O teste de catálogo confere os contratos contra as migrations em PostgreSQL em memória.
 - Validar PostgREST/GoTrue e concorrência entre sessões na stack completa. `.env.*` já está protegido, com exceção de `.env.example`.
 
 ## Estado de retomada
 
-**V0.2.3B.2B.1.2:** Auth, sessão/refresh, rotas protegidas, seis migrations alinhadas e PT409 confirmados remotamente. POST smoke retornou 200 com readBack/conflict/inactive; leitura cruzada A/B passou nos dois sentidos. Harness de desenvolvimento `/api/dev/rls-smoke` preparado para concluir escrita cruzada, PostgREST direto e anon; esses novos cenários ainda não foram validados remotamente. Próxima ação: executar prepare A → attack B → verify A → anon e inverter A/B conforme o [roteiro](rotina/doc/V0.2.3B.2B.1-auth-smoke.md). Nenhuma migration ou db push nesta etapa; B.2B.2 não iniciada; UI, mocks e BancoMestreProvider intactos.
+**V0.2.3B.2B.1.3:** Auth/sessão, seis migrations, PT409, POST, RLS de leitura/escrita cruzada, UPDATE/INSERTs cruzados, verify e anon confirmados remotamente pela usuária. Tipos oficiais adotados em database.types.ts, com aliases compatíveis e revisão omitida na criação usando o default SQL. Sem divergência E identificada, segredo exposto, migration ou db push. B.2B.2 não iniciada; UI, mocks, Auth e BancoMestreProvider intactos.
 
 **Último marco funcional:** V0.2.2D aprovada, concluindo a V0.2.2 com cinco tipos de Item da Rotina.
 
-**Ponto atual:** validação remota parcial concluída, com harness B.2B.1.2 pronto para os testes adicionais. UI do Banco Mestre permanece local, com mocks.
+**Ponto atual:** validação remota de persistência informada como concluída e tipos oficiais incorporados. UI do Banco Mestre permanece local, com mocks.
 
-**Próxima ação:** executar o roteiro de escrita cruzada e anon no projeto de desenvolvimento já configurado. Nenhuma operação remota foi executada pelo agente nesta etapa.
+**Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
+
+**Próxima ação:** liberar explicitamente o escopo da B.2B.2 após conferir o relatório e os checks finais. A etapa não foi iniciada automaticamente.
 
 ---
 
