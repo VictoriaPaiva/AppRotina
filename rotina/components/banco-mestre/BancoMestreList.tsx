@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,14 +11,16 @@ import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useBancoMestre } from './BancoMestreProvider';
-import { activitySummaries, activityTypeLabels, filterActivities, formatDuration, importanceLabels, importanceStyles, statusLabels, type ActivityFilters } from '@/lib/banco-mestre/presentation';
+import { activityTypeLabels, itemTypeDescriptions, filterActivities, formatDuration, importanceLabels, importanceStyles, statusLabels, type ActivityFilters } from '@/lib/banco-mestre/presentation';
+import type { ReadFailure } from '@/lib/banco-mestre/data/read-model';
 
 const initialFilters: ActivityFilters = { search: '', areaId: 'all', type: 'all', importance: 'all', status: 'all' };
 
-export function BancoMestreList() {
-  const { activities: localActivities, areas, goals, rules } = useBancoMestre();
+export function BancoMestreList({error}:{error?:ReadFailure}) {
+  const { activities: realActivities, areas } = useBancoMestre();
+  const router=useRouter();
   const [filters, setFilters] = useState<ActivityFilters>(initialFilters);
-  const activities = filterActivities(localActivities, filters);
+  const activities = filterActivities(realActivities, filters);
   const hasFilters = Object.entries(filters).some(([key, value]) => key === 'search' ? value.trim().length > 0 : value !== 'all');
 
   // Configuração local da tela, não um novo componente genérico de filtros.
@@ -28,12 +31,15 @@ export function BancoMestreList() {
     { key: 'status' as const, label: 'Status', options: [{ value: 'all', label: 'Todos os status' }, ...Object.entries(statusLabels).map(([value, label]) => ({ value, label }))] },
   ];
 
+  if(error) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-lg font-semibold">Não foi possível carregar o Banco Mestre</h2><p role="alert" className="text-sm text-muted-foreground">{error.message}</p>{error.kind==='Unauthorized' ? <Button asChild><Link href="/auth/login">Entrar</Link></Button> : <Button type="button" variant="outline" onClick={()=>router.refresh()}>Tentar novamente</Button>}</CardContent></Card>;
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground md:text-base">Biblioteca e administração dos itens reutilizáveis da rotina.</p>
-        <Badge variant="secondary" className="font-normal">Dados locais · sem persistência após recarregar</Badge>
-        <div><Button asChild><Link href="/banco-mestre/nova">Novo item</Link></Button></div>
+        <Badge variant="secondary" className="font-normal">Somente leitura</Badge>
+        <p className="text-sm text-muted-foreground">Criação e edição estão temporariamente indisponíveis.</p>
+        <div><Button disabled>Novo item</Button></div>
       </header>
 
       <section aria-label="Busca e filtros de atividades" className="space-y-4 rounded-2xl border bg-card p-4 md:p-5">
@@ -81,9 +87,9 @@ export function BancoMestreList() {
       {activities.length === 0 ? (
         <Card className="rounded-2xl border-dashed shadow-none">
           <CardContent className="space-y-2 p-6 text-center">
-            <h2 className="font-semibold">Nenhum item encontrado</h2>
-            <p className="text-sm text-muted-foreground">Tente outro nome ou ajuste os filtros.</p>
-            <Button type="button" variant="outline" onClick={() => setFilters(initialFilters)}>Limpar busca e filtros</Button>
+            <h2 className="font-semibold">{realActivities.length===0?'Seu Banco Mestre está vazio':'Nenhum item encontrado'}</h2>
+            <p className="text-sm text-muted-foreground">{realActivities.length===0?'Você ainda não possui itens cadastrados.':'Tente outro nome ou ajuste os filtros.'}</p>
+            {hasFilters && <Button type="button" variant="outline" onClick={() => setFilters(initialFilters)}>Limpar busca e filtros</Button>}
           </CardContent>
         </Card>
       ) : (
@@ -109,7 +115,7 @@ export function BancoMestreList() {
                     <CardContent className="flex-1 space-y-3 px-5 pb-5">
 
                       <dl className="space-y-3 text-sm">
-                        <div><dt className="font-medium">Resumo</dt><dd><ul className="mt-1 space-y-1 text-muted-foreground">{activitySummaries(activity, rules, goals).map(summary => <li key={summary}>{summary}</li>)}</ul></dd></div>
+                        <div><dt className="font-medium">Resumo</dt><dd className="mt-1 whitespace-pre-wrap break-words text-muted-foreground">{activity.description ?? itemTypeDescriptions[activity.type]}</dd></div>
                         {activity.duration.mode !== 'unknown' && activity.type !== 'checklistGoal' && <div><dt className="font-medium">Duração</dt><dd className="mt-1 text-muted-foreground">{formatDuration(activity.duration)}</dd></div>}
                       </dl>
                     </CardContent>

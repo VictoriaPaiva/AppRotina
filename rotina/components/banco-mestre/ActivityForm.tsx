@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,6 +54,7 @@ export function ActivityForm({ initial }: { initial?: ActivityBundle }) {
   }
   function submit(event: FormEvent) {
     event.preventDefault();
+    if(master.readOnly) return;
     const result = buildBundle(draft, master.areas, initial?.activity.id ?? crypto.randomUUID(), new Date().toISOString(), initial?.activity);
     if (!result.ok) {
       setErrors(result.errors); setSubmitted(true);
@@ -70,8 +72,10 @@ export function ActivityForm({ initial }: { initial?: ActivityBundle }) {
   const metas = draft.type === 'variableActivity' || draft.type === 'checklistGoal';
   const repetition = draft.type === 'reminder' || draft.type === 'commitment';
 
+  if(master.readOnly) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-xl font-semibold">Banco Mestre em modo de leitura</h2><p className="text-sm text-muted-foreground">Criação e edição de itens ainda não estão disponíveis.</p><Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button></CardContent></Card>;
+
   return <form ref={formRef} onSubmit={submit} noValidate className="space-y-5">
-    <div className="space-y-2"><h2 className="text-xl font-semibold">{initial ? 'Editar item da rotina' : 'Novo item da rotina'}</h2><p className="text-sm text-muted-foreground">Dados locais desta sessão. Recarregar restaura os exemplos.</p></div>
+    <div className="space-y-2"><h2 className="text-xl font-semibold">{initial ? 'Editar item da rotina' : 'Novo item da rotina'}</h2><p className="text-sm text-muted-foreground">Criação e edição estão indisponíveis durante o modo de leitura.</p></div>
     {submitted && Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Revise os campos indicados antes de salvar.</p>}
     {section('Sobre o item', <>
       {field('name', 'Nome', draft.name, v => change('name', v))}

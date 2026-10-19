@@ -1,18 +1,25 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { mockActivities, mockAreas, mockGoals, mockRecurrenceRules, mockTimeWindows } from '@/lib/banco-mestre/mock-data';
-import { saveBundle, type ActivityBundle, type MasterState } from '@/lib/banco-mestre/editor';
+import { createContext, useContext, type ReactNode } from 'react';
+import type { Area } from '@/types/banco-mestre';
+import type { ActivityBundle } from '@/lib/banco-mestre/editor';
+import type { ActivitySummary } from '@/lib/banco-mestre/data/contracts';
 
-const Context = createContext<(MasterState & { areas: typeof mockAreas; save: (bundle: ActivityBundle) => void }) | null>(null);
+interface ReadContext {
+  areas:Area[];
+  activities:ActivitySummary[];
+  readOnly:true;
+  save:(bundle:ActivityBundle)=>never;
+}
+const Context=createContext<ReadContext|null>(null);
+function rejectWrite():never {throw new Error('O Banco Mestre está disponível somente para leitura.');}
 
-export function BancoMestreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<MasterState>(() => ({ activities: [...mockActivities], goals: [...mockGoals], rules: [...mockRecurrenceRules], windows: [...mockTimeWindows] }));
-  return <Context.Provider value={{ ...state, areas: mockAreas, save: bundle => setState(current => saveBundle(current, bundle)) }}>{children}</Context.Provider>;
+export function BancoMestreProvider({children,areas=[],activities=[]}:{children:ReactNode;areas?:Area[];activities?:ActivitySummary[]}) {
+  return <Context.Provider value={{areas,activities,readOnly:true,save:rejectWrite}}>{children}</Context.Provider>;
 }
 
 export function useBancoMestre() {
   const value = useContext(Context);
-  if (!value) throw new Error('Banco Mestre deve estar dentro de seu provider local.');
+  if (!value) throw new Error('Banco Mestre deve estar dentro de seu provider.');
   return value;
 }

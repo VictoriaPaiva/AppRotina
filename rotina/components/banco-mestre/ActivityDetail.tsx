@@ -1,12 +1,9 @@
-"use client";
-
 import Link from 'next/link';
-import { use, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { useBancoMestre } from './BancoMestreProvider';
-import { ActivityForm } from './ActivityForm';
+import type { DetailReadResult } from '@/lib/banco-mestre/data/read-model';
 import { activityTypeLabels, itemTypeDescriptions, importanceLabels, statusLabels, formatDuration, formatGoal, formatRecurrence, formatLocalDate, minutesLabel, weekdayShort } from '@/lib/banco-mestre/presentation';
 import type { TimeWindow } from '@/types/banco-mestre';
 
@@ -16,21 +13,15 @@ function windowSummary(window: TimeWindow) {
 }
 function section(title: string, content: ReactNode) { return <Card className="rounded-2xl"><CardContent className="space-y-3 p-5"><h3 className="font-semibold">{title}</h3>{content}</CardContent></Card>; }
 
-export function ActivityRouteView({ params, edit = false }: { params: Promise<{ id: string }>; edit?: boolean }) {
-  const { id } = use(params);
-  const master = useBancoMestre();
-  const activity = master.activities.find(item => item.id === id);
-  if (!activity) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-lg font-semibold">Item não encontrado</h2><p className="text-sm text-muted-foreground">Itens criados nesta demonstração não sobrevivem ao recarregamento.</p><Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button></CardContent></Card>;
-  const goals = master.goals.filter(item => item.activityId === id);
-  const rules = master.rules.filter(item => item.activityId === id);
-  const windows = master.windows.filter(item => item.activityId === id);
-  if (edit) return <ActivityForm key={id + activity.updatedAt} initial={{ activity, goals, rules, windows }} />;
+export function ActivityRouteView({result}:{result:DetailReadResult}) {
+  if(result.status==='error') return <Card><CardContent className="space-y-3 p-5"><h2 className="text-lg font-semibold">{result.kind==='NotFound'?'Item não encontrado':result.kind==='Validation'?'Item indisponível':'Não foi possível carregar o item'}</h2><p role="alert" className="text-sm text-muted-foreground">{result.message}</p><Button asChild variant="outline"><Link href={result.kind==='Unauthorized'?'/auth/login':'/banco-mestre'}>{result.kind==='Unauthorized'?'Entrar':'Voltar ao Banco Mestre'}</Link></Button></CardContent></Card>;
+  const {activity,goals,rules,windows}=result.item.bundle;
   const context = activity.type === 'commitment' || activity.type === 'fixedActivity' || activity.type === 'variableActivity' ? activity.config : undefined;
   return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="min-w-0 break-words text-xl font-semibold">{activity.name}</h2><div className="flex flex-wrap gap-2"><Button asChild><Link href={'/banco-mestre/' + id + '/editar'}>Editar item</Link></Button><Button asChild variant="outline"><Link href="/banco-mestre">Voltar à lista</Link></Button></div></div>
-    <p className="text-sm text-muted-foreground">Dados locais desta sessão, sem persistência.</p>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="min-w-0 break-words text-xl font-semibold">{activity.name}</h2><div className="flex flex-wrap gap-2"><Button disabled>Editar item</Button><Button asChild variant="outline"><Link href="/banco-mestre">Voltar à lista</Link></Button></div></div>
+    <p className="text-sm text-muted-foreground">Somente leitura.</p>
     {section('Geral', <><dl className="grid gap-4 sm:grid-cols-2">{[
-      ['Área', master.areas.find(area => area.id === activity.areaId)?.name || 'Área não definida'], ['Tipo', activityTypeLabels[activity.type]], ['Importância', importanceLabels[activity.defaultImportance]], ['Status', statusLabels[activity.status]],
+      ['Área', result.areas.find(area => area.id === activity.areaId)?.name || 'Área não definida'], ['Tipo', activityTypeLabels[activity.type]], ['Importância', importanceLabels[activity.defaultImportance]], ['Status', statusLabels[activity.status]],
     ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-sm font-medium">{label}</dt><dd className="mt-1 break-words text-sm text-muted-foreground">{value}</dd></div>)}</dl><p className="text-sm text-muted-foreground">{itemTypeDescriptions[activity.type]}</p>{activity.description && <p className="whitespace-pre-wrap break-words text-sm">{activity.description}</p>}</>)}
     {activity.duration.mode !== 'unknown' && section('Duração estimada', <p className="text-sm">{formatDuration(activity.duration)}</p>)}
     {activity.type === 'reminder' && section('Lembrete', <><p className="text-sm">Data / referência: {formatLocalDate(activity.config.referenceDate)}</p>{activity.config.reminderTime && <p className="text-sm">Hora de aviso: {activity.config.reminderTime}</p>}<p className="text-xs text-muted-foreground">Não reserva um bloco de tempo. Avisos reais ainda não estão disponíveis.</p></>)}

@@ -1,4 +1,5 @@
 import type { Activity, ActivityImportance, ActivityStatus, ActivityType, Duration, Goal, RecurrenceRule, Weekday } from '@/types/banco-mestre';
+import type { ActivitySummary } from './data/contracts';
 
 export const activityTypeLabels: Record<ActivityType, string> = { reminder: 'Lembrete', commitment: 'Compromisso', fixedActivity: 'Atividade fixa', variableActivity: 'Atividade variável', checklistGoal: 'Meta / Checklist' };
 export const itemTypeDescriptions: Record<ActivityType, string> = {
@@ -82,7 +83,7 @@ export interface ActivityFilters {
   importance: ActivityImportance | 'all';
   status: ActivityStatus | 'all';
 }
-export function filterActivities(activities: readonly Activity[], filters: ActivityFilters): Activity[] {
+export function filterActivities<T extends ActivitySummary>(activities: readonly T[], filters: ActivityFilters): T[] {
   const search = normalizeSearch(filters.search);
   return activities.filter(activity =>
     normalizeSearch(activity.name).includes(search) &&

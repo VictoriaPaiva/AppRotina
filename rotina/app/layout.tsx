@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
-import { BancoMestreProvider } from "@/components/banco-mestre/BancoMestreProvider";
 import { TopBar } from "@/components/layout/TopBar";
 import { Sidebar } from "@/components/navigation/Sidebar";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -47,7 +46,7 @@ export default function RootLayout({
             <main className="min-w-0 flex-1 pb-20 md:pb-0">
               <Suspense fallback={<div aria-hidden="true" className="h-16 border-b bg-surface" />}><TopBar /></Suspense>
               <div className="mx-auto max-w-7xl p-4 md:p-8">
-                <BancoMestreProvider>{children}</BancoMestreProvider>
+                {children}
               </div>
             </main>
 
