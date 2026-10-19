@@ -111,7 +111,7 @@ test('RLS/ownership permanecem sob invoker nas duas RPCs e em DML direto',async(
   assert.equal((await db.query('select public.get_activity_aggregate($1) as value',[created.activity.id])).rows[0].value,null);
   assert.equal((await db.query('select count(*)::int n from activities where id=$1',[created.activity.id])).rows[0].n,0);
   assert.equal((await db.query('update activities set name=$1 where id=$2 returning id',['Intruso',created.activity.id])).rows.length,0);
-  await assert.rejects(()=>save('variableActivity',{},created.activity),e=>e.code==='40001');
+  await assert.rejects(()=>save('variableActivity',{},created.activity),e=>e.code==='PT409');
   await assert.rejects(()=>save('variableActivity',{}),e=>e.code==='23503');
 });
 test('triggers/constraints diretos e revision funcionam sem EXECUTE concedido às trigger functions',async()=>{
@@ -124,7 +124,7 @@ test('triggers/constraints diretos e revision funcionam sem EXECUTE concedido à
   assert.equal((await db.query('select revision from activities where id=$1',[created.activity.id])).rows[0].revision,revision);
   await assert.rejects(()=>db.query("update goals set starts_on='2026-10-12',ends_on='2026-10-11' where id=$1",[created.goals[0].id]),e=>e.code==='23514');
   await assert.rejects(()=>save('checklistGoal',{}, {...created.activity,revision}),e=>e.code==='23514');
-  await assert.rejects(()=>save('checklistGoal',{goals:[goal]},{...created.activity,revision:created.activity.revision}),e=>e.code==='40001');
+  await assert.rejects(()=>save('checklistGoal',{goals:[goal]},{...created.activity,revision:created.activity.revision}),e=>e.code==='PT409');
 });
 test('CHECKs por OID precisam de EXECUTE técnico; revogação isolada falha e não altera o agregado',async()=>{
   const created=await save('reminder',cases[0][1]);

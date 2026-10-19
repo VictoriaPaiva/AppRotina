@@ -47,7 +47,7 @@ test('save usa uma única RPC com snapshot completo e expectedRevision explícit
 });
 test('SQLSTATE, auth e mapper errors viram mensagens seguras com cause técnico preservado',async()=>{
   const b=fixture('academia');
-  for(const [code,kind] of [['40001','Conflict'],['40P01','Conflict'],['42501','Unauthorized'],['PGRST301','Unauthorized'],['23514','Validation'],['23503','Validation'],['22023','Validation'],['XX000','Unknown'],['PGRST116','Unknown']]) {
+  for(const [code,kind] of [['PT409','Conflict'],['40001','Conflict'],['40P01','Conflict'],['42501','Unauthorized'],['PGRST301','Unauthorized'],['23514','Validation'],['23503','Validation'],['22023','Validation'],['XX000','Unknown'],['PGRST116','Unknown']]) {
     const error={code,message:'constraint activities_goal private-id',details:'SQL internals'};
     const {repo}=fake({error});
     await assert.rejects(()=>repo.saveActivity(b),e=>isError(kind)(e)&&e.cause===error&&!e.message.includes(code)&&!e.message.includes('activities'));

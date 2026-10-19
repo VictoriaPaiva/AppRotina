@@ -311,6 +311,8 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 ## Estado de retomada
 
+**V0.2.3B.2B.1.1:** Auth, sessão e GET passaram na validação real relatada. O POST revelou retries pelo uso customizado de 40001. A sexta migration incremental `20261019000100_revision_conflict_http_409.sql` troca somente esse conflito por PT409 (HTTP 409). As cinco migrations antigas já aplicadas permanecem intactas. Nenhum db push remoto foi executado nesta correção. Próxima ação: aplicar manualmente a nova migration e repetir o [smoke real](rotina/doc/V0.2.3B.2B.1-auth-smoke.md). B.2B.2 não iniciada; UI, mocks e BancoMestreProvider intactos. Os registros abaixo documentam o marco anterior.
+
 **Último marco funcional:** V0.2.2D aprovada, concluindo a V0.2.2 com cinco tipos de Item da Rotina.
 
 **Ponto atual:** preparação V0.2.3B.2B.1 de autenticação e smoke implementada; validação no Supabase real pendente. UI do Banco Mestre permanece local, com mocks.

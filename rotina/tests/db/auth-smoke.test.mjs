@@ -2,6 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFile, readdir } from 'node:fs/promises';
 import { test, before, beforeEach, after } from 'node:test';
 import assert from 'node:assert/strict';
+import ts from 'typescript';
 import { createRequire } from 'node:module';
 const require=createRequire(import.meta.url);
 const {load}=require('../helpers/load-typescript.cjs');
@@ -15,6 +16,7 @@ async function user(id=owner) {
   await db.exec('set role authenticated');
 }
 // Adapter SOMENTE de teste, consulta PostgreSQL em memória; nenhuma URL/chave.
+const rpcErrors=[];
 const client={
   from(table) {
     assert(['activities','areas'].includes(table));
@@ -36,7 +38,7 @@ const client={
       if(name==='get_activity_aggregate') result=await db.query('select public.get_activity_aggregate($1::uuid) result',[args.p_activity_id]);
       else {assert.equal(name,'save_activity_aggregate');result=await db.query('select public.save_activity_aggregate($1::jsonb,$2::jsonb,$3::integer) result',[JSON.stringify(args.p_activity),JSON.stringify(args.p_relations),args.p_expected_revision]);}
       return {data:result.rows[0].result,error:null};
-    } catch(error) {return {data:null,error};}
+    } catch(error) {rpcErrors.push(error.code);return {data:null,error};}
   },
 };
 before(async()=>{
@@ -60,6 +62,8 @@ test('smoke real SQL normal: leitura não cria áreas nem itens',async()=>{
 test('smoke real SQL: cria área própria, salva, edita, lê, rejeita revisão antiga e inativa',async()=>{
   const first=await runRepositorySmoke(client,owner,{write:true});
   assert.equal(first.fixture.createdArea,true);
+  assert.equal(first.fixture.conflict,true);
+  assert.deepEqual(rpcErrors.splice(0),['PT409']);
   const row=(await db.query('select user_id,status,revision from activities where id=$1',[first.fixture.activityId])).rows[0];
   assert.equal(row.user_id,owner);assert.equal(row.status,'inactive');assert(row.revision>=3);
   const secondRun=await runRepositorySmoke(client,owner,{write:true});
@@ -79,4 +83,29 @@ test('smoke não reativa área desativada e não modifica atividade existente',a
   assert.equal((await db.query('select count(*)::integer n from areas where not active')).rows[0].n,1);
   const after=(await db.query('select id,status,revision from activities where id<>$1 order by id',[report.fixture.activityId])).rows;
   assert.deepEqual(after,previous);
+});
+
+
+test('POST handler + repository + SQL: PT409 esperado termina com 200 e fixture inativa',async()=>{
+  const source=ts.transpileModule(await readFile('app/api/dev/data-smoke/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
+  const stubs={
+    'next/server':{NextResponse:{json(body,init){return {body,status:init.status??200,headers:init.headers};}}},
+    '@/lib/supabase/server':{createClient:async()=>({...client,auth:{getClaims:async()=>({data:{claims:{sub:owner}},error:null})}})},
+    '@/lib/supabase/configuration':{getSupabasePublicConfig:()=>({})},
+    '@/lib/banco-mestre/data/smoke':{runRepositorySmoke},
+    '@/lib/auth/smoke-access':load('lib/auth/smoke-access.ts'),
+    '@/lib/banco-mestre/data/errors':load('lib/banco-mestre/data/errors.ts'),
+  };
+  const mod={exports:{}};
+  new Function('exports','require','module','process',source)(mod.exports,name=>{assert(name in stubs);return stubs[name];},mod,{env:{NODE_ENV:'development'}});
+  const url=new URL('http://localhost:3000/api/dev/data-smoke');
+  rpcErrors.length=0;
+  const response=await mod.exports.POST({method:'POST',url:url.href,nextUrl:url,headers:new Headers({origin:url.origin})});
+  assert.equal(response.status,200);assert.equal(response.body.ok,true);
+  assert.equal(response.headers['Cache-Control'],'private, no-store');
+  assert.deepEqual(rpcErrors,['PT409']);
+  assert.equal(response.body.fixture.conflict,true);
+  assert.equal(response.body.fixture.inactive,true);
+  const row=(await db.query('select status from activities where id=$1',[response.body.fixture.activityId])).rows[0];
+  assert.equal(row.status,'inactive');
 });

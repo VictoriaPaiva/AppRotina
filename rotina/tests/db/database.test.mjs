@@ -100,10 +100,11 @@ test('IDs e created_at preservados; revision avança por filhos e bloqueia ediç
   const payload = {id:a.goals[0].id,...goal('count',2)};
   const b = await save({...activity('variableActivity'),id:a.activity.id},{goals:[payload]},a.activity.revision);
   assert.equal(b.goals[0].id,a.goals[0].id); assert.equal(b.goals[0].created_at,a.goals[0].created_at); assert.ok(b.activity.revision>a.activity.revision);
-  await rejected(()=>save({...activity('variableActivity'),id:a.activity.id},{goals:[payload]},a.activity.revision),'40001');
+  await rejected(()=>save({...activity('variableActivity'),id:a.activity.id,name:'Rejected stale edit'},{goals:[{...payload,minimum_target:99}]},a.activity.revision),'PT409');
+  assert.deepEqual((await db.query('select public.get_activity_aggregate($1) bundle',[a.activity.id])).rows[0].bundle,b);
   await db.query('update goals set minimum_target=3 where id=$1',[payload.id]);
   assert.ok((await db.query('select revision from activities where id=$1',[a.activity.id])).rows[0].revision>b.activity.revision);
-  await rejected(()=>save({...activity('variableActivity'),id:a.activity.id},{goals:[payload]},b.activity.revision),'40001');
+  await rejected(()=>save({...activity('variableActivity'),id:a.activity.id},{goals:[payload]},b.activity.revision),'PT409');
 });
 test('durações e planejamento rejeitam frações, negativos, zero e overflow; quantity aceita decimal', async () => {
   for (const n of [1.5,0,-1,2147483648]) await rejected(()=>save({...activity('variableActivity'),duration_mode:'fixed',duration_minutes:n}));
@@ -207,4 +208,16 @@ test('última meta/grupo não podem ser removidos; recorrência semanal de calen
   }
   const a=await save(activity('reminder'),{reminder_config:reminder,recurrence_rules:[{basis:'calendar',pattern:'interval',unit:'week',interval_count:2,anchor_date:'2026-10-11',starts_on:'2026-10-11'}]});
   assert.equal(a.recurrence_rules[0].unit,'week');
+});
+
+
+test('injected PostgreSQL serialization_failure retains SQLSTATE 40001',async()=>{
+  await assert.rejects(()=>db.exec("do $$ begin raise serialization_failure using message = 'serialization test'; end $$"),e=>e.code==='40001');
+});
+
+test('incremental migration only changes custom revision SQLSTATE',async()=>{
+  const previous=await readFile('supabase/migrations/20261012000200_private_permissions_hardening.sql','utf8');
+  const incremental=await readFile('supabase/migrations/20261019000100_revision_conflict_http_409.sql','utf8');
+  const body=previous.slice(previous.indexOf('create or replace function public.save_activity_aggregate'),previous.indexOf('create or replace function public.get_activity_aggregate')).trim();
+  assert.equal(incremental.slice(incremental.indexOf('create or replace function')).trim(),body.replace("raise exception 'Stale or unavailable activity revision' using errcode = '40001';","raise sqlstate 'PT409' using message = 'Stale or unavailable activity revision';"));
 });
