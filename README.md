@@ -6,7 +6,7 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**Etapa atual:** V0.2.3B.2B.2B — criação e edição reais integradas; validação da escrita na UI pendente
+**Etapa concluída:** V0.2.3B.2B.2B — criação e edição reais validadas no navegador real; encerramento formal em 19/10/2026
 
 **Marco concluído:** V0.2.2 — interface local do Banco Mestre e fluxo de Item da Rotina, consolidada na V0.2.2D e aprovada após teste manual.
 
@@ -63,7 +63,7 @@ Metas e recorrências permanecem separadas: uma meta 3x/semana não cria dias ou
 
 ## Etapa atual e próxima etapa
 
-**V0.2.3B.2B.2B — criação e edição pelo repository existente, com revisão otimista e sessão normal.**
+**V0.2.3B.2B.2B concluída — criação e edição reais validadas, com revisão otimista e sessão normal.**
 
 O documento [Modelo relacional V0.2.3A](rotina/doc/V0.2.3A-modelo-relacional.md) descreve tabelas, colunas, PKs/FKs, integridade por tipo, ownership, RLS, datas, índices, mapeamento TypeScript e fronteiras futuras de Occurrence/ProgressLog. A ressalva aprovada exige minutos inteiros. As nove tabelas agora estão implementadas em migrations locais; detalhes em [Banco local B.1](rotina/doc/V0.2.3B.1-banco-local.md).
 
@@ -72,8 +72,8 @@ Sequência:
 1. B.1 aprovada: nove tabelas, constraints, RLS e escrita agregada.
 2. **B.2A:** tipos Database provisórios derivados das migrations, DTOs/mappers, metadata revision, repository browser/server injetável, RPC segura de leitura e testes. Consulte [Camada de dados B.2A](rotina/doc/V0.2.3B.2A-camada-dados.md). Mocks/provider continuam sendo a fonte da interface.
 3. **B.2A.1:** migration incremental revoga grants genéricos e USAGE de routine_private; mantém get/save públicas invoker e apenas EXECUTE técnico dos três CHECK validators. Defaults por owner foram ajustados, com alcance global documentado. Consulte [Hardening no guia de banco](rotina/doc/V0.2.3B.1-banco-local.md).
-4. **B.2B.1 e B.2B.2A concluídas:** Auth/sessão, seis migrations, PT409, repository, RLS A/B/anon e leitura nas telas validados remotamente pela usuária; tipos oficiais adotados. **B.2B.2B atual:** criação/edição no formulário existente via Server Action autenticada e saveActivity, com revisão obrigatória na edição. Consulte a [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
-5. **V0.2.4:** primeiro ciclo de persistência, formulário → Supabase → PostgreSQL → leitura, em etapa posterior autorizada.
+4. **B.2B.1 e B.2B.2A concluídas:** Auth/sessão, seis migrations, PT409, repository, RLS A/B/anon e leitura nas telas validados remotamente pela usuária; tipos oficiais adotados. **B.2B.2B concluída e validada no navegador real:** criação/edição no formulário existente via Server Action autenticada e saveActivity, com revisão obrigatória na edição. Consulte a [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
+5. **V0.2.4:** próximo marco do roadmap, liberado para planejamento de escopo mediante nova instrução; não iniciado. O primeiro ciclo formulário → Supabase → PostgreSQL → leitura previsto originalmente já foi atendido pela B.2B.2B.
 6. Planejamento, Calendário, Occurrence e registros de progresso terão etapas próprias; não entram implicitamente na primeira migration.
 
 O núcleo de dados vem antes das telas funcionais porque elas dependerão de tipos, metas, recorrências e preferências consistentes. O detalhe de um item permanece um destino único reutilizável, mesmo quando futuramente aberto a partir de outras telas.
@@ -305,29 +305,29 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 - Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
 - Busca e Configurações globais e ações fictícias da tela Hoje ainda são preparatórias. Busca/filtros do Banco Mestre e botão + para Item da rotina já funcionam localmente.
-- B.2B.1 e leitura da B.2B.2A confirmadas no Supabase/navegador real. Pendente validar criação/edição e conflito em duas abas pela UI da [B.2B.2B](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
+- Melhoria não bloqueante da B.2B.2B: após recuperar a sessão, uma instância antiga do formulário pode manter visualmente Unauthorized até reload/F5. Melhorar a atualização do aviso preservando o rascunho; registrada também no backlog DOCX.
 - Tipos oficiais do schema public gerados e adotados na B.2B.1.3, preservando aliases e validações de transporte. O teste de catálogo confere os contratos contra as migrations em PostgreSQL em memória.
-- Validar PostgREST/GoTrue e concorrência entre sessões na stack completa. `.env.*` já está protegido, com exceção de `.env.example`.
+- PostgREST/GoTrue, concorrência entre sessões e isolamento A/B validados na stack real. `.env.*` permanece protegido, com exceção de `.env.example`.
 
 ## Estado de retomada
 
 **Pré-requisito B.2B.1 concluído:** Auth/sessão, seis migrations, PT409, POST, RLS de leitura/escrita cruzada, UPDATE/INSERTs cruzados, verify e anon confirmados remotamente pela usuária. Tipos oficiais adotados com aliases compatíveis e revisão omitida na criação usando o default SQL. Sem divergência E identificada.
 
-**Último marco funcional:** V0.2.2D aprovada, concluindo a V0.2.2 com cinco tipos de Item da Rotina.
+**Último marco funcional:** V0.2.3B.2B.2B concluída e validada no navegador real, com leitura, criação e edição persistidas no Banco Mestre.
 
-**Ponto atual:** B.2B.2A validada no navegador real (lista, detalhe direto, inexistente, escrita bloqueada e isolamento visual A/B). B.2B.2B integra criação/edição com saveActivity e revisão, sem mocks ou save local no provider. Sem migration, db push ou alteração de schema/RLS/Auth. A escrita pela nova UI ainda precisa de validação real.
+**Ponto atual:** B.2B.2A e B.2B.2B concluídas. Validados no navegador real: criação/edição, refresh, UUID preservado, lista após save, PT409 em duas abas, rascunho preservado, bloqueio de sobrescrita, isolamento de escrita A/B, Unauthorized com “Entrar novamente” e falha de conexão sem falso sucesso ou perda do rascunho. Sem migration, db push ou alteração de schema/RLS/Auth neste fechamento.
 
 **UX atual:** Novo/Editar habilitados, áreas e snapshots reais. Envio com loading e trava contra duplo submit; navegação somente após confirmação do banco. Conflito mantém o rascunho e exige recarga explícita, sem sobrescrita automática. Provider restrito a `/banco-mestre`, sem escrita local; leitura preservada.
 
-**Verificação B.2B.2B:** 69 testes unitários, 54 testes SQL, lint, TypeScript, build e diff-check passaram. Nova escrita pela UI ainda pendente de validação no navegador real; roteiro em [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
+**Verificação B.2B.2B:** 69 testes unitários, 54 testes SQL, lint, TypeScript, build e diff-check passaram. Escrita pela UI validada no navegador real; registro em [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
 
-**Correção de sessão expirada:** POSTs de Server Actions nas rotas do editor chegam à verificação de sessão da action e retornam Unauthorized, preservando o rascunho e oferecendo “Entrar novamente”. GET sem sessão continua redirecionando para login. Repetir no navegador o logout em outra aba antes de salvar; regressão automatizada incluída.
+**Correção de sessão expirada:** POSTs de Server Actions nas rotas do editor chegam à verificação de sessão da action e retornam Unauthorized, preservando o rascunho e oferecendo “Entrar novamente”. GET sem sessão continua redirecionando para login. Logout em outra aba antes de salvar validado no navegador real; regressão automatizada incluída. Melhoria visual residual de Unauthorized após recuperar a sessão permanece não bloqueante.
 
 **Verificação histórica B.2B.2A:** 57 testes unitários, 50 testes SQL, lint, TypeScript, build e diff-check passaram; os cinco cenários de navegador relatados pela usuária estão concluídos. Resultados e roteiro da escrita ficam na documentação B.2B.2B.
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**Próxima ação:** executar o roteiro manual de criação/edição, refresh e conflito em duas abas da B.2B.2B no projeto de desenvolvimento, com dados técnicos. Nenhuma etapa posterior foi iniciada.
+**Próxima ação liberada:** planejar o escopo da V0.2.4, próximo marco do roadmap, mediante nova instrução. O primeiro ciclo real previsto originalmente já foi atendido pela B.2B.2B. Nenhuma etapa posterior foi iniciada.
 
 ---
 
