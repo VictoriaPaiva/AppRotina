@@ -8,6 +8,8 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 **Etapa concluída:** V0.2.3B.2B.2B — criação e edição reais validadas no navegador real; encerramento formal em 19/10/2026
 
+**Marco atual aprovado (20/10/2026): V0.2.4 — Gestão real de Áreas do Banco Mestre.** A V0.2.3 está concluída e validada no navegador real. A V0.2.4A está pronta como [especificação e arquitetura de Áreas](rotina/doc/V0.2.4A-gestao-areas-especificacao.md), para permitir que uma conta nova cadastre seus itens sem áreas técnicas manuais. Nenhuma tela ou escrita de áreas foi implementada nesta análise.
+
 **Marco concluído:** V0.2.2 — interface local do Banco Mestre e fluxo de Item da Rotina, consolidada na V0.2.2D e aprovada após teste manual.
 
 ### V0.1 concluída
@@ -39,7 +41,7 @@ As demais telas principais existem como rotas e placeholders. Seus protótipos d
 
 O fluxo global é **+ → Item da rotina / Projeto / Ideia**. Item da rotina abre o mesmo formulário de **Novo item** do Banco Mestre; Projeto e Ideia estão desabilitados como “Em breve”. A usuária não precisa escolher um módulo técnico antes de criar um item.
 
-O Banco Mestre é a **biblioteca e administração dos itens reutilizáveis da rotina**. Já possui listagem, busca, filtros, detalhe único, criação, edição, ativação/desativação e validações. A troca de tipo mantém a identidade e pede confirmação antes de limpar dados específicos. Dados locais são compartilhados durante a navegação; recarregar restaura os mocks.
+O Banco Mestre é a **biblioteca e administração dos itens reutilizáveis da rotina**. Já possui listagem, busca, filtros, detalhe único, criação, edição, ativação/desativação e validações. A troca de tipo mantém a identidade e pede confirmação antes de limpar dados específicos. Na V0.2.2, dados locais eram compartilhados durante a navegação e recarregar restaurava os mocks. Esse comportamento é histórico: desde a V0.2.3 concluída, leitura, criação e edição do Banco Mestre usam Supabase real e persistem após refresh.
 
 | Tipo | Comportamento do cadastro atual |
 |---|---|
@@ -51,7 +53,7 @@ O Banco Mestre é a **biblioteca e administração dos itens reutilizáveis da r
 
 Os literais técnicos são reminder, commitment, fixedActivity, variableActivity e checklistGoal. trackingMode foi removido por redundância. Importância continua independente; novos itens são ativos e status aparece na edição. Duração aceita Desconhecida, Fixa e Mínima + ideal, com horas/minutos convertidos em minutos totais. Preparação, ida e volta são estimativas locais, não reservas de agenda.
 
-As demais telas mantêm sua estrutura visual inicial. Não há calendário/planejamento funcional, motor de recorrência, progresso real, notificações ou persistência dos itens no Supabase.
+As demais telas mantêm sua estrutura visual inicial. Não há calendário/planejamento funcional, motor de recorrência, progresso real ou notificações. A persistência dos itens do Banco Mestre no Supabase já foi implementada e validada na V0.2.3.
 
 ## Meta / Checklist e progresso diário futuro
 
@@ -70,10 +72,10 @@ O documento [Modelo relacional V0.2.3A](rotina/doc/V0.2.3A-modelo-relacional.md)
 Sequência:
 
 1. B.1 aprovada: nove tabelas, constraints, RLS e escrita agregada.
-2. **B.2A:** tipos Database provisórios derivados das migrations, DTOs/mappers, metadata revision, repository browser/server injetável, RPC segura de leitura e testes. Consulte [Camada de dados B.2A](rotina/doc/V0.2.3B.2A-camada-dados.md). Mocks/provider continuam sendo a fonte da interface.
+2. **B.2A:** tipos Database provisórios derivados das migrations, DTOs/mappers, metadata revision, repository browser/server injetável, RPC segura de leitura e testes. Consulte [Camada de dados B.2A](rotina/doc/V0.2.3B.2A-camada-dados.md). Naquela entrega, mocks/provider ainda eram a fonte da interface; isso foi substituído pela leitura/escrita reais e validadas da B.2B.2A/B.2B.2B.
 3. **B.2A.1:** migration incremental revoga grants genéricos e USAGE de routine_private; mantém get/save públicas invoker e apenas EXECUTE técnico dos três CHECK validators. Defaults por owner foram ajustados, com alcance global documentado. Consulte [Hardening no guia de banco](rotina/doc/V0.2.3B.1-banco-local.md).
 4. **B.2B.1 e B.2B.2A concluídas:** Auth/sessão, seis migrations, PT409, repository, RLS A/B/anon e leitura nas telas validados remotamente pela usuária; tipos oficiais adotados. **B.2B.2B concluída e validada no navegador real:** criação/edição no formulário existente via Server Action autenticada e saveActivity, com revisão obrigatória na edição. Consulte a [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
-5. **V0.2.4:** próximo marco do roadmap, liberado para planejamento de escopo mediante nova instrução; não iniciado. O primeiro ciclo formulário → Supabase → PostgreSQL → leitura previsto originalmente já foi atendido pela B.2B.2B.
+5. **V0.2.4 — Gestão real de Áreas:** marco aprovado. **V0.2.4A:** especificação e arquitetura documentadas para revisão, sem implementação funcional ou migration. O primeiro ciclo formulário → Supabase → PostgreSQL → leitura previsto originalmente já foi atendido pela B.2B.2B; esta definição atual substitui o escopo antigo.
 6. Planejamento, Calendário, Occurrence e registros de progresso terão etapas próprias; não entram implicitamente na primeira migration.
 
 O núcleo de dados vem antes das telas funcionais porque elas dependerão de tipos, metas, recorrências e preferências consistentes. O detalhe de um item permanece um destino único reutilizável, mesmo quando futuramente aberto a partir de outras telas.
@@ -303,6 +305,8 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 ## Pendências técnicas conhecidas
 
+- V0.2.4A: contrato funcional documentado para listar, criar, renomear, ativar/desativar e alterar a prioridade sort_position de cada Área; DELETE pelo cliente proibido. Recomendação: escrita direta com RLS e snapshot esperado para concorrência, ordem por sort_position/id com empates permitidos. Reorder de lista inteira exigiria avaliação transacional própria. Implementação posterior depende de nova instrução; nenhuma migration nesta análise. Documento Mestre e Backlog DOCX foram inspecionados e conservam registros históricos; a definição atual está no documento Markdown da V0.2.4A.
+
 - Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
 - Busca e Configurações globais e ações fictícias da tela Hoje ainda são preparatórias. Busca/filtros do Banco Mestre e botão + para Item da rotina já funcionam localmente.
 - Melhoria não bloqueante da B.2B.2B: após recuperar a sessão, uma instância antiga do formulário pode manter visualmente Unauthorized até reload/F5. Melhorar a atualização do aviso preservando o rascunho; registrada também no backlog DOCX.
@@ -327,7 +331,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**Próxima ação liberada:** planejar o escopo da V0.2.4, próximo marco do roadmap, mediante nova instrução. O primeiro ciclo real previsto originalmente já foi atendido pela B.2B.2B. Nenhuma etapa posterior foi iniciada.
+**Próxima mudança técnica recomendada:** V0.2.4B — DTOs, validação, mapper, repository e ações de Áreas com testes, mediante nova instrução. V0.2.4C prevê UI/primeiro uso; V0.2.4D prevê validação real/fechamento. A [V0.2.4A](rotina/doc/V0.2.4A-gestao-areas-especificacao.md) está pronta como especificação, mantendo reorder como prioridade numérica por área. B/C/D não foram iniciadas; nenhuma tela, código funcional, migration ou db push nesta análise.
 
 ---
 
