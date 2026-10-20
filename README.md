@@ -6,9 +6,9 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**Etapa em validação: V0.2.4C.2.** Estados sem áreas/todas inativas conectados à gestão real, com retorno explícito permitido somente para Novo item. Cobertura: 105 testes unitários, lint, TypeScript, build e diff-check passaram; SQL não repetido nesta revisão sem mudança de dados/actions/schema. Validação no navegador real da C.2 pendente. V0.2.4D não iniciada.
+**V0.2.4C.2 concluída — VALIDADA NO NAVEGADOR REAL.** Fluxos de conta sem áreas e com todas inativas aprovados, com criação/reativação, returnTo seguro, retorno a Novo item com áreas reais e nenhuma seleção automática. Objetivo central da V0.2.4 atendido: conta nova usa o Banco Mestre do zero sem SQL manual, seed ou área técnica pré-criada. V0.2.4D liberada para definição/fechamento, não iniciada.
 
-**Última etapa concluída:** V0.2.4C.1 — gestão real de Áreas VALIDADA NO NAVEGADOR REAL; encerramento formal em 20/10/2026. A V0.2.3 permanece concluída e validada.
+**Última etapa concluída:** V0.2.4C.2 — primeiro uso do Banco Mestre VALIDADO NO NAVEGADOR REAL; encerramento formal em 20/10/2026. C.1 e V0.2.3 permanecem concluídas e validadas.
 
 **Marco atual aprovado (20/10/2026): V0.2.4 — Gestão real de Áreas do Banco Mestre.** A V0.2.3 está concluída e validada no navegador real. A V0.2.4A está pronta como [especificação e arquitetura de Áreas](rotina/doc/V0.2.4A-gestao-areas-especificacao.md), para permitir que uma conta nova cadastre seus itens sem áreas técnicas manuais. Nenhuma tela ou escrita de áreas foi implementada nesta análise.
 
@@ -319,7 +319,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Pré-requisito B.2B.1 concluído:** Auth/sessão, seis migrations, PT409, POST, RLS de leitura/escrita cruzada, UPDATE/INSERTs cruzados, verify e anon confirmados remotamente pela usuária. Tipos oficiais adotados com aliases compatíveis e revisão omitida na criação usando o default SQL. Sem divergência E identificada.
 
-**Último marco funcional:** V0.2.4C.1 concluída e validada no navegador real, com gestão de Áreas persistida e snapshot/updated_at confirmado via PostgREST.
+**Último marco funcional:** V0.2.4C.2 concluída e validada no navegador real: conta nova cria a primeira área e seu primeiro item sem preparação manual; conta com áreas inativas pode reativar e voltar ao cadastro.
 
 **Ponto atual:** B.2B.2A e B.2B.2B concluídas. Validados no navegador real: criação/edição, refresh, UUID preservado, lista após save, PT409 em duas abas, rascunho preservado, bloqueio de sobrescrita, isolamento de escrita A/B, Unauthorized com “Entrar novamente” e falha de conexão sem falso sucesso ou perda do rascunho. Sem migration, db push ou alteração de schema/RLS/Auth neste fechamento.
 
@@ -333,7 +333,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**V0.2.4C.1 concluída — VALIDADA NO NAVEGADOR REAL.** A usuária confirmou criação/renomeação reais, persistência após refresh, conflito em duas abas com rascunho preservado e sem sobrescrita automática, desativação/reativação reais, sessão expirada com Unauthorized/“Entrar novamente” e rascunho preservado, falha de rede sem falso sucesso ou perda do rascunho e snapshot/updated_at através do PostgREST real. Registro em [V0.2.4C.1](rotina/doc/V0.2.4C.1-tela-areas.md). V0.2.4C.2 implementada: ActivityForm sem áreas oferece Criar primeira área; com todas inativas oferece Criar ou reativar área, ambos para /banco-mestre/areas?returnTo=/banco-mestre/nova, sem criação/seleção automática. O retorno aceita somente /banco-mestre/nova e oferece Voltar para criar item após criação/reativação confirmada, sem redirect automático; gestão sem contexto continua normal. Edição com área original inativa preservada. [Registro C.2](rotina/doc/V0.2.4C.2-primeira-area-activity-form.md); validação real da C.2 ainda pendente. Sem alteração funcional, migration ou db push neste fechamento.
+**V0.2.4C.1 concluída — VALIDADA NO NAVEGADOR REAL.** A usuária confirmou criação/renomeação reais, persistência após refresh, conflito em duas abas com rascunho preservado e sem sobrescrita automática, desativação/reativação reais, sessão expirada com Unauthorized/“Entrar novamente” e rascunho preservado, falha de rede sem falso sucesso ou perda do rascunho e snapshot/updated_at através do PostgREST real. Registro em [V0.2.4C.1](rotina/doc/V0.2.4C.1-tela-areas.md). V0.2.4C.2 concluída e validada no navegador real: ActivityForm sem áreas oferece Criar primeira área; com todas inativas oferece Criar ou reativar área, ambos para /banco-mestre/areas?returnTo=/banco-mestre/nova, sem criação/seleção automática. O retorno aceita somente /banco-mestre/nova e oferece Voltar para criar item após criação/reativação confirmada, sem redirect automático; gestão sem contexto continua normal. Edição com área original inativa preservada. [Registro C.2](rotina/doc/V0.2.4C.2-primeira-area-activity-form.md); validação real da C.2 concluída. Objetivo central da V0.2.4 atendido: uso do zero sem SQL manual, seed ou área técnica. Próxima etapa V0.2.4D liberada para definição/fechamento, sem iniciá-la. Sem alteração funcional, migration ou db push neste fechamento.
 
 ---
 
