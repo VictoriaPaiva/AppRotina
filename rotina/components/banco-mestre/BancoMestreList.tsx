@@ -37,7 +37,7 @@ export function BancoMestreList({error}:{error?:ReadFailure}) {
     <div className="space-y-6">
       <header className="space-y-2">
         <p className="text-sm text-muted-foreground md:text-base">Biblioteca e administração dos itens reutilizáveis da rotina.</p>
-        <div><Button asChild><Link href="/banco-mestre/nova">Novo item</Link></Button></div>
+        <div className="flex flex-wrap gap-2"><Button asChild><Link href="/banco-mestre/nova">Novo item</Link></Button><Button asChild variant="outline"><Link href="/banco-mestre/areas">Gerenciar áreas</Link></Button></div>
       </header>
 
       <section aria-label="Busca e filtros de atividades" className="space-y-4 rounded-2xl border bg-card p-4 md:p-5">
