@@ -6,7 +6,7 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**Etapa concluída:** V0.2.3B.2B.2B — criação e edição reais validadas no navegador real; encerramento formal em 19/10/2026
+**Última etapa concluída:** V0.2.4C.1 — gestão real de Áreas VALIDADA NO NAVEGADOR REAL; encerramento formal em 20/10/2026. A V0.2.3 permanece concluída e validada.
 
 **Marco atual aprovado (20/10/2026): V0.2.4 — Gestão real de Áreas do Banco Mestre.** A V0.2.3 está concluída e validada no navegador real. A V0.2.4A está pronta como [especificação e arquitetura de Áreas](rotina/doc/V0.2.4A-gestao-areas-especificacao.md), para permitir que uma conta nova cadastre seus itens sem áreas técnicas manuais. Nenhuma tela ou escrita de áreas foi implementada nesta análise.
 
@@ -317,7 +317,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Pré-requisito B.2B.1 concluído:** Auth/sessão, seis migrations, PT409, POST, RLS de leitura/escrita cruzada, UPDATE/INSERTs cruzados, verify e anon confirmados remotamente pela usuária. Tipos oficiais adotados com aliases compatíveis e revisão omitida na criação usando o default SQL. Sem divergência E identificada.
 
-**Último marco funcional:** V0.2.3B.2B.2B concluída e validada no navegador real, com leitura, criação e edição persistidas no Banco Mestre.
+**Último marco funcional:** V0.2.4C.1 concluída e validada no navegador real, com gestão de Áreas persistida e snapshot/updated_at confirmado via PostgREST.
 
 **Ponto atual:** B.2B.2A e B.2B.2B concluídas. Validados no navegador real: criação/edição, refresh, UUID preservado, lista após save, PT409 em duas abas, rascunho preservado, bloqueio de sobrescrita, isolamento de escrita A/B, Unauthorized com “Entrar novamente” e falha de conexão sem falso sucesso ou perda do rascunho. Sem migration, db push ou alteração de schema/RLS/Auth neste fechamento.
 
@@ -331,7 +331,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**Etapa atual: V0.2.4C.1 — tela real de Áreas.** Rota /banco-mestre/areas com leitura SSR autenticada e actions da B.2 para criar, renomear, ativar/desativar. Lista/estado vazio, identificação de inativas, confirmação de desativação e formulários preservados em erro/conflito. Link Gerenciar áreas disponível no Banco Mestre. Sem prioridade, reorder, DELETE, mocks/seed ou alteração de schema/RLS/Auth. Implementação e roteiro em [V0.2.4C.1](rotina/doc/V0.2.4C.1-tela-areas.md); validação no navegador real pendente. Nenhuma etapa seguinte iniciada.
+**V0.2.4C.1 concluída — VALIDADA NO NAVEGADOR REAL.** A usuária confirmou criação/renomeação reais, persistência após refresh, conflito em duas abas com rascunho preservado e sem sobrescrita automática, desativação/reativação reais, sessão expirada com Unauthorized/“Entrar novamente” e rascunho preservado, falha de rede sem falso sucesso ou perda do rascunho e snapshot/updated_at através do PostgREST real. Registro em [V0.2.4C.1](rotina/doc/V0.2.4C.1-tela-areas.md). Próxima subetapa liberada: V0.2.4C.2 — integrar o estado “sem área” do ActivityForm ao fluxo real de Áreas; não iniciada. Sem alteração funcional, migration ou db push neste fechamento.
 
 ---
 
