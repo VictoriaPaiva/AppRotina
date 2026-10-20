@@ -305,7 +305,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 ## Pendências técnicas conhecidas
 
-- V0.2.4A: contrato funcional documentado para listar, criar, renomear, ativar/desativar e alterar a prioridade sort_position de cada Área; DELETE pelo cliente proibido. Recomendação: escrita direta com RLS e snapshot esperado para concorrência, ordem por sort_position/id com empates permitidos. Reorder de lista inteira exigiria avaliação transacional própria. Implementação posterior depende de nova instrução; nenhuma migration nesta análise. Documento Mestre e Backlog DOCX foram inspecionados e conservam registros históricos; a definição atual está no documento Markdown da V0.2.4A.
+- V0.2.4A: contrato funcional documentado para listar, criar, renomear e ativar/desativar Áreas; DELETE pelo cliente proibido. Recomendação: escrita direta com RLS e snapshot esperado para concorrência, listagem preservada por sort_position/id, sem método ou UI de ordenação nesta etapa. Reorder/drag-and-drop/mover para cima-baixo são evolução futura que exige novo contrato. Criação recebe id + nome: UUID gerado uma vez pelo formulário e validado no servidor, reutilizado no retry da mesma instância; user_id vem exclusivamente da sessão verificada, com RLS obrigatória. Implementação posterior depende de nova instrução; nenhuma migration nesta análise. Documento Mestre e Backlog DOCX foram inspecionados e conservam registros históricos; a definição atual está no documento Markdown da V0.2.4A.
 
 - Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
 - Busca e Configurações globais e ações fictícias da tela Hoje ainda são preparatórias. Busca/filtros do Banco Mestre e botão + para Item da rotina já funcionam localmente.
@@ -331,7 +331,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**Próxima mudança técnica recomendada:** V0.2.4B — DTOs, validação, mapper, repository e ações de Áreas com testes, mediante nova instrução. V0.2.4C prevê UI/primeiro uso; V0.2.4D prevê validação real/fechamento. A [V0.2.4A](rotina/doc/V0.2.4A-gestao-areas-especificacao.md) está pronta como especificação, mantendo reorder como prioridade numérica por área. B/C/D não foram iniciadas; nenhuma tela, código funcional, migration ou db push nesta análise.
+**Próxima mudança técnica recomendada:** V0.2.4B — DTOs, validação, mapper, repository e ações de Áreas com testes, mediante nova instrução. V0.2.4C prevê UI/primeiro uso; V0.2.4D prevê validação real/fechamento. A [V0.2.4A](rotina/doc/V0.2.4A-gestao-areas-especificacao.md) está pronta como especificação, limitada a listar/criar/renomear/ativar/desativar, sem reorder público e com UUID de criação estável por tentativa. B/C/D não foram iniciadas; nenhuma tela, código funcional, migration ou db push nesta análise.
 
 ---
 
