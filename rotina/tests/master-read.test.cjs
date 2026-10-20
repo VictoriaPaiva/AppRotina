@@ -138,7 +138,7 @@ test('existing form uses supplied areas, no seed, and provider has no local save
     '@/lib/banco-mestre/editor':load('lib/banco-mestre/editor.ts'),'@/lib/banco-mestre/presentation':presentation,
   });
   const html=renderToStaticMarkup(React.createElement(BancoMestreLayout,null,React.createElement(ActivityForm,{areas:[]})));
-  assert(html.includes('Nenhuma área disponível'));assert(!html.includes('<form'));
+  assert(html.includes('Crie sua primeira área'));assert(html.includes('Criar primeira área'));assert(html.includes('/banco-mestre/areas'));assert(!html.includes('<form'));
   const form=renderToStaticMarkup(React.createElement(ActivityForm,{areas:[{id:crypto.randomUUID(),name:'Only real area',active:true}]}));
   assert(form.includes('<form'));assert(form.includes('Only real area'));assert(form.includes('Salvar item'));
   function Probe(){const ctx=provider.useBancoMestre();assert.equal(ctx.save,undefined);assert.deepEqual(ctx.activities,[]);return null;}

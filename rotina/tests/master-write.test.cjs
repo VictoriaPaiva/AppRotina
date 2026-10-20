@@ -126,6 +126,64 @@ test('edit preserves its inactive area as an option, without admitting other ina
   assert(options.includes(bundle.activity.areaId));assert(options.includes(active.id));assert(!options.includes(other.id));
 });
 
+test('missing/only-inactive areas link directly to management without writes or automatic selection; original inactive association stays editable',()=>{
+  let writes=0;const action=async()=>{writes++;throw Error('unexpected write');};
+  for(const [areas,label,heading] of [[[],'Criar primeira área','Crie sua primeira área'],[[{id:crypto.randomUUID(),name:'Inactive',active:false}],'Criar ou reativar área','Todas as áreas estão inativas']]) {
+    const h=formHarness({areas},action);const tree=h.render();
+    assert(h.text(tree).includes(heading));
+    const links=h.nodes(tree,n=>n.props?.href==='/banco-mestre/areas?returnTo=/banco-mestre/nova');assert.equal(links.length,1);assert.equal(links[0].props.children,label);
+    assert(h.nodes(tree,n=>n.props?.href==='/banco-mestre').length);
+    assert(!h.nodes(tree,n=>n.type==='form').length);assert.deepEqual(h.navigations,[]);
+  }
+  const active=formHarness({areas:[{id:crypto.randomUUID(),name:'Active',active:true}]},action);
+  assert.equal(active.field(active.render(),'areaId').props.value,'');
+  const bundle=fixture('academia');
+  const edit=formHarness({initial:bundle,expectedRevision:2,areas:[{id:bundle.activity.areaId,name:'Original inactive',active:false}]},action);
+  const tree=edit.render();assert(tree.props.onSubmit);assert.equal(edit.field(tree,'areaId').props.value,bundle.activity.areaId);
+  assert(!edit.text(tree).includes('Todas as áreas estão inativas'));assert.equal(writes,0);
+});
+
+test('New item rereads areas after the return link for first creation/reactivation without selecting or saving automatically',async()=>{
+  const reads=load('lib/banco-mestre/data/read-model.ts');
+  const navigation=load('lib/banco-mestre/area-navigation.ts');
+  const active={id:crypto.randomUUID(),name:'Available after management',active:true};
+  let currentAreas=[],readsCount=0,writes=0;
+  const Page=withStubs('app/banco-mestre/nova/page.tsx',{
+    '@/components/banco-mestre/ActivityForm':{ActivityForm:'ActivityForm'},
+    '@/lib/banco-mestre/data/read-model':reads,
+    '@/lib/banco-mestre/data/server-reader':{createBancoMestreReader:async()=>({listAreas:async()=>{readsCount++;return currentAreas;}})},
+  }).default;
+  const content=async()=>{const page=Page();return page.props.children.type(page.props.children.props);};
+  for(const before of [[],[{...active,active:false}]]) {
+    currentAreas=before;
+    const initial=await content();const blocked=formHarness(initial.props,async()=>{writes++;});
+    const link=blocked.nodes(blocked.render(),n=>n.props?.href?.startsWith('/banco-mestre/areas?'))[0];
+    const target=new URL(link.props.href,'http://localhost:3000');
+    assert.equal(target.pathname,'/banco-mestre/areas');assert.equal(navigation.areaReturnTo(target.searchParams.get('returnTo')),'/banco-mestre/nova');
+    currentAreas=[active]; // New server read after confirmed creation/reactivation.
+    const returned=await content();assert.deepEqual(returned.props.areas,[active]);
+    const form=formHarness(returned.props,async()=>{writes++;});const tree=form.render();
+    assert(tree.props.onSubmit);assert.equal(form.field(tree,'areaId').props.value,'');assert(form.text(tree).includes(active.name));
+    assert.deepEqual(form.navigations,[]);
+  }
+  assert.equal(readsCount,4);assert.equal(writes,0);
+});
+
+test('mixed active/inactive areas keep normal creation unselected and permit editing the original inactive association',()=>{
+  let writes=0;const action=async()=>{writes++;};
+  const bundle=fixture('academia');
+  const inactive={id:bundle.activity.areaId,name:'Original inactive',active:false};
+  const active={id:crypto.randomUUID(),name:'Selectable active',active:true};
+  const create=formHarness({areas:[inactive,active]},action);const tree=create.render();
+  assert(tree.props.onSubmit);assert.equal(create.field(tree,'areaId').props.value,'');
+  const options=create.nodes(create.field(tree,'areaId'),n=>n.type==='option').map(n=>n.props.value);
+  assert(options.includes(active.id));assert(!options.includes(inactive.id));
+  assert(!create.nodes(tree,n=>n.props?.href?.startsWith('/banco-mestre/areas?')).length);
+  const edit=formHarness({initial:bundle,expectedRevision:7,areas:[inactive,active]},action);const editing=edit.render();
+  assert(editing.props.onSubmit);assert.equal(edit.field(editing,'areaId').props.value,inactive.id);
+  assert.equal(writes,0);
+});
+
 test('validation, expired session and unavailable item keep the edited form with safe guidance',async()=>{
   for(const kind of ['Validation','Unauthorized','NotFound']) {
     const bundle=fixture('academia');

@@ -8,12 +8,13 @@ const {withStubs}=require('./helpers/load-with-stubs.cjs');
 const {PersistenceError,toPersistenceError}=load('lib/banco-mestre/data/errors.ts');
 const {readManagedAreas}=load('lib/banco-mestre/data/area-read-model.ts');
 const {owner}=require('./helpers/data-fixtures.cjs');
+const navigation=load('lib/banco-mestre/area-navigation.ts');
 const area={id:'10000000-0000-4000-8000-000000000001',name:'Área real',active:true,sortPosition:37,updatedAt:'2026-10-20T10:00:00.123456Z'};
 const snapshot=({name,active,sortPosition,updatedAt})=>({name,active,sortPosition,updatedAt});
 const actions={createMasterArea:async()=>{throw Error('unexpected creation');},renameMasterArea:async()=>{throw Error('unexpected rename');},setMasterAreaActive:async()=>{throw Error('unexpected state change');}};
 const ui={Button:'button',Card:'div',CardContent:'div',Badge:'span',Input:'input',Label:'label'};
 function stubs(extra={}) {return {'next/navigation':{useRouter:()=>({refresh(){}})},'next/link':{default:'a'},...Object.fromEntries(['button','card','badge','input','label'].map(name=>['@/components/ui/'+name,ui])),
-  '@/app/banco-mestre/area-actions':actions,'@/lib/banco-mestre/data/errors':{toPersistenceError},...extra};}
+  '@/app/banco-mestre/area-actions':actions,'@/lib/banco-mestre/data/errors':{toPersistenceError},'@/lib/banco-mestre/area-navigation':navigation,...extra};}
 
 test('areas SSR reader verifies claims per request and exposes only listing',async()=>{
   let sub=owner,instances=0;const calls=[];
@@ -34,10 +35,11 @@ test('areas page uses Suspense and real SSR listing, including empty/error witho
     '@/components/banco-mestre/AreaManagement':{AreaManagement:'AreaManagement'},
     '@/lib/banco-mestre/data/area-read-model':{readManagedAreas},
     '@/lib/banco-mestre/data/area-server-reader':{createManagedAreasReader:async()=>({listManagedAreas:async()=>{calls++;return areas;}})},
+    '@/lib/banco-mestre/area-navigation':navigation,
   }).default;
-  const page=Page();assert.equal(page.props.fallback.props.role,'status');
-  assert.deepEqual((await page.props.children.type()).props.result,{status:'ready',areas:[area]});
-  areas=[];assert.deepEqual((await Page().props.children.type()).props.result,{status:'ready',areas:[]});assert.equal(calls,2);
+  const page=Page({searchParams:Promise.resolve({})});assert.equal(page.props.fallback.props.role,'status');
+  assert.deepEqual((await page.props.children.type(page.props.children.props)).props.result,{status:'ready',areas:[area]});
+  areas=[];assert.deepEqual((await page.props.children.type(page.props.children.props)).props.result,{status:'ready',areas:[]});assert.equal(calls,2);
   const failure=await readManagedAreas(async()=>{throw Error('private SQL');});assert.equal(failure.kind,'Unknown');assert(!failure.message.includes('private'));
 });
 
@@ -185,4 +187,62 @@ test('expired creation keeps name and login option without success, refresh or s
   assert.equal(calls.length,1);assert.equal(h.input(h.render()).props.value,'Draft after logout');assert.equal(h.refreshes(),0);
   assert(h.nodes(h.render(),n=>n.props?.href==='/auth/login').length);
   assert(!h.button(h.render(),'Criar outra área'));assert.equal(h.form(h.render()).props['aria-busy'],false);
+});
+
+test('area return destination accepts only the exact internal New item path',()=>{
+  assert.equal(navigation.areaReturnTo('/banco-mestre/nova'),'/banco-mestre/nova');
+  for(const value of [undefined,null,'','https://example.com','//example.com','javascript:alert(1)','/auth/login','/banco-mestre/nova?next=https://example.com','/banco-mestre/nova#x','/banco-mestre/nova/','/banco-mestre/../nova','\\example.com','%2Fbanco-mestre%2Fnova',['/banco-mestre/nova'],['/banco-mestre/nova','https://example.com']])assert.equal(navigation.areaReturnTo(value),undefined);
+});
+
+test('areas SSR sanitizes returnTo including repeated query parameters before passing client props',async()=>{
+  const Page=withStubs('app/banco-mestre/areas/page.tsx',{
+    '@/components/banco-mestre/AreaManagement':{AreaManagement:'AreaManagement'},
+    '@/lib/banco-mestre/data/area-read-model':{readManagedAreas},
+    '@/lib/banco-mestre/data/area-server-reader':{createManagedAreasReader:async()=>({listManagedAreas:async()=>[area]})},
+    '@/lib/banco-mestre/area-navigation':navigation,
+  }).default;
+  for(const returnTo of ['/banco-mestre/nova',undefined,'https://example.com',['/banco-mestre/nova']]) {
+    const page=Page({searchParams:Promise.resolve({returnTo})});
+    const content=await page.props.children.type(page.props.children.props);
+    assert.equal(content.props.returnTo,navigation.areaReturnTo(returnTo));assert.deepEqual(content.props.result.areas,[area]);
+  }
+});
+
+test('creation offers explicit safe return only after confirmation, without changing action inputs',async()=>{
+  const calls=[];
+  const h=harness('AreaCreateForm',{returnTo:'/banco-mestre/nova'},{createMasterArea:async input=>{calls.push(input);return {ok:true,area:{...area,id:input.id}};}});
+  assert(!h.nodes(h.render(),n=>n.props?.children==='Voltar para criar item').length);
+  h.input(h.render()).props.onChange({target:{value:'First area'}});await h.form(h.render()).props.onSubmit(h.event);
+  const link=h.nodes(h.render(),n=>n.props?.children==='Voltar para criar item')[0];assert.equal(link.props.href,'/banco-mestre/nova');
+  assert.deepEqual(Object.keys(calls[0]).sort(),['id','name']);assert.equal(h.refreshes(),1);
+});
+
+test('after reactivation a fresh SSR read offers contextual return; normal and invalid contexts retain ordinary access',async()=>{
+  let saved={...area,active:false};
+  const props={result:{status:'ready',areas:[saved]},returnTo:'/banco-mestre/nova'};
+  const page=harness('AreaManagement',props);
+  const links=()=>page.nodes(page.render(),n=>n.props?.children==='Voltar para criar item');
+  assert.equal(links().length,0);
+  const row=harness('AreaRow',{area:saved},{setMasterAreaActive:async input=>{saved={...saved,active:input.active,updatedAt:'2026-10-20T10:00:01.654321Z'};return {ok:true,area:saved};}});
+  row.button(row.render(),'Reativar').props.onClick();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(saved.active,true);assert.equal(row.refreshes(),1);assert.equal(links().length,0);
+  props.result=await readManagedAreas(async()=>({listManagedAreas:async()=>[saved]}));
+  assert.equal(links()[0].props.href,'/banco-mestre/nova');
+  for(const returnTo of [undefined,'https://example.com','/auth/login']) {
+    props.returnTo=returnTo;assert.equal(links().length,0);
+    assert(page.nodes(page.render(),n=>n.props?.href==='/banco-mestre').length);
+    assert(page.nodes(page.render(),n=>n.type?.name==='AreaCreateForm').length);
+    assert(!page.nodes(page.render(),n=>n.props?.href==='https://example.com').length);
+  }
+});
+
+test('invalid returnTo never becomes a post-creation href; ordinary creation flow remains available',async()=>{
+  for(const returnTo of [undefined,'https://example.com','//example.com','/auth/login','javascript:alert(1)']) {
+    const h=harness('AreaCreateForm',{returnTo},{createMasterArea:async input=>({ok:true,area:{...area,id:input.id}})});
+    h.input(h.render()).props.onChange({target:{value:'Safe creation'}});
+    await h.form(h.render()).props.onSubmit(h.event);
+    const links=h.nodes(h.render(),n=>typeof n.props?.href==='string');
+    assert.deepEqual(links.map(n=>n.props.href),['/banco-mestre/nova']);
+    assert.equal(links[0].props.children,'Criar item');assert.equal(h.refreshes(),1);
+  }
 });

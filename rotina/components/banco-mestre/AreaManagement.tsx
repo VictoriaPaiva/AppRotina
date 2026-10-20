@@ -12,6 +12,7 @@ import { createMasterArea, renameMasterArea, setMasterAreaActive } from '@/app/b
 import type { AreaMutationResult, ManagedArea } from '@/lib/banco-mestre/data/area-contracts';
 import type { ManagedAreasReadResult } from '@/lib/banco-mestre/data/area-read-model';
 import { toPersistenceError } from '@/lib/banco-mestre/data/errors';
+import { areaReturnTo } from '@/lib/banco-mestre/area-navigation';
 
 type Failure=Extract<AreaMutationResult,{ok:false}>;
 function safeFailure(error:unknown):Failure {
@@ -29,7 +30,7 @@ function MutationError({error}:{error:Failure|null}) {
   </div>;
 }
 
-export function AreaCreateForm() {
+export function AreaCreateForm({returnTo}:{returnTo?:string}={}) {
   const router=useRouter();
   const [name,setName]=useState('');
   const [saving,setSaving]=useState(false);
@@ -54,7 +55,7 @@ export function AreaCreateForm() {
   function another() {id.current=null;completed.current=false;setSaved(false);setName('');setError(null);}
   return <Card><CardContent className="space-y-4 p-5">
     <h2 className="text-lg font-semibold">Nova área</h2>
-    {saved ? <div className="space-y-3"><p role="status">Área criada. A lista será atualizada com os dados salvos.</p><Button type="button" onClick={another}>Criar outra área</Button><Button asChild variant="outline"><Link href="/banco-mestre/nova">Criar item</Link></Button></div> :
+    {saved ? <div className="space-y-3"><p role="status">Área criada. A lista será atualizada com os dados salvos.</p><Button type="button" onClick={another}>Criar outra área</Button><Button asChild variant="outline"><Link href="/banco-mestre/nova">{areaReturnTo(returnTo)?'Voltar para criar item':'Criar item'}</Link></Button></div> :
       <form onSubmit={submit} noValidate aria-busy={saving} className="space-y-3">
         <fieldset disabled={saving} className="space-y-3">
           <Label htmlFor="area-new-name">Nome da nova área</Label>
@@ -115,14 +116,15 @@ export function AreaRow({area}:{area:ManagedArea}) {
   </CardContent></Card></li>;
 }
 
-export function AreaManagement({result}:{result:ManagedAreasReadResult}) {
+export function AreaManagement({result,returnTo}:{result:ManagedAreasReadResult;returnTo?:string}) {
   const router=useRouter();
+  const destination=areaReturnTo(returnTo);
   return <div className="space-y-6">
-    <header className="space-y-3"><h1 className="text-2xl font-semibold">Áreas do Banco Mestre</h1><p className="text-muted-foreground">Organize seus itens por área. Desativar uma área preserva os itens existentes.</p><Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button></header>
+    <header className="space-y-3"><h1 className="text-2xl font-semibold">Áreas do Banco Mestre</h1><p className="text-muted-foreground">Organize seus itens por área. Desativar uma área preserva os itens existentes.</p><Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button>{destination && result.status==='ready' && result.areas.some(area=>area.active) && <Button asChild><Link href={destination}>Voltar para criar item</Link></Button>}</header>
     {result.status==='error' ? <Card><CardContent className="space-y-3 p-5"><h2 className="font-semibold">Não foi possível carregar as áreas</h2><p role="alert">{result.message}</p>{result.kind==='Unauthorized'?<Button asChild><Link href="/auth/login">Entrar novamente</Link></Button>:<Button type="button" onClick={()=>router.refresh()}>Tentar novamente</Button>}</CardContent></Card> : <>
       {result.areas.length===0 && <Card><CardContent className="space-y-3 p-5"><h2 className="font-semibold">Você ainda não tem áreas</h2><p>Crie sua primeira área para cadastrar os itens da sua rotina.</p><Button asChild><a href="#area-new-name">Criar primeira área</a></Button></CardContent></Card>}
       {result.areas.length>0 && !result.areas.some(area=>area.active) && <p role="status">Todas as áreas estão inativas. Crie uma área ou reative uma existente para cadastrar novos itens.</p>}
-      <AreaCreateForm />
+      <AreaCreateForm returnTo={destination} />
       {result.areas.length>0 && <section aria-label="Suas áreas"><h2 className="mb-3 text-lg font-semibold">Suas áreas</h2><ul className="space-y-3">{result.areas.map(area=><AreaRow key={area.id+':'+area.updatedAt} area={area} />)}</ul></section>}
     </>}
   </div>;

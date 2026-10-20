@@ -94,7 +94,15 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
 
   if(failure) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-xl font-semibold">Não foi possível carregar o formulário</h2><p role="alert">{failure.message}</p>{failure.kind==='Unauthorized'?<Button asChild><Link href="/auth/login">Entrar</Link></Button>:<Button type="button" variant="outline" onClick={()=>router.refresh()}>Tentar novamente</Button>}</CardContent></Card>;
   if(saved) return <Card><CardContent className="space-y-3 p-5"><p role="status">Item salvo.</p><Button asChild><Link href={'/banco-mestre/'+saved.activityId}>Ver item salvo</Link></Button></CardContent></Card>;
-  if(!areas.some(area=>area.active || initial?.activity.areaId===area.id)) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-xl font-semibold">Nenhuma área disponível</h2><p>É necessário ter uma área ativa para cadastrar um item. Nenhuma área será criada automaticamente.</p><Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button></CardContent></Card>;
+  if(!areas.some(area=>area.active || initial?.activity.areaId===area.id)) {
+    const noAreas=areas.length===0;
+    return <Card><CardContent className="space-y-3 p-5">
+      <h2 className="text-xl font-semibold">{noAreas?'Crie sua primeira área':'Todas as áreas estão inativas'}</h2>
+      <p>{noAreas?'Para cadastrar seu primeiro item, é necessário criar uma área no Banco Mestre.':'Para cadastrar um novo item, crie uma área ou reative uma das áreas existentes.'}</p>
+      <Button asChild><Link href="/banco-mestre/areas?returnTo=/banco-mestre/nova">{noAreas?'Criar primeira área':'Criar ou reativar área'}</Link></Button>
+      <Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button>
+    </CardContent></Card>;
+  }
 
   return <form ref={formRef} onSubmit={submit} noValidate aria-busy={saving} className="space-y-5">
     {saving && <p role="status" aria-live="polite">Salvando item…</p>}
