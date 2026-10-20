@@ -7,12 +7,13 @@ import { requiresSession } from '@/lib/auth/policy';
 export async function updateSession(request: NextRequest) {
   let response=NextResponse.next({request});
   const protectedRoute=requiresSession(request.nextUrl.pathname);
-  // Only the existing editor's fetch Server Actions may handle missing sessions
+  // Only the explicit Banco Mestre action routes may handle missing sessions
   // themselves. Next validates the action ID and Origin; the header is NOT auth.
   // Ordinary navigation/POSTs keep the redirect policy, including spoofed GETs.
-  const editorAction=request.method==='POST'
+  const authenticatedActionRequest=request.method==='POST'
     && Boolean(request.headers.get('next-action')?.trim())
-    && /^\/banco-mestre\/(?:nova|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/editar)$/i.test(request.nextUrl.pathname);
+    && (request.nextUrl.pathname==='/banco-mestre/areas'
+      || /^\/banco-mestre\/(?:nova|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/editar)$/i.test(request.nextUrl.pathname));
   const config=getSupabasePublicConfig();
   function loginRedirect() {
     const url=request.nextUrl.clone();url.pathname='/auth/login';url.search='';
@@ -43,9 +44,9 @@ export async function updateSession(request: NextRequest) {
   // Mantém a verificação imediatamente após criar o cliente, como no starter SSR.
   try {
     const {data,error}=await supabase.auth.getClaims();
-    if(protectedRoute && !editorAction && (error || !data?.claims?.sub)) return loginRedirect();
+    if(protectedRoute && !authenticatedActionRequest && (error || !data?.claims?.sub)) return loginRedirect();
   } catch {
-    if(protectedRoute && !editorAction) return loginRedirect();
+    if(protectedRoute && !authenticatedActionRequest) return loginRedirect();
   }
   response.headers.set('Cache-Control','private, no-store');
   return response;

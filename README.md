@@ -331,7 +331,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**Etapa atual: V0.2.4B.1 — camada de dados de Áreas.** Contratos, validação runtime, mapper com timestamp original e repository implementados conforme a [V0.2.4A](rotina/doc/V0.2.4A-gestao-areas-especificacao.md). UPDATE condicionado ao snapshot completo; sem UI, Server Actions, RPC, DELETE, reorder, migration ou db push. Detalhes e validação em [V0.2.4B.1](rotina/doc/V0.2.4B.1-camada-dados-areas.md). Próxima parte: ações autenticadas mediante nova instrução; C/D não iniciadas.
+**Etapa atual: V0.2.4B.2 — ações autenticadas de Áreas.** Criar, renomear e ativar/desativar usam validação runtime, getClaims/sub e o repository da B.1 com owner verificado. Retornos seguros e revalidação de lista/gestão/nova/detalhe/edição somente após sucesso. Detalhes em [V0.2.4B.2](rotina/doc/V0.2.4B.2-actions-areas.md). Sem UI, RPC, DELETE, reorder, migration ou db push; schema/RLS preservados. Proxy com exceção explícita apenas para POST de Server Action na rota exata /banco-mestre/areas, além das rotas nova/editar existentes; GET segue protegido e a action exige getClaims/sub. Próxima etapa C depende de nova instrução; validação remota ainda pendente.
 
 ---
 

@@ -73,21 +73,22 @@ test('redirect de sessão expirada preserva cookies e headers de renovação',as
   assert.equal(response.headers.get('cache-control'),'private, no-store');
 });
 
-test('only POST editor Server Actions defer session denial to the authenticated action',async()=>{
+test('only explicit POST Banco Mestre Server Actions defer session denial to the authenticated action',async()=>{
   const edit='/banco-mestre/11111111-1111-4111-8111-111111111111/editar';
   for(const settings of [{},{error:{code:'expired'}},{throws:true}]) {
     const proxy=proxyHarness(settings);
-    for(const route of [edit,'/banco-mestre/nova']) {
+    for(const route of [edit,'/banco-mestre/nova','/banco-mestre/areas']) {
       const response=await proxy(route,{method:'POST',headers:{'Next-Action':'test-action'}});
       assert.equal(response.location,undefined);assert.equal(response.headers.get('cache-control'),'private, no-store');
-      for(const options of [{},{method:'POST'},{method:'GET',headers:{'Next-Action':'test-action'}},{method:'POST',headers:{'Next-Action':' '}}]) {
+      for(const options of [{},{method:'POST'},{method:'GET',headers:{'Next-Action':'test-action'}},{method:'POST',headers:{'Next-Action':' '}},{method:'PUT',headers:{'Next-Action':'test-action'}}]) {
         assert.equal((await proxy(route,options)).location,'http://localhost:3000/auth/login');
       }
     }
-    for(const route of ['/hoje','/banco-mestre','/banco-mestre/11111111-1111-4111-8111-111111111111']) {
+    for(const route of ['/hoje','/projetos','/banco-mestre','/banco-mestre/areas-publico','/banco-mestre/areas/outra','/banco-mestre/11111111-1111-4111-8111-111111111111']) {
       assert.equal((await proxy(route,{method:'POST',headers:{'Next-Action':'spoofed'}})).location,'http://localhost:3000/auth/login');
     }
   }
+  assert.equal((await proxyHarness({configured:false})('/banco-mestre/areas',{method:'POST',headers:{'Next-Action':'test-action'}})).location,'http://localhost:3000/auth/login');
 });
 test('confirmação aceita PKCE e OTP, força recuperação interna e não repassa erro/token',async()=>{
   for(const [query,expected,method] of [

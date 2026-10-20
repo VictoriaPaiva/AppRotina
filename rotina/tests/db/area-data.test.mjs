@@ -6,6 +6,7 @@ import {createRequire} from 'node:module';
 import {pgliteClient} from '../helpers/pglite-client.mjs';
 const require=createRequire(import.meta.url);
 const {load}=require('../helpers/load-typescript.cjs');
+const {withStubs}=require('../helpers/load-with-stubs.cjs');
 const {owner:A,fixture}=require('../helpers/data-fixtures.cjs');
 const {createAreaRepository}=load('lib/banco-mestre/data/area-repository.ts');
 const {createBancoMestreRepository}=load('lib/banco-mestre/data/repository.ts');
@@ -109,4 +110,33 @@ test('setActive applies the explicit requested value even when it already matche
     assert.equal(area.active,active);assert.equal(area.sortPosition,0);
     assert.equal((await db.query('select active from areas where id=$1',[area.id])).rows[0].active,active);
   }
+});
+
+test('authenticated area actions use real repository/SQL and invalidate only confirmed writes',async()=>{
+  let session=A;const invalidated=[];
+  const actions=withStubs('app/banco-mestre/area-actions.ts',{
+    'next/cache':{revalidatePath:(...args)=>invalidated.push(args)},
+    '@/lib/supabase/server':{createClient:async()=>({...client,auth:{getClaims:async()=>({data:{claims:{sub:session}},error:null})}})},
+    '@/lib/banco-mestre/data/area-repository':{createAreaRepository},
+    '@/lib/banco-mestre/data/area-validation':load('lib/banco-mestre/data/area-validation.ts'),
+    '@/lib/banco-mestre/data/errors':load('lib/banco-mestre/data/errors.ts'),
+    '@/lib/banco-mestre/data/read-model':load('lib/banco-mestre/data/read-model.ts'),
+  });
+  await user(A);
+  const id=crypto.randomUUID();const created=await actions.createMasterArea({id,name:' Action area '});
+  assert.equal(created.ok,true);assert.equal(created.area.id,id);assert.equal(created.area.name,'Action area');assert.equal(invalidated.length,5);
+  invalidated.length=0;
+  const edited=await actions.renameMasterArea({id,name:'Renamed by action',expected:snapshot(created.area)});
+  assert.equal(edited.ok,true);assert.equal(invalidated.length,5);invalidated.length=0;
+  assert.equal((await actions.setMasterAreaActive({id,active:false,expected:snapshot(created.area)})).kind,'Conflict');
+  assert.equal(invalidated.length,0);
+  await user(B);session=B;
+  assert.equal((await actions.renameMasterArea({id,name:'Foreign action',expected:snapshot(edited.area)})).kind,'NotFound');
+  assert.equal(invalidated.length,0);
+  session=null;
+  assert.equal((await actions.createMasterArea({id:crypto.randomUUID(),name:'Expired'})).kind,'Unauthorized');
+  assert.equal(invalidated.length,0);
+  await user(A);session=A;
+  const inactive=await actions.setMasterAreaActive({id,active:false,expected:snapshot(edited.area)});
+  assert.equal(inactive.ok,true);assert.equal(inactive.area.active,false);assert.equal(invalidated.length,5);
 });
