@@ -331,7 +331,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**Próxima mudança técnica recomendada:** V0.2.4B — DTOs, validação, mapper, repository e ações de Áreas com testes, mediante nova instrução. V0.2.4C prevê UI/primeiro uso; V0.2.4D prevê validação real/fechamento. A [V0.2.4A](rotina/doc/V0.2.4A-gestao-areas-especificacao.md) está pronta como especificação, limitada a listar/criar/renomear/ativar/desativar, sem reorder público e com UUID de criação estável por tentativa. B/C/D não foram iniciadas; nenhuma tela, código funcional, migration ou db push nesta análise.
+**Etapa atual: V0.2.4B.1 — camada de dados de Áreas.** Contratos, validação runtime, mapper com timestamp original e repository implementados conforme a [V0.2.4A](rotina/doc/V0.2.4A-gestao-areas-especificacao.md). UPDATE condicionado ao snapshot completo; sem UI, Server Actions, RPC, DELETE, reorder, migration ou db push. Detalhes e validação em [V0.2.4B.1](rotina/doc/V0.2.4B.1-camada-dados-areas.md). Próxima parte: ações autenticadas mediante nova instrução; C/D não iniciadas.
 
 ---
 
