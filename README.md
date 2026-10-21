@@ -6,7 +6,7 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**V0.2.4 concluída — Gestão real de Áreas.** A auditoria V0.2.4D confirmou o escopo final aprovado, com C.1/C.2 validadas no navegador real. Conta nova usa o Banco Mestre do zero sem SQL manual, seed ou área técnica pré-criada. [Fechamento formal](rotina/doc/V0.2.4D-fechamento-gestao-areas.md), apoiado pela [auditoria detalhada](rotina/doc/V0.2.4D-auditoria-fechamento-areas.md). Próximo marco liberado somente para definição: V0.2.5, sem escopo presumido e não iniciado.
+**V0.2.4 concluída — Gestão real de Áreas.** A auditoria V0.2.4D confirmou o escopo final aprovado, com C.1/C.2 validadas no navegador real. Conta nova usa o Banco Mestre do zero sem SQL manual, seed ou área técnica pré-criada. [Fechamento formal](rotina/doc/V0.2.4D-fechamento-gestao-areas.md), apoiado pela [auditoria detalhada](rotina/doc/V0.2.4D-auditoria-fechamento-areas.md). V0.2.5 iniciada somente em definição: [proposta formal V0.2.5A](rotina/doc/V0.2.5A-definicao-escopo.md), apoiada pela [comparação dos candidatos](rotina/doc/V0.2.5-definicao-proximo-marco.md). Recomendação para revisão: Metas e progresso diário, com primeiro corte em contagens diárias reais na tela Hoje. Implementação não iniciada; nenhuma migration/RPC/UI nova.
 
 **Última etapa concluída:** V0.2.4D — auditoria e fechamento formal em 20/10/2026. V0.2.3 e V0.2.4 concluídas no escopo aprovado.
 
@@ -81,6 +81,8 @@ Sequência:
 4. **B.2B.1 e B.2B.2A concluídas:** Auth/sessão, seis migrations, PT409, repository, RLS A/B/anon e leitura nas telas validados remotamente pela usuária; tipos oficiais adotados. **B.2B.2B concluída e validada no navegador real:** criação/edição no formulário existente via Server Action autenticada e saveActivity, com revisão obrigatória na edição. Consulte a [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
 5. **V0.2.4 — Gestão real de Áreas concluída:** A especificou; B.1/B.2 implementaram dados/actions; C.1/C.2 entregaram gestão e primeiro uso com validação real; D auditou e consolidou o fechamento. O primeiro ciclo de persistência previsto originalmente já havia sido atendido pela B.2B.2B; o escopo final de Áreas foi entregue sem nova migration.
 6. Planejamento, Calendário, Occurrence e registros de progresso terão etapas próprias; não entram implicitamente na primeira migration.
+
+**Definição V0.2.5 (21/10/2026):** Calendário/Occurrences, Planejamento, Metas/progresso e a alternativa de agenda somente de leitura foram comparados. Recomenda-se um primeiro ciclo manual de contagem diária, independente de Occurrence, antes de ampliar métricas/períodos ou implementar planejador completo. Fechar fuso/data civil, histórico de metas/tipo, correções e idempotência antes de qualquer persistência nova. A [proposta formal V0.2.5A](rotina/doc/V0.2.5A-definicao-escopo.md) registra escopo, alternativas, subetapas, critérios de conclusão e necessidades de persistência. Após aprovação do escopo, a primeira etapa recomendada é B.1: contrato temporal, histórico e persistência, antes de SQL/código. Trata-se de recomendação ainda a confirmar; nenhuma parte de B foi iniciada.
 
 O núcleo de dados vem antes das telas funcionais porque elas dependerão de tipos, metas, recorrências e preferências consistentes. O detalhe de um item permanece um destino único reutilizável, mesmo quando futuramente aberto a partir de outras telas.
 
