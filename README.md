@@ -342,3 +342,9 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 ---
 
 O Rotina está em desenvolvimento ativo. Estrutura, regras e funcionalidades podem evoluir conforme o uso e a validação do produto.
+
+**V0.2.5B.2 — desenho técnico documental iniciado:** [schema e RPCs propostos](rotina/doc/V0.2.5B.2-desenho-tecnico-persistencia.md). Mantém as seis estruturas da B.1, DDL, RLS/grants e captura histórica via triggers compatível com save invoker. Nenhuma migration/código/RPC foi criada ou aplicada; sem db push. Corpos SQL, preflight de privilégios e testes locais/concorrentes ainda necessários antes da implementação.
+
+**B.2 — detalhamento das RPCs:** [assinaturas e algoritmos SQL de record, void e preferência temporal](rotina/doc/V0.2.5B.2-rpcs-transacionais-progresso.md). Replay por tentativa antes de validar contexto atual, locks transacionais, anulação serializada e PT409 separado de falhas técnicas. Somente documentação; sem funções, migrations ou db push.
+
+**B.2 — candidata local de compatibilidade:** [schema/RPCs e captura histórica](rotina/doc/V0.2.5B.2-desenho-schema-rpcs.md). SQL isolado em supabase/candidates, fora de migrations, validado por 15 novos testes PGlite (76 SQL totais) e 105 unitários. Save invoker/PT409/revision e grants existentes de goals preservados; novos triggers cobrem save e DML direto. **Não pronta para db push**: concorrência PostgreSQL, privilégios de instalação e política de eliminação de conta ainda pendentes. Sem UI/Hoje/C ou alteração remota.
