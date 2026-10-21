@@ -1,0 +1,14 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+select extensions.plan(9);
+select extensions.is((select count(*)::integer from pg_class where relnamespace='public'::regnamespace and relname in ('areas','activities','reminder_configs','commitment_configs','planning_contexts','fixed_schedules','goals','recurrence_rules','time_windows') and relrowsecurity),9,'RLS nas nove tabelas');
+select extensions.ok(not has_table_privilege('anon','public.activities','SELECT'),'anon sem leitura');
+select extensions.ok(not has_table_privilege('authenticated','public.activities','DELETE'),'mestre sem DELETE');
+select extensions.ok(not has_table_privilege('authenticated','public.areas','DELETE'),'áreas sem DELETE');
+select extensions.ok(has_function_privilege('authenticated','public.save_activity_aggregate(jsonb,jsonb,integer)','EXECUTE'),'RPC autenticada');
+select extensions.ok(not has_function_privilege('anon','public.save_activity_aggregate(jsonb,jsonb,integer)','EXECUTE'),'RPC sem acesso anon');
+select extensions.ok((select not prosecdef from pg_proc where oid='public.save_activity_aggregate(jsonb,jsonb,integer)'::regprocedure),'RPC invoker');
+select extensions.is((select count(*)::integer from pg_trigger where tgname='aggregate_valid' and tgdeferrable and tginitdeferred),8,'validação diferida em mestre e filhas');
+select extensions.ok((select position('PT409' in prosrc)>0 and position('40001' in prosrc)=0 from pg_proc where oid='public.save_activity_aggregate(jsonb,jsonb,integer)'::regprocedure),'custom revision conflict uses PT409');
+select * from extensions.finish();
+rollback;

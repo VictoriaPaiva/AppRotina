@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ambiente: somente o exemplo pode ser versionado
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/

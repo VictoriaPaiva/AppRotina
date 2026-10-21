@@ -1,8 +1,11 @@
+import { requireSupabasePublicConfig } from './configuration';
+import type { Database } from '@/lib/banco-mestre/data/database.types';
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  const config = requireSupabasePublicConfig();
+  return createBrowserClient<Database>(
+    config.url,
+    config.key,
   );
 }

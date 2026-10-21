@@ -26,7 +26,7 @@ const moreItems = [
 
 export function BottomNavigation() {
   const pathname = usePathname();
-  const moreActive = moreItems.some((item) => pathname === item.href);
+  const moreActive = moreItems.some((item) => (pathname === item.href || pathname.startsWith(item.href + "/")));
 
   return (
     <nav
@@ -34,7 +34,7 @@ export function BottomNavigation() {
       className="fixed bottom-0 left-0 right-0 z-40 flex items-center border-t bg-card md:hidden"
     >
       {items.map((item) => {
-        const active = pathname === item.href;
+        const active = (pathname === item.href || pathname.startsWith(item.href + "/"));
 
         return (
           <Link
@@ -64,7 +64,7 @@ export function BottomNavigation() {
         </DropdownMenuTrigger>
         <DropdownMenuContent side="top" align="end" sideOffset={8} className="z-[60] min-w-48" aria-label="Mais páginas e opções">
           {moreItems.map((item) => {
-            const active = pathname === item.href;
+            const active = (pathname === item.href || pathname.startsWith(item.href + "/"));
             return (
               <DropdownMenuItem key={item.href} asChild className={active ? "bg-primary-soft font-medium text-primary" : undefined}>
                 <Link href={item.href} aria-current={active ? "page" : undefined}>

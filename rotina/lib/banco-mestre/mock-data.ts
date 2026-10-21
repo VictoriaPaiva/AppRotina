@@ -15,29 +15,34 @@ export const mockAreas: Area[] = [
 ];
 const timestamps = { createdAt: '2026-10-11T12:00:00Z', updatedAt: '2026-10-11T12:00:00Z' };
 export const mockActivities: Activity[] = [
-  { ...timestamps, id: 'academia', name: 'Academia', description: 'Treinos flexíveis, sem dias fixos.', areaId: 'saude', status: 'active', type: 'routine', defaultImportance: 'important', duration: { mode: 'minimumIdeal', minMinutes: 30, idealMinutes: 60 } },
-  { ...timestamps, id: 'agua', name: 'Beber água', description: 'Acompanhar o volume ao longo do dia.', areaId: 'saude', status: 'active', type: 'routine', defaultImportance: 'required', duration: { mode: 'unknown' } },
-  { ...timestamps, id: 'passeio', name: 'Passear com os cachorros', description: 'Saídas de manhã, tarde e noite.', areaId: 'pets', status: 'active', type: 'routine', defaultImportance: 'required', duration: { mode: 'range', minMinutes: 20, maxMinutes: 40 } },
-  { ...timestamps, id: 'faxina', name: 'Faxina pesada', description: 'Estimativa de seis horas para uma limpeza completa.', areaId: 'casa', status: 'active', type: 'routine', defaultImportance: 'important', duration: { mode: 'fixed', minutes: 360 } },
-  { ...timestamps, id: 'cabelo', name: 'Cortar cabelo', areaId: 'autocuidado', status: 'active', type: 'routine', defaultImportance: 'important', duration: { mode: 'fixed', minutes: 40 } },
-  { ...timestamps, id: 'excel', name: 'Estudar Excel', areaId: 'estudos', status: 'active', type: 'desired', defaultImportance: 'important', duration: { mode: 'minimum', minMinutes: 20 } },
-  { ...timestamps, id: 'fotos', name: 'Organizar fotos', areaId: 'organizacao', status: 'inactive', type: 'desired', defaultImportance: 'optional', duration: { mode: 'unknown' } },
-  { ...timestamps, id: 'filtro', name: 'Comprar filtro de água', description: 'Compra pontual de demonstração.', areaId: 'casa', status: 'active', type: 'punctual', defaultImportance: 'required', duration: { mode: 'fixed', minutes: 10 } },
+  { ...timestamps, id: 'academia', name: 'Academia', description: 'Treinos flexíveis, sem dias obrigatórios.', areaId: 'saude', status: 'active', type: 'variableActivity', defaultImportance: 'important', duration: { mode: 'minimumIdeal', minMinutes: 30, idealMinutes: 60 }, config: {} },
+  { ...timestamps, id: 'agua', name: 'Beber água', areaId: 'saude', status: 'active', type: 'checklistGoal', defaultImportance: 'required', duration: { mode: 'unknown' }, config: {} },
+  { ...timestamps, id: 'passeio', name: 'Passeio rápido dos cachorros', description: 'Saídas rápidas para necessidades, acompanhadas por contagem.', areaId: 'pets', status: 'active', type: 'checklistGoal', defaultImportance: 'required', duration: { mode: 'fixed', minutes: 15 }, config: {} },
+  { ...timestamps, id: 'faxina', name: 'Faxina pesada', areaId: 'casa', status: 'active', type: 'variableActivity', defaultImportance: 'important', duration: { mode: 'minimumIdeal', minMinutes: 180, idealMinutes: 300 }, config: {} },
+  { ...timestamps, id: 'cabelo', name: 'Cortar cabelo', areaId: 'autocuidado', status: 'active', type: 'reminder', defaultImportance: 'important', duration: { mode: 'unknown' }, config: { referenceDate: '2026-10-11' } },
+  { ...timestamps, id: 'excel', name: 'Estudar Excel', areaId: 'estudos', status: 'active', type: 'variableActivity', defaultImportance: 'important', duration: { mode: 'minimumIdeal', minMinutes: 20, idealMinutes: 40 }, config: {} },
+  { ...timestamps, id: 'fotos', name: 'Organizar fotos', areaId: 'organizacao', status: 'inactive', type: 'variableActivity', defaultImportance: 'optional', duration: { mode: 'unknown' }, config: {} },
+  { ...timestamps, id: 'filtro', name: 'Comprar filtro de água', areaId: 'casa', status: 'active', type: 'reminder', defaultImportance: 'required', duration: { mode: 'unknown' }, config: { referenceDate: '2026-10-18' } },
+  { ...timestamps, id: 'trabalho', name: 'Trabalho', areaId: 'trabalho', status: 'active', type: 'fixedActivity', defaultImportance: 'required', duration: { mode: 'fixed', minutes: 540 }, config: { location: 'Escritório', schedules: [{ id: 'trabalho-seg-ter', weekdays: ['monday', 'tuesday'], startTime: '06:00', endTime: '15:00' }, { id: 'trabalho-qua-sex', weekdays: ['wednesday', 'thursday', 'friday'], startTime: '08:00', endTime: '17:00' }] } },
+  { ...timestamps, id: 'dentista', name: 'Dentista', areaId: 'compromissos', status: 'active', type: 'commitment', defaultImportance: 'important', duration: { mode: 'fixed', minutes: 60 }, config: { date: '2026-10-18', startTime: '16:00', endTime: '17:00', location: 'Clínica odontológica', preparationMinutes: 30, travel: { outboundMinutes: 30, returnMinutes: 30 } } },
+  { ...timestamps, id: 'aniversario-mae', name: 'Aniversário da mãe', areaId: 'familia', status: 'active', type: 'reminder', defaultImportance: 'important', duration: { mode: 'unknown' }, config: { referenceDate: '2026-10-20', reminderTime: '09:00' } },
+  { ...timestamps, id: 'escovar', name: 'Escovar os dentes', areaId: 'autocuidado', status: 'active', type: 'checklistGoal', defaultImportance: 'required', duration: { mode: 'unknown' }, config: {} },
 ];
-
 export const mockRecurrenceRules: RecurrenceRule[] = [
-  ...(['manhã', 'tarde', 'noite'] as const).map((label, index): RecurrenceRule => ({ id: 'passeio-' + index, activityId: 'passeio', enabled: true, label, basis: 'calendar', pattern: 'interval', interval: 1, unit: 'day', anchorDate: '2026-10-11', startsOn: '2026-10-11' })),
-  { id: 'faxina-15-dias', activityId: 'faxina', enabled: true, basis: 'calendar', pattern: 'interval', interval: 15, unit: 'day', anchorDate: '2026-10-11', startsOn: '2026-10-11' },
-  { id: 'cabelo-conclusao', activityId: 'cabelo', enabled: true, basis: 'completion', pattern: 'interval', interval: 30, unit: 'day', startsOn: '2026-10-11' },
+  { id: 'cabelo-3-meses', activityId: 'cabelo', enabled: true, basis: 'calendar', pattern: 'interval', interval: 3, unit: 'month', anchorDate: '2026-10-11', startsOn: '2026-10-11', invalidDatePolicy: 'lastValidDay' },
+  { id: 'aniversario-anual', activityId: 'aniversario-mae', enabled: true, basis: 'calendar', pattern: 'interval', interval: 12, unit: 'month', anchorDate: '2026-10-20', startsOn: '2026-10-11', invalidDatePolicy: 'lastValidDay' },
 ];
 export const mockGoals: Goal[] = [
   { id: 'academia-frequencia', activityId: 'academia', enabled: true, metric: 'count', unit: 'execution', minimumTarget: 3, idealTarget: 5, period: 'week', startsOn: '2026-10-11' },
   { id: 'academia-duracao', activityId: 'academia', enabled: true, metric: 'duration', unit: 'minute', minimumTarget: 90, idealTarget: 180, period: 'week', startsOn: '2026-10-11' },
-  { id: 'agua-volume', activityId: 'agua', enabled: true, metric: 'quantity', unit: 'ml', minimumTarget: 2500, period: 'day', startsOn: '2026-10-11' },
+  { id: 'agua-volume', activityId: 'agua', enabled: true, metric: 'quantity', unit: 'garrafas', minimumTarget: 8, idealTarget: 10, period: 'day', startsOn: '2026-10-11' },
+  { id: 'passeio-vezes', activityId: 'passeio', enabled: true, metric: 'count', unit: 'execution', minimumTarget: 3, idealTarget: 4, period: 'day', startsOn: '2026-10-11' },
+  { id: 'faxina-frequencia', activityId: 'faxina', enabled: true, metric: 'count', unit: 'execution', minimumTarget: 1, period: 'week', startsOn: '2026-10-11' },
+  { id: 'escovar-vezes', activityId: 'escovar', enabled: true, metric: 'count', unit: 'execution', minimumTarget: 1, idealTarget: 3, period: 'day', startsOn: '2026-10-11' },
 ];
 export const mockTimeWindows: TimeWindow[] = [
-  { id: 'academia-preferencia', activityId: 'academia', kind: 'timeRange', effect: 'preferred', coverage: 'startOnly', startTime: '15:00', endTime: '18:00', endDayOffset: 0, startsOn: '2026-10-11' },
-  ...([{ startTime: '07:00', endTime: '10:00' }, { startTime: '15:00', endTime: '18:00' }, { startTime: '20:00', endTime: '22:00' }]).map((hours, index): TimeWindow => ({ id: 'janela-passeio-' + index, activityId: 'passeio', recurrenceRuleId: 'passeio-' + index, kind: 'timeRange', effect: 'allowed', coverage: 'wholeActivity', ...hours, endDayOffset: 0, startsOn: '2026-10-11' })),
+  { id: 'academia-preferencia', activityId: 'academia', kind: 'timeRange', effect: 'preferred', coverage: 'startOnly', startTime: '14:30', endTime: '16:00', endDayOffset: 0, startsOn: '2026-10-11' },
+  { id: 'faxina-sabado', activityId: 'faxina', kind: 'weekdays', effect: 'preferred', coverage: 'startOnly', weekdays: ['saturday'], startsOn: '2026-10-11' },
 ];
-// Arquitetura reservada, sem editor nem relações fictícias incompletas.
+// Reservado para modelagem futura; nenhum vínculo funcional nesta etapa.
 export const mockDependencies: ActivityDependency[] = [];
