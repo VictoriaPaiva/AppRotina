@@ -6,13 +6,15 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
-**V0.2.4C.2 concluída — VALIDADA NO NAVEGADOR REAL.** Fluxos de conta sem áreas e com todas inativas aprovados, com criação/reativação, returnTo seguro, retorno a Novo item com áreas reais e nenhuma seleção automática. Objetivo central da V0.2.4 atendido: conta nova usa o Banco Mestre do zero sem SQL manual, seed ou área técnica pré-criada. V0.2.4D liberada para definição/fechamento, não iniciada.
+**V0.2.4 concluída — Gestão real de Áreas.** A auditoria V0.2.4D confirmou o escopo final aprovado, com C.1/C.2 validadas no navegador real. Conta nova usa o Banco Mestre do zero sem SQL manual, seed ou área técnica pré-criada. [Fechamento formal](rotina/doc/V0.2.4D-fechamento-gestao-areas.md), apoiado pela [auditoria detalhada](rotina/doc/V0.2.4D-auditoria-fechamento-areas.md). Próximo marco liberado somente para definição: V0.2.5, sem escopo presumido e não iniciado.
 
-**Última etapa concluída:** V0.2.4C.2 — primeiro uso do Banco Mestre VALIDADO NO NAVEGADOR REAL; encerramento formal em 20/10/2026. C.1 e V0.2.3 permanecem concluídas e validadas.
+**Última etapa concluída:** V0.2.4D — auditoria e fechamento formal em 20/10/2026. V0.2.3 e V0.2.4 concluídas no escopo aprovado.
 
-**Marco atual aprovado (20/10/2026): V0.2.4 — Gestão real de Áreas do Banco Mestre.** A V0.2.3 está concluída e validada no navegador real. A V0.2.4A está pronta como [especificação e arquitetura de Áreas](rotina/doc/V0.2.4A-gestao-areas-especificacao.md), para permitir que uma conta nova cadastre seus itens sem áreas técnicas manuais. Nenhuma tela ou escrita de áreas foi implementada nesta análise.
+**Verificação global V0.2.4D:** 105 testes unitários, 61 SQL, lint, TypeScript, build e diff-check passaram. C.1/C.2 validadas remotamente pela usuária; nenhum novo smoke remoto nesta auditoria. Resíduos não bloqueantes permanecem no backlog: aviso visual Unauthorized após recuperar sessão e recomendação cacheComponents/partialPrefetching.
 
-**Marco concluído:** V0.2.2 — interface local do Banco Mestre e fluxo de Item da Rotina, consolidada na V0.2.2D e aprovada após teste manual.
+**Marco encerrado:** V0.2.4 — listar, criar, renomear, ativar/desativar Áreas reais, com sessão normal, RLS, snapshot e primeiro uso integrado ao ActivityForm. Sem DELETE/reorder, mocks/seed ou nova migration. Relatórios A/B/C preservam o histórico; D consolida o estado atual.
+
+**Marco histórico concluído:** V0.2.2 — interface local do Banco Mestre e fluxo de Item da Rotina, consolidada na V0.2.2D e aprovada após teste manual.
 
 ### V0.1 concluída
 
@@ -67,7 +69,7 @@ Metas e recorrências permanecem separadas: uma meta 3x/semana não cria dias ou
 
 ## Etapa atual e próxima etapa
 
-**V0.2.3B.2B.2B concluída — criação e edição reais validadas, com revisão otimista e sessão normal.**
+**V0.2.4 concluída — Gestão real de Áreas, incluindo primeiro uso sem preparação manual.**
 
 O documento [Modelo relacional V0.2.3A](rotina/doc/V0.2.3A-modelo-relacional.md) descreve tabelas, colunas, PKs/FKs, integridade por tipo, ownership, RLS, datas, índices, mapeamento TypeScript e fronteiras futuras de Occurrence/ProgressLog. A ressalva aprovada exige minutos inteiros. As nove tabelas agora estão implementadas em migrations locais; detalhes em [Banco local B.1](rotina/doc/V0.2.3B.1-banco-local.md).
 
@@ -77,7 +79,7 @@ Sequência:
 2. **B.2A:** tipos Database provisórios derivados das migrations, DTOs/mappers, metadata revision, repository browser/server injetável, RPC segura de leitura e testes. Consulte [Camada de dados B.2A](rotina/doc/V0.2.3B.2A-camada-dados.md). Naquela entrega, mocks/provider ainda eram a fonte da interface; isso foi substituído pela leitura/escrita reais e validadas da B.2B.2A/B.2B.2B.
 3. **B.2A.1:** migration incremental revoga grants genéricos e USAGE de routine_private; mantém get/save públicas invoker e apenas EXECUTE técnico dos três CHECK validators. Defaults por owner foram ajustados, com alcance global documentado. Consulte [Hardening no guia de banco](rotina/doc/V0.2.3B.1-banco-local.md).
 4. **B.2B.1 e B.2B.2A concluídas:** Auth/sessão, seis migrations, PT409, repository, RLS A/B/anon e leitura nas telas validados remotamente pela usuária; tipos oficiais adotados. **B.2B.2B concluída e validada no navegador real:** criação/edição no formulário existente via Server Action autenticada e saveActivity, com revisão obrigatória na edição. Consulte a [escrita real](rotina/doc/V0.2.3B.2B.2B-escrita-banco-mestre.md).
-5. **V0.2.4 — Gestão real de Áreas:** marco aprovado. **V0.2.4A:** especificação e arquitetura documentadas para revisão, sem implementação funcional ou migration. O primeiro ciclo formulário → Supabase → PostgreSQL → leitura previsto originalmente já foi atendido pela B.2B.2B; esta definição atual substitui o escopo antigo.
+5. **V0.2.4 — Gestão real de Áreas concluída:** A especificou; B.1/B.2 implementaram dados/actions; C.1/C.2 entregaram gestão e primeiro uso com validação real; D auditou e consolidou o fechamento. O primeiro ciclo de persistência previsto originalmente já havia sido atendido pela B.2B.2B; o escopo final de Áreas foi entregue sem nova migration.
 6. Planejamento, Calendário, Occurrence e registros de progresso terão etapas próprias; não entram implicitamente na primeira migration.
 
 O núcleo de dados vem antes das telas funcionais porque elas dependerão de tipos, metas, recorrências e preferências consistentes. O detalhe de um item permanece um destino único reutilizável, mesmo quando futuramente aberto a partir de outras telas.
@@ -303,11 +305,11 @@ O projeto mantém três documentos oficiais:
    - dívida técnica;
    - status e prioridades.
 
-O Markdown versionado principal é este README. Documento Mestre e Backlog estão presentes em DOCX em rotina/doc/; foram preservados nesta etapa. A especificação Markdown V0.2.3A registra as decisões técnicas atuais e o planejamento dos próximos marcos.
+O Markdown versionado principal é este README. Documento Mestre e Backlog estão presentes em DOCX em rotina/doc/, com atualizações datadas de decisão e fechamento. A especificação Markdown V0.2.3A registra as decisões técnicas atuais e o planejamento dos próximos marcos.
 
 ## Pendências técnicas conhecidas
 
-- V0.2.4A: contrato funcional documentado para listar, criar, renomear e ativar/desativar Áreas; DELETE pelo cliente proibido. Recomendação: escrita direta com RLS e snapshot esperado para concorrência, listagem preservada por sort_position/id, sem método ou UI de ordenação nesta etapa. Reorder/drag-and-drop/mover para cima-baixo são evolução futura que exige novo contrato. Criação recebe id + nome: UUID gerado uma vez pelo formulário e validado no servidor, reutilizado no retry da mesma instância; user_id vem exclusivamente da sessão verificada, com RLS obrigatória. Implementação posterior depende de nova instrução; nenhuma migration nesta análise. Documento Mestre e Backlog DOCX foram inspecionados e conservam registros históricos; a definição atual está no documento Markdown da V0.2.4A.
+- V0.2.4 encerrada conforme [auditoria D](rotina/doc/V0.2.4D-auditoria-fechamento-areas.md). Reorder/drag-and-drop/mover para cima-baixo permanecem evolução futura com novo contrato; DELETE não faz parte da gestão. Sem pendência funcional bloqueante identificada no escopo aprovado. DELETE, reorder/drag-and-drop, fusão, hierarquia, cores/ícones e áreas compartilhadas ficam explicitamente fora do escopo; detalhes no [fechamento formal](rotina/doc/V0.2.4D-fechamento-gestao-areas.md).
 
 - Avaliar futuramente a recomendação de configuração `partialPrefetching` junto de `cacheComponents`; o build atual passa e isso não bloqueia a V0.2.
 - Busca e Configurações globais e ações fictícias da tela Hoje ainda são preparatórias. Busca/filtros do Banco Mestre e botão + para Item da rotina já funcionam localmente.
@@ -319,9 +321,9 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Pré-requisito B.2B.1 concluído:** Auth/sessão, seis migrations, PT409, POST, RLS de leitura/escrita cruzada, UPDATE/INSERTs cruzados, verify e anon confirmados remotamente pela usuária. Tipos oficiais adotados com aliases compatíveis e revisão omitida na criação usando o default SQL. Sem divergência E identificada.
 
-**Último marco funcional:** V0.2.4C.2 concluída e validada no navegador real: conta nova cria a primeira área e seu primeiro item sem preparação manual; conta com áreas inativas pode reativar e voltar ao cadastro.
+**Último marco funcional:** V0.2.4 concluída — gestão real de Áreas e criação do primeiro item por conta nova sem preparação manual; C.1/C.2 validadas no navegador real e auditoria global D concluída.
 
-**Ponto atual:** B.2B.2A e B.2B.2B concluídas. Validados no navegador real: criação/edição, refresh, UUID preservado, lista após save, PT409 em duas abas, rascunho preservado, bloqueio de sobrescrita, isolamento de escrita A/B, Unauthorized com “Entrar novamente” e falha de conexão sem falso sucesso ou perda do rascunho. Sem migration, db push ou alteração de schema/RLS/Auth neste fechamento.
+**Ponto atual:** Banco Mestre com leitura/criação/edição reais e gestão própria de Áreas. Snapshot/updated_at confirmado via PostgREST; conflitos não sobrescrevem; sessão expirada e rede preservam rascunhos. Escopo auditado em D; nenhum novo marco iniciado.
 
 **UX atual:** Novo/Editar habilitados, áreas e snapshots reais. Envio com loading e trava contra duplo submit; navegação somente após confirmação do banco. Conflito mantém o rascunho e exige recarga explícita, sem sobrescrita automática. Provider restrito a `/banco-mestre`, sem escrita local; leitura preservada.
 
@@ -333,7 +335,7 @@ O Markdown versionado principal é este README. Documento Mestre e Backlog estã
 
 **Verificação da adoção:** 47 testes unitários, 48 testes SQL, lint, TypeScript, build e diff-check passaram. Camada de persistência tecnicamente pronta para liberar B.2B.2, considerando também as validações remotas confirmadas pela usuária. Nenhum segredo exposto; sem migration, db push ou alteração de Auth nesta adoção.
 
-**V0.2.4C.1 concluída — VALIDADA NO NAVEGADOR REAL.** A usuária confirmou criação/renomeação reais, persistência após refresh, conflito em duas abas com rascunho preservado e sem sobrescrita automática, desativação/reativação reais, sessão expirada com Unauthorized/“Entrar novamente” e rascunho preservado, falha de rede sem falso sucesso ou perda do rascunho e snapshot/updated_at através do PostgREST real. Registro em [V0.2.4C.1](rotina/doc/V0.2.4C.1-tela-areas.md). V0.2.4C.2 concluída e validada no navegador real: ActivityForm sem áreas oferece Criar primeira área; com todas inativas oferece Criar ou reativar área, ambos para /banco-mestre/areas?returnTo=/banco-mestre/nova, sem criação/seleção automática. O retorno aceita somente /banco-mestre/nova e oferece Voltar para criar item após criação/reativação confirmada, sem redirect automático; gestão sem contexto continua normal. Edição com área original inativa preservada. [Registro C.2](rotina/doc/V0.2.4C.2-primeira-area-activity-form.md); validação real da C.2 concluída. Objetivo central da V0.2.4 atendido: uso do zero sem SQL manual, seed ou área técnica. Próxima etapa V0.2.4D liberada para definição/fechamento, sem iniciá-la. Sem alteração funcional, migration ou db push neste fechamento.
+**V0.2.4C.1 concluída — VALIDADA NO NAVEGADOR REAL.** A usuária confirmou criação/renomeação reais, persistência após refresh, conflito em duas abas com rascunho preservado e sem sobrescrita automática, desativação/reativação reais, sessão expirada com Unauthorized/“Entrar novamente” e rascunho preservado, falha de rede sem falso sucesso ou perda do rascunho e snapshot/updated_at através do PostgREST real. Registro em [V0.2.4C.1](rotina/doc/V0.2.4C.1-tela-areas.md). V0.2.4C.2 concluída e validada no navegador real: ActivityForm sem áreas oferece Criar primeira área; com todas inativas oferece Criar ou reativar área, ambos para /banco-mestre/areas?returnTo=/banco-mestre/nova, sem criação/seleção automática. O retorno aceita somente /banco-mestre/nova e oferece Voltar para criar item após criação/reativação confirmada, sem redirect automático; gestão sem contexto continua normal. Edição com área original inativa preservada. [Registro C.2](rotina/doc/V0.2.4C.2-primeira-area-activity-form.md); validação real da C.2 concluída. Objetivo central da V0.2.4 atendido: uso do zero sem SQL manual, seed ou área técnica. V0.2.4D concluída: escopo auditado e fechamento global consolidado. Sem alteração funcional, migration ou db push neste fechamento.
 
 ---
 
