@@ -22,6 +22,7 @@ const moreItems = [
   { href: "/planejamento", label: "Planejamento" },
   { href: "/banco-mestre", label: "Banco Mestre" },
   { href: "/ideias", label: "Ideias" },
+  { href: "/financas", label: "Finanças" },
 ];
 
 export function BottomNavigation() {

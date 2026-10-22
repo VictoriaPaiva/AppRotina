@@ -12,6 +12,7 @@ const pageTitles: Record<string, string> = {
   "/projetos": "Projetos",
   "/banco-mestre": "Banco Mestre",
   "/ideias": "Ideias",
+  "/financas": "Finanças",
 };
 
 export function TopBar() {

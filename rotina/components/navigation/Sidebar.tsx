@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Wallet } from "lucide-react";
 
 const items = [
   { href: "/hoje", label: "Hoje" },
@@ -11,6 +12,7 @@ const items = [
   { href: "/projetos", label: "Projetos" },
   { href: "/banco-mestre", label: "Banco Mestre" },
   { href: "/ideias", label: "Ideias" },
+  { href: "/financas", label: "Finanças" },
 ];
 
 export function Sidebar() {
@@ -47,6 +49,7 @@ export function Sidebar() {
                   : "text-[var(--text-secondary)] hover:bg-[var(--surface-soft)]"
               }`}
             >
+              {item.href === "/financas" && <Wallet aria-hidden="true" className="mr-2 inline-block h-4 w-4" />}
               {item.label}
             </Link>
           );

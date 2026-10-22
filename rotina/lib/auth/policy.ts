@@ -1,4 +1,4 @@
-const mainRoutes=['/hoje','/planejamento','/calendario','/projetos','/banco-mestre','/ideias'];
+const mainRoutes=['/hoje','/planejamento','/calendario','/projetos','/banco-mestre','/ideias','/financas'];
 export function requiresSession(path: string): boolean {
   return [...mainRoutes,'/protected'].some(root=>path === root || path.startsWith(root+'/'));
 }
@@ -6,7 +6,7 @@ export function requiresSession(path: string): boolean {
 export function safeAuthRedirect(value: unknown, fallback = '/hoje'): string {
   if(typeof value !== 'string') return fallback;
   if(value === '/auth/update-password') return value;
-  return /^\/(hoje|planejamento|calendario|projetos|banco-mestre|ideias)(?:\/[A-Za-z0-9_-]+)*$/.test(value) ? value : fallback;
+  return /^\/(hoje|planejamento|calendario|projetos|banco-mestre|ideias|financas)(?:\/[A-Za-z0-9_-]+)*$/.test(value) ? value : fallback;
 }
 export function isEmailOtpType(value: unknown): value is 'email' | 'signup' | 'recovery' | 'invite' | 'email_change' {
   return typeof value === 'string' && ['email','signup','recovery','invite','email_change'].includes(value);

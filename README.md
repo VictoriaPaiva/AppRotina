@@ -6,6 +6,41 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 
 ## Status atual
 
+**Prioridade atual: MVP utilizável.
+A trilha avançada de progresso V0.2.5 está pausada e preservada para retomada futura.**
+
+Atualização oficial em 22/10/2026: entregar funcionalidade prática nos sete módulos — Hoje, Planejamento, Calendário, Projetos, Banco Mestre, Ideias e Finanças. Banco Mestre e gestão de Áreas reais permanecem preservados. Documentos, candidates e testes de progresso permanecem intactos; não continuar preflight/promoção. Os registros de etapas abaixo são históricos e não autorizam retomar essa trilha.
+
+Finanças está acessível em `/financas`, na Sidebar desktop e no menu Mais mobile, com título próprio e a mensagem “Página em construção”. Segue a proteção de sessão das demais rotas principais. Ainda não há operações financeiras.
+
+### Mapa funcional atual do MVP
+
+Inspeção do código em 22/10/2026; propostas abaixo ainda não implementadas. Navegação, tema e autenticação já funcionam globalmente. Busca/configurações globais estão desabilitadas; no botão +, Projeto e Ideia continuam desabilitados como “Em breve”.
+
+| Tela | Visual e funcional hoje | Fictício/placeholder e ações sem efeito | Persistência necessária | Menor corte utilizável e reuso |
+|---|---|---|---|---|
+| Hoje | Data real formatada em America/Sao_Paulo; seções Agora, Para hoje, Metas, Checklist e Pendências | Trabalho/próximo evento, Academia, Tarot, metas, checklist e número de pendências são demonstrativos. Fazer agora, Planejar, Iniciar sessão, Subtarefas e Ver não executam operações; checkboxes só mudam visualmente | Itens planejados, data e conclusão | Lista real de hoje, concluir/desfazer, pendências e reagendar; ocultar demonstrações. Reusar estrutura de Hoje, SectionTitle, Card, Button e Checkbox; adaptar FlexibleActivityCard sem métricas fictícias |
+| Planejamento | Rota e navegação funcionam | Somente “Página em construção”; nenhum botão específico | Decisões manuais de Activity/data | Escolher atividade real, Hoje/Amanhã/data, listar por data e reagendar. Reusar listActivities/listAreas, filtros do Banco Mestre, Input, Button e Card |
+| Calendário | Rota e navegação funcionam | Somente “Página em construção”; nenhum botão específico | Reusar itens do planejamento; sem nova entidade exclusiva para o primeiro corte | Navegar mês/dia e consultar itens planejados reais, com acesso ao planejamento/detalhe. Reusar os mesmos dados, Card e Button; sem motor de recorrência |
+| Projetos | Rota e navegação funcionam; ProjectCard existe em Hoje | Página placeholder; Tarot/24% em Hoje é fictício. Iniciar sessão/Subtarefas não funcionam; criação global de projeto desabilitada | Projetos e tarefas com conclusão | Criar/editar projeto, adicionar tarefas, concluir tarefas e calcular percentual pelas tarefas. Reusar ProjectCard, Input, Card, Button e Checkbox; sem cronômetro ou sessões |
+| Banco Mestre | Lista, busca, filtros, detalhes, criação/edição e status reais; gestão de Áreas e primeiro uso reais; SSR/actions, RLS e conflitos | Nenhum mock participa desses fluxos; ainda não há ação de planejar | Cadastro já persistido; somente vínculo com item planejado é novo | Preservar o entregue e acrescentar Planejar. Reusar BancoMestreList, ActivityDetail, ActivityForm, AreaManagement, repository e tratamento seguro de erros |
+| Ideias | Rota e navegação funcionam | Somente “Página em construção”; criação global de ideia desabilitada | Ideias próprias: título, texto e timestamps | Criar, listar, consultar e editar notas reais. Reusar Input, Card, Button e padrões de formulário/actions; sem conversão automática em projeto |
+| Finanças | Rota, menu desktop/mobile e título adicionados | Somente “Página em construção”; nenhum botão financeiro | Lançamentos próprios: receita/despesa, data, valor, descrição e categoria | Cadastro/edição, visão mensal, totais de ganhos/gastos/saldo, agrupamento por categoria e histórico mensal. Reusar Input, Card, Button e formulários autenticados; calcular valores monetários sem ponto flutuante impreciso |
+
+### Ordem curta de implementação recomendada
+
+1. **Planejamento + Hoje como uma entrega vertical:** uma tabela simples proposta `daily_plan_items`, ligada à Activity, com owner, UUID estável, data, conclusão e timestamps/snapshot. Planejar pelo Banco Mestre, consultar por data, concluir, detectar pendências por data vencida sem conclusão e reagendar. Mesmas leituras para Planejamento/Hoje; sem Occurrence, progresso complexo ou engine. A migration será uma tarefa futura, não foi criada aqui.
+2. **Calendário simples:** mostrar os mesmos itens por mês/dia e navegar ao detalhe/planejamento. Reusar a persistência da primeira entrega, sem recorrência automática nem calendário completo.
+3. **Ideias:** notas persistidas, independentes dos demais módulos; corte menor que Projetos e útil imediatamente.
+4. **Projetos:** cadastro e tarefas com conclusão; percentual calculado a partir das tarefas, sem depender da arquitetura de progresso pausada.
+5. **Finanças:** lançamentos manuais e resumos mensais por categoria. Independe de Projetos/Ideias e pode ser antecipada por prioridade de uso; fica depois para preservar o foco inicial no cotidiano e introduzir cálculos monetários com testes próprios.
+
+**Próxima tela a implementar: Planejamento**, entregue junto à leitura/conclusão mínima de Hoje para fechar o ciclo de uso. Primeiro corte já deve oferecer loading, vazio, erro, sessão expirada, confirmação real de gravação e isolamento por conta. Infraestrutura somente quando necessária à funcionalidade visível, sem engines genéricas, event sourcing ou abstrações futuras.
+
+Finanças futura no MVP: receitas/ganhos, despesas/gastos, data, valor, descrição, categoria, visão mensal, totais e saldo do mês, identificação de onde o dinheiro está sendo gasto, agrupamento por categoria e histórico mensal. Fora deste MVP inicial: integração bancária/Open Finance, importação automática, cartão/fatura sofisticada, investimentos, previsões e IA financeira. Nenhuma dessas funções foi implementada nesta tarefa.
+
+### Histórico de status anterior à repriorização
+
 **V0.2.4 concluída — Gestão real de Áreas.** A auditoria V0.2.4D confirmou o escopo final aprovado, com C.1/C.2 validadas no navegador real. Conta nova usa o Banco Mestre do zero sem SQL manual, seed ou área técnica pré-criada. [Fechamento formal](rotina/doc/V0.2.4D-fechamento-gestao-areas.md), apoiado pela [auditoria detalhada](rotina/doc/V0.2.4D-auditoria-fechamento-areas.md). V0.2.5 iniciada somente em definição: [proposta formal V0.2.5A](rotina/doc/V0.2.5A-definicao-escopo.md), apoiada pela [comparação dos candidatos](rotina/doc/V0.2.5-definicao-proximo-marco.md). Recomendação para revisão: Metas e progresso diário, com primeiro corte em contagens diárias reais na tela Hoje. B.1 concluída como [contrato conceitual de progresso](rotina/doc/V0.2.5B.1-contrato-progresso.md), consolidando tempo, histórico e persistência. B.2 não iniciada. Implementação não iniciada; nenhuma migration/RPC/UI nova.
 
 **Última etapa concluída:** V0.2.4D — auditoria e fechamento formal em 20/10/2026. V0.2.3 e V0.2.4 concluídas no escopo aprovado.
@@ -68,6 +103,8 @@ Exemplo: escovar dentes ideal 3 vezes/dia, duas execuções em 11/10 → 2/3. Em
 Metas e recorrências permanecem separadas: uma meta 3x/semana não cria dias ou horários fixos. Atividade variável só ocupará um horário depois de planejamento futuro; compromisso e atividade fixa já possuem configurações de horário.
 
 ## Etapa atual e próxima etapa
+
+**Status vigente em 22/10/2026: MVP utilizável.** Próximo corte recomendado: Planejamento integrado a Hoje (conclusão, pendências e reagendamento). A trilha avançada V0.2.5 está pausada e preservada; as recomendações de progresso abaixo registram o planejamento anterior, superado por esta prioridade.
 
 **V0.2.4 concluída — Gestão real de Áreas, incluindo primeiro uso sem preparação manual.**
 

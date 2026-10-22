@@ -14,13 +14,14 @@ function withStubs(file,stubs,environment=process.env.NODE_ENV){
   new Function('exports','require','module','process',source)(mod.exports,name=>{assert(name in stubs,'Dependência sem stub: '+name);return stubs[name];},mod,{env:{NODE_ENV:environment}});
   return mod.exports;
 }
-test('protege seis rotas, subrotas e protected; callbacks e prefixos semelhantes são públicos',()=>{
-  for(const route of ['hoje','planejamento','calendario','projetos','banco-mestre','ideias','protected']) {
+test('protege sete rotas, subrotas e protected; callbacks e prefixos semelhantes são públicos',()=>{
+  for(const route of ['hoje','planejamento','calendario','projetos','banco-mestre','ideias','financas','protected']) {
     assert(policy.requiresSession('/'+route));assert(policy.requiresSession('/'+route+'/item'));assert(!policy.requiresSession('/'+route+'-publico'));
   }
   for(const route of ['/','/auth/login','/auth/sign-up','/auth/confirm','/auth/forgot-password','/auth/update-password','/auth/error','/auth/sign-up-success']) assert(!policy.requiresSession(route));
 });
 test('redirects internos permitidos; URLs externas, tokens, barras escapadas e traversal rejeitados',()=>{
+  assert.equal(policy.safeAuthRedirect('/financas'),'/financas');
   assert.equal(policy.safeAuthRedirect('/banco-mestre/item-1'),'/banco-mestre/item-1');
   assert.equal(policy.safeAuthRedirect('/auth/update-password'),'/auth/update-password');
   for(const target of ['https://example.com','//example.com','/hoje?token_hash=teste','/hoje#token','/hoje/../auth','/hoje/%2f','/hoje\\externo','/auth/confirm',null]) assert.equal(policy.safeAuthRedirect(target),'/hoje');
@@ -64,6 +65,8 @@ test('proxy falha fechado sem configuração, sessão expirada ou falha de auten
     assert.equal((await proxy('/auth/confirm?code=test')).location,undefined);
   }
   assert.equal((await proxyHarness({sub:'verified-user'})('/projetos')).location,undefined);
+  assert.equal((await proxyHarness()('/financas')).location,'http://localhost:3000/auth/login');
+  assert.equal((await proxyHarness({sub:'verified-user'})('/financas')).location,undefined);
 });
 test('redirect de sessão expirada preserva cookies e headers de renovação',async()=>{
   const response=await proxyHarness({refresh:true})('/ideias');
