@@ -1,6 +1,13 @@
 -- LOCAL CANDIDATE ONLY. Not in migrations; never db push this directory.
 BEGIN;
-CREATE ROLE routine_progress_executor NOLOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT;
+CREATE ROLE routine_progress_executor NOLOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT
+ NOCREATEROLE NOCREATEDB NOREPLICATION;
+-- PREFLIGHT TEMPORARY PRIVILEGES BEGIN
+-- PostgreSQL 17: transfer needs SET; following ACL/trigger DDL needs owner privileges.
+-- Only the trusted migration caller receives this temporary membership.
+GRANT routine_progress_executor TO CURRENT_USER WITH INHERIT TRUE, SET TRUE;
+GRANT CREATE ON SCHEMA public, routine_private TO routine_progress_executor;
+-- PREFLIGHT TEMPORARY PRIVILEGES END
 create table public.user_temporal_preferences (
   user_id uuid primary key references auth.users(id)
     on update restrict on delete restrict,
@@ -189,6 +196,17 @@ grant select on public.areas, public.activities, public.goals, public.reminder_c
  public.recurrence_rules, public.time_windows to routine_progress_executor;
 grant update(id) on public.activities to routine_progress_executor;
 grant execute on function routine_private.assert_activity(uuid,uuid) to routine_progress_executor;
+-- A GRANT on a managed Auth object may only warn when not delegable.
+-- Require effective privileges instead of silently installing a broken owner.
+DO $$ BEGIN
+ IF NOT has_schema_privilege('routine_progress_executor','public','USAGE')
+ OR NOT has_schema_privilege('routine_progress_executor','routine_private','USAGE')
+ OR NOT has_schema_privilege('routine_progress_executor','auth','USAGE')
+ OR NOT has_function_privilege('routine_progress_executor','auth.uid()','EXECUTE')
+ OR NOT has_function_privilege('routine_progress_executor','routine_private.assert_activity(uuid,uuid)','EXECUTE') THEN
+ RAISE EXCEPTION 'Required executor schema/function grants unavailable' USING ERRCODE='42501';
+ END IF;
+END $$;
 do $$ declare t text; begin
  foreach t in array array['areas','activities','goals','reminder_configs','commitment_configs',
  'planning_contexts','fixed_schedules','recurrence_rules','time_windows'] loop
@@ -248,11 +266,16 @@ create trigger progress_timezone_stamp before insert or update on public.user_te
 
 -- Baseline under installation locks; no inferred timezone and no fake logs.
 lock table public.activities,public.goals in share row exclusive mode;
+-- FORCE RLS also applies to the non-BYPASS table-owning installer.
+-- Only that trusted installer may backfill existing accounts, inside this transaction.
+create policy progress_install_backfill on public.activity_goal_versions
+ for insert to current_user with check (true);
 insert into public.activity_goal_versions(user_id,activity_id,source_goal_id,version_no,
  activity_revision,transition,effective_at,enabled,metric,unit,minimum_target,ideal_target,period,starts_on,ends_on)
  select g.user_id,g.activity_id,g.id,1,a.revision,'baseline',clock_timestamp(),g.enabled,
  g.metric,g.unit,g.minimum_target,g.ideal_target,g.period,g.starts_on,g.ends_on
  from public.goals g join public.activities a on a.user_id=g.user_id and a.id=g.activity_id;
+drop policy progress_install_backfill on public.activity_goal_versions;
 
 create function routine_private.finalize_goal_versions(p_user_id uuid,p_activity_id uuid) returns void
 language plpgsql security definer set search_path=pg_catalog,pg_temp set row_security=on as $$
@@ -319,9 +342,11 @@ begin
  where v.user_id=p_user_id and v.activity_id=l.activity_id and v.transition<>'removed' and v.enabled
  and v.metric=l.metric and v.unit=l.unit and v.period='day'
  and v.starts_on<=l.performed_on and (v.ends_on is null or v.ends_on>=l.performed_on)
- and v.effective_at<=l.accepted_at
+ -- Historical eligibility follows the accepted aggregate revision, not wall-clock
+ -- ordering (clock adjustments/ties must not reinterpret the accepted version).
+ and v.activity_revision<=l.activity_revision
  and not exists(select 1 from public.activity_goal_versions newer where newer.user_id=v.user_id and newer.source_goal_id=v.source_goal_id
- and newer.version_no>v.version_no and newer.effective_at<=l.accepted_at);
+ and newer.version_no>v.version_no and newer.activity_revision<=l.activity_revision);
  select array_agg(s.goal_version_id order by s.goal_version_id) into actual from public.progress_log_goal_versions s
  where s.user_id=p_user_id and s.activity_id=l.activity_id and s.progress_log_id=l.id;
  if cardinality(coalesce(ids,'{}'::uuid[]))=0 or ids is distinct from actual then raise exception 'Invalid associations' using errcode='23514';end if;
@@ -333,11 +358,36 @@ end $$;
 alter function routine_private.assert_progress_integrity(uuid,uuid) owner to routine_progress_executor;
 create function routine_private.check_progress_receipt() returns trigger
 language plpgsql security definer set search_path=pg_catalog,pg_temp set row_security=on as $$
+declare k uuid; a public.progress_attempts; l public.activity_progress_logs;
 begin
- perform routine_private.assert_progress_integrity(new.user_id,new.attempt_id);return null;
+ if tg_table_schema<>'public' then raise exception 'Unexpected integrity target' using errcode='23514';end if;
+ if tg_table_name='progress_attempts' then k:=new.attempt_id;
+ elsif tg_table_name='activity_progress_logs' then
+ select * into strict a from public.progress_attempts where user_id=new.user_id and attempt_id=new.attempt_id;
+ if a.command_kind<>'record' or a.result_log_id<>new.id then
+ raise exception 'Log requires its reciprocal record receipt' using errcode='23514';end if;
+ k:=new.attempt_id;
+ elsif tg_table_name='progress_log_goal_versions' then
+ select * into strict l from public.activity_progress_logs where user_id=new.user_id and activity_id=new.activity_id and id=new.progress_log_id;
+ k:=l.attempt_id;
+ elsif tg_table_name='activity_progress_voids' then
+ select * into strict a from public.progress_attempts where user_id=new.user_id and attempt_id=new.winning_attempt_id;
+ if a.command_kind<>'void' or a.activity_id<>new.activity_id or a.target_log_id<>new.progress_log_id
+ or a.result_log_id<>new.progress_log_id or a.result_void_id<>new.id or a.accepted_at<>new.voided_at then
+ raise exception 'Void requires its reciprocal winning receipt' using errcode='23514';end if;
+ k:=new.winning_attempt_id;
+ else raise exception 'Unexpected integrity target' using errcode='23514';
+ end if;
+ perform routine_private.assert_progress_integrity(new.user_id,k);return null;
 end $$;
 alter function routine_private.check_progress_receipt() owner to routine_progress_executor;
 create constraint trigger progress_receipt_integrity after insert on public.progress_attempts
+ deferrable initially deferred for each row execute function routine_private.check_progress_receipt();
+create constraint trigger progress_effect_integrity after insert on public.activity_progress_logs
+ deferrable initially deferred for each row execute function routine_private.check_progress_receipt();
+create constraint trigger progress_association_integrity after insert on public.progress_log_goal_versions
+ deferrable initially deferred for each row execute function routine_private.check_progress_receipt();
+create constraint trigger progress_void_integrity after insert on public.activity_progress_voids
  deferrable initially deferred for each row execute function routine_private.check_progress_receipt();
 
 
@@ -620,4 +670,19 @@ revoke all on function routine_private.finalize_goal_versions(uuid,uuid),
  routine_private.capture_progress_history(),routine_private.assert_progress_integrity(uuid,uuid),
  routine_private.check_progress_receipt(),routine_private.progress_immutable(),
  routine_private.progress_timezone_stamp() from public,anon,authenticated;
+-- PREFLIGHT CLEANUP BEGIN
+REVOKE CREATE ON SCHEMA public, routine_private FROM routine_progress_executor;
+REVOKE routine_progress_executor FROM CURRENT_USER;
+-- PostgreSQL may retain its automatic ADMIN-only creator membership.
+-- It must not retain SET/INHERIT; the trusted installer already administers roles.
+DO $$ BEGIN
+ IF has_schema_privilege('routine_progress_executor','public','CREATE')
+ OR has_schema_privilege('routine_progress_executor','routine_private','CREATE')
+ OR (NOT (SELECT rolsuper FROM pg_roles WHERE rolname=current_user)
+     AND (pg_has_role(current_user,'routine_progress_executor','SET')
+          OR pg_has_role(current_user,'routine_progress_executor','USAGE'))) THEN
+ RAISE EXCEPTION 'Deployment privileges were not fully removed' USING ERRCODE='42501';
+ END IF;
+END $$;
+-- PREFLIGHT CLEANUP END
 COMMIT;
