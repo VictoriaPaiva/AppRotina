@@ -1,6 +1,6 @@
 /** Generated with Supabase CLI 2.120.0: gen types typescript --linked --schema public.
- * Generated base plus the locally pending daily_plan_items MVP migration below.
- * Compatibility aliases are appended at the end; regenerate after remote application.
+ * daily_plan_items regenerated from the linked development schema on 2026-10-22.
+ * All public schema contracts compared; compatibility aliases appended at the end.
  * Numeric transport validation remains in mapper/validation.
  */
 export type Json =
@@ -19,12 +19,43 @@ export type Database = {
   }
   public: {
     Tables: {
-      // Local incremental MVP migration; regenerate official types after remote application.
       daily_plan_items: {
-        Row: { id: string; user_id: string; activity_id: string; planned_date: string; completed_at: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; user_id: string; activity_id: string; planned_date: string; completed_at?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; user_id?: string; activity_id?: string; planned_date?: string; completed_at?: string | null; created_at?: string; updated_at?: string }
-        Relationships: [{ foreignKeyName: "daily_plan_items_owner_activity_fkey"; columns: ["user_id", "activity_id"]; isOneToOne: false; referencedRelation: "activities"; referencedColumns: ["user_id", "id"] }]
+        Row: {
+          activity_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          planned_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          planned_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          planned_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_plan_items_owner_activity_fkey"
+            columns: ["user_id", "activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["user_id", "id"]
+          },
+        ]
       }
       activities: {
         Row: {

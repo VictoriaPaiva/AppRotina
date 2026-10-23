@@ -9,28 +9,32 @@ O **Rotina** está sendo desenvolvido como uma plataforma modular para centraliz
 **Prioridade atual: MVP utilizável.
 A trilha avançada de progresso V0.2.5 está pausada e preservada para retomada futura.**
 
+**Desktop/computador é a prioridade do MVP.** Manter responsividade mobile básica quando simples, sem atrasar funcionalidades. A rodada específica de responsividade fica para depois de todas as telas do MVP funcionarem.
+
 Atualização oficial em 22/10/2026: entregar funcionalidade prática nos sete módulos — Hoje, Planejamento, Calendário, Projetos, Banco Mestre, Ideias e Finanças. Banco Mestre e gestão de Áreas reais permanecem preservados. Documentos, candidates e testes de progresso permanecem intactos; não continuar preflight/promoção. Os registros de etapas abaixo são históricos e não autorizam retomar essa trilha.
 
 Finanças está acessível em `/financas`, na Sidebar desktop e no menu Mais mobile, com título próprio e a mensagem “Página em construção”. Segue a proteção de sessão das demais rotas principais. Ainda não há operações financeiras.
 
-**Primeira entrega funcional do MVP — Planejamento + Hoje implementados localmente; aguardam aplicação da migration e validação no navegador real.** Banco Mestre oferece Planejar nas Activities ativas; Planejamento permite Hoje/Amanhã/data, consulta por data, conclusão/desfazer e reagendamento; Hoje mostra itens reais, concluídos da data planejada e pendências (data anterior sem conclusão), sem demonstrações. Dados vêm do servidor após gravação confirmada. A conclusão de uma pendência conserva sua data original; consulte essa data em Planejamento para encontrá-la depois.
+**Primeira entrega funcional do MVP — Planejamento + Hoje implementados; migration aplicada no Supabase de desenvolvimento, aguardando validação funcional no navegador desktop.** Banco Mestre oferece Planejar nas Activities ativas; Planejamento permite Hoje/Amanhã/data, consulta por data, conclusão/desfazer e reagendamento; Hoje mostra itens reais, concluídos da data planejada e pendências (data anterior sem conclusão), sem demonstrações. Dados vêm do servidor após gravação confirmada. A conclusão de uma pendência conserva sua data original; consulte essa data em Planejamento para encontrá-la depois.
 
 Migration incremental: `rotina/supabase/migrations/20261022000100_daily_plan_items.sql`. Uma Activity/data por conta; FK composta, RLS, sem DELETE, timestamps do banco e UPDATE condicionado ao snapshot exato (incluindo microssegundos). Activity inativa não admite planejamento novo; planos existentes continuam visíveis, concluíveis e reagendáveis. Concluir/desfazer afeta somente o item planejado. Dia civil: convenção explícita `America/Sao_Paulo`, calculada no servidor ao carregar/atualizar a tela; não há job noturno. Para uma tela aberta durante a virada do dia, recarregue para obter o novo dia. Sem recorrência automática ou alteração de metas/revision da Activity.
 
-O `package-lock.json` vazio da raiz foi removido: não havia package/workspace ali. O lockfile correto em `rotina/` foi preservado. Nenhum db push executado; migrations antigas e candidata de progresso intactas. Calendário permanece placeholder e depende de validação desta entrega pela usuária antes de qualquer implementação.
+O `package-lock.json` vazio da raiz foi removido: não havia package/workspace ali. O lockfile correto em `rotina/` foi preservado. Na aplicação remota autorizada em 22/10/2026, confirmou-se o projeto vinculado **Rotina - Desenvolvimento**; `db push --linked --dry-run --skip-vault` apontou somente `20261022000100_daily_plan_items.sql`, então `db push --linked --skip-vault --yes` aplicou exclusivamente essa migration, sem seeds, roles ou Vault. `migration list --linked` confirmou as sete versões alinhadas. Migrations antigas e candidata de progresso intactas. Calendário depende de validação desta entrega pela usuária antes de qualquer implementação.
+
+Tipos oficiais regenerados com CLI 2.120.0, `gen types typescript --linked --schema public`, primeiro em arquivo temporário ignorado. Comparação estrutural das dez tabelas, Row/Insert/Update, nullable/defaults, relacionamentos, RPCs e demais estruturas: sem divergências. Incorporado somente o bloco gerado de `daily_plan_items` e seu comentário de origem, preservando os demais tipos/aliases. Consulta remota READ ONLY confirmou RLS, três policies, grants restritos, ausência de DELETE/SELECT anon, FK composta, UNIQUE, índice e trigger invoker; as seis tabelas da candidata de progresso não existem no remoto. Nenhuma credencial foi adicionada ao código/documentação.
 
 Validação automatizada local: **118 unitários e 91 SQL/PGlite passaram**, além de lint, `tsc --noEmit`, build e diff-check. A execução SQL paralela excedeu memória ao concorrer com o build; repetida com sucesso com `node --test --test-concurrency=1 tests/db/*.test.mjs`, sem alterar arquitetura/configuração. Build com acesso à fonte externa; permanece o aviso preexistente cacheComponents/partialPrefetching. Esses resultados não substituem a validação no Supabase/navegador reais.
 
-**Validação real pendente:** aplicar somente a nova migration pelo fluxo habitual de migrations do projeto (a candidata de progresso não faz parte dela), reiniciar a aplicação e testar A/B, Hoje/Amanhã/data personalizada, duplicação, concluir/desfazer, data passada como pendência, reagendar, desativar Activity, duas abas com snapshot antigo, logout em outra aba e rede interrompida. Esperado: isolamento, persistência após refresh, conflito sem sobrescrita, rascunho preservado e nenhum falso sucesso. Regenerar tipos oficiais após aplicação remota; a extensão local de `Database` está identificada no arquivo de tipos.
+**Validação funcional real pendente:** reiniciar a aplicação e testar no computador A/B, Hoje/Amanhã/data personalizada, duplicação, concluir/desfazer, data passada como pendência, reagendar, desativar Activity, duas abas com snapshot antigo, logout em outra aba e rede interrompida. Esperado: isolamento, persistência após refresh, conflito sem sobrescrita, rascunho preservado e nenhum falso sucesso. A migration e os tipos oficiais já estão aplicados/adotados; verificações de catálogo não substituem esses testes de navegador.
 
 ### Mapa funcional atual do MVP
 
-Mapa atualizado em 22/10/2026 após a implementação local de Planejamento + Hoje, ainda sem validação remota dessa entrega. Navegação, tema e autenticação funcionam globalmente; busca/configurações globais e Projeto/Ideia no botão + permanecem desabilitados.
+Mapa atualizado em 22/10/2026 após implementação de Planejamento + Hoje, com migration remota aplicada e validação funcional de navegador ainda pendente. Navegação, tema e autenticação funcionam globalmente; busca/configurações globais e Projeto/Ideia no botão + permanecem desabilitados.
 
 | Tela | Visual e funcional hoje | Fictício/placeholder e ações sem efeito | Persistência necessária | Menor corte utilizável e reuso |
 |---|---|---|---|---|
-| Hoje | Leitura SSR real; planejados para hoje, concluídos da data, pendências, conclusão/desfazer e reagendamento | Demonstrações removidas; aguarda migration e validação real | daily_plan_items, migration local criada | Fluxo mínimo implementado com PlanningBoard, Card, Button e Input; falta validação remota |
-| Planejamento | Escolha de Activity real, Hoje/Amanhã/data, listagem, concluir/desfazer e reagendar | Placeholder removido; aguarda migration e validação real | Mesma daily_plan_items de Hoje | Fluxo mínimo implementado, reutiliza listActivities, repository/actions e PlanningBoard |
+| Hoje | Leitura SSR real; planejados para hoje, concluídos da data, pendências, conclusão/desfazer e reagendamento | Demonstrações removidas; aguarda validação funcional real | daily_plan_items aplicada no desenvolvimento | Fluxo mínimo implementado com PlanningBoard, Card, Button e Input; falta validação no navegador |
+| Planejamento | Escolha de Activity real, Hoje/Amanhã/data, listagem, concluir/desfazer e reagendar | Placeholder removido; aguarda validação funcional real | Mesma daily_plan_items de Hoje | Fluxo mínimo implementado, reutiliza listActivities, repository/actions e PlanningBoard |
 | Calendário | Rota e navegação funcionam | Somente “Página em construção”; nenhum botão específico | Reusar itens do planejamento; sem nova entidade exclusiva para o primeiro corte | Navegar mês/dia e consultar itens planejados reais, com acesso ao planejamento/detalhe. Reusar os mesmos dados, Card e Button; sem motor de recorrência |
 | Projetos | Rota e navegação funcionam; ProjectCard existe em Hoje | Página placeholder; Tarot/24% em Hoje é fictício. Iniciar sessão/Subtarefas não funcionam; criação global de projeto desabilitada | Projetos e tarefas com conclusão | Criar/editar projeto, adicionar tarefas, concluir tarefas e calcular percentual pelas tarefas. Reusar ProjectCard, Input, Card, Button e Checkbox; sem cronômetro ou sessões |
 | Banco Mestre | Lista, busca, filtros, detalhes, criação/edição e Áreas reais; nova ação Planejar em Activities ativas | Nenhum mock participa; Planejar aguarda validação real desta entrega | Cadastro preservado; vínculo em daily_plan_items | Cadastro já utilizável; nova navegação para Planejamento reutiliza BancoMestreList e sessão existentes |
@@ -39,7 +43,7 @@ Mapa atualizado em 22/10/2026 após a implementação local de Planejamento + Ho
 
 ### Ordem curta de implementação recomendada
 
-1. **Planejamento + Hoje implementados localmente:** `daily_plan_items`, repository/actions e telas, sem Occurrence ou engine. Próximo passo imediato: aplicar a migration e validar o fluxo real, sem antecipar Calendário.
+1. **Planejamento + Hoje implementados, migration aplicada:** `daily_plan_items`, repository/actions e telas, sem Occurrence ou engine. Próximo passo imediato: validar o fluxo real no desktop, sem antecipar Calendário.
 2. **Calendário simples:** mostrar os mesmos itens por mês/dia e navegar ao detalhe/planejamento. Reusar a persistência da primeira entrega, sem recorrência automática nem calendário completo.
 3. **Ideias:** notas persistidas, independentes dos demais módulos; corte menor que Projetos e útil imediatamente.
 4. **Projetos:** cadastro e tarefas com conclusão; percentual calculado a partir das tarefas, sem depender da arquitetura de progresso pausada.
@@ -114,7 +118,7 @@ Metas e recorrências permanecem separadas: uma meta 3x/semana não cria dias ou
 
 ## Etapa atual e próxima etapa
 
-**Status vigente em 22/10/2026: MVP utilizável.** Planejamento integrado a Hoje implementado localmente, aguardando migration/validação real. Calendário só após aprovação dessa validação. A trilha avançada V0.2.5 está pausada e preservada; as recomendações de progresso abaixo registram o planejamento anterior, superado por esta prioridade.
+**Status vigente em 22/10/2026: MVP utilizável, desktop primeiro.** Planejamento integrado a Hoje com migration aplicada no desenvolvimento e tipos oficiais adotados; falta validação funcional no navegador. Calendário só após aprovação dessa validação. A trilha avançada V0.2.5 está pausada e preservada; as recomendações de progresso abaixo registram o planejamento anterior, superado por esta prioridade.
 
 **V0.2.4 concluída — Gestão real de Áreas, incluindo primeiro uso sem preparação manual.**
 

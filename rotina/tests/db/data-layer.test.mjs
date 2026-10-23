@@ -54,7 +54,7 @@ before(async()=>{
 beforeEach(async()=>{await db.exec('rollback');await user();});
 after(async()=>{await db.close();});
 
-test('Official Database plus local MVP extension matches columns, defaults, nullable fields and public FKs',async()=>{
+test('Official Database matches columns, defaults, nullable fields and public FKs',async()=>{
   const source=ts.createSourceFile('database.types.ts',await readFile('lib/banco-mestre/data/database.types.ts','utf8'),ts.ScriptTarget.Latest,true);
   const dbtype=source.statements.find(n=>ts.isTypeAliasDeclaration(n)&&n.name.text==='Database').type;
   const property=(node,name)=>node.members.find(m=>m.name.getText(source)===name)?.type;
