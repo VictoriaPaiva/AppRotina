@@ -10,7 +10,9 @@ export function pgliteClient(db,tables) {
         select(value){columns=value.split(',').map(ident).join(',');return query;},
         insert(value){operation='insert';payload=value;return query;},
         update(value){operation='update';payload=value;return query;},
-        eq(key,value){filters.push([ident(key),value]);return query;},
+        eq(key,value){filters.push([ident(key),'=',value]);return query;},
+        lt(key,value){filters.push([ident(key),'<',value]);return query;},
+        is(key,value){assert.equal(value,null);filters.push([ident(key),'is',null]);return query;},
         order(key,{ascending=true}={}){orders.push(ident(key)+(ascending?' asc':' desc'));return query;},
         range(start,end){offset=start;count=end-start+1;return query;},
         limit(value){count=value;return query;},
@@ -25,7 +27,7 @@ export function pgliteClient(db,tables) {
               sql=`insert into public.${table} (${keys.join(',')}) values (${keys.map(k=>param(payload[k])).join(',')})`;
             } else if(operation==='update') sql=`update public.${table} set ${Object.entries(payload).map(([k,v])=>ident(k)+'='+param(v)).join(',')}`;
             else sql=`select ${columns} from public.${table}`;
-            if(filters.length) sql+=' where '+filters.map(([k,v])=>k+'='+param(v)).join(' and ');
+            if(filters.length) sql+=' where '+filters.map(([k,op,v])=>op==='is'?k+' is null':k+op+param(v)).join(' and ');
             if(operation!=='select') sql+=' returning '+columns;
             else {
               if(orders.length)sql+=' order by '+orders.join(',');

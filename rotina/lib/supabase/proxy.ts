@@ -7,12 +7,13 @@ import { requiresSession } from '@/lib/auth/policy';
 export async function updateSession(request: NextRequest) {
   let response=NextResponse.next({request});
   const protectedRoute=requiresSession(request.nextUrl.pathname);
-  // Only the explicit Banco Mestre action routes may handle missing sessions
+  // Only the explicit action routes may handle missing sessions
   // themselves. Next validates the action ID and Origin; the header is NOT auth.
   // Ordinary navigation/POSTs keep the redirect policy, including spoofed GETs.
   const authenticatedActionRequest=request.method==='POST'
     && Boolean(request.headers.get('next-action')?.trim())
     && (request.nextUrl.pathname==='/banco-mestre/areas'
+      || request.nextUrl.pathname==='/planejamento' || request.nextUrl.pathname==='/hoje'
       || /^\/banco-mestre\/(?:nova|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/editar)$/i.test(request.nextUrl.pathname));
   const config=getSupabasePublicConfig();
   function loginRedirect() {

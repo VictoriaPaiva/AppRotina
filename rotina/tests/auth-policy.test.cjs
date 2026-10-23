@@ -68,6 +68,17 @@ test('proxy falha fechado sem configuração, sessão expirada ou falha de auten
   assert.equal((await proxyHarness()('/financas')).location,'http://localhost:3000/auth/login');
   assert.equal((await proxyHarness({sub:'verified-user'})('/financas')).location,undefined);
 });
+
+test('planning actions reach server authentication after logout only on exact POST routes',async()=>{
+  const proxy=proxyHarness();
+  for(const route of ['/hoje','/planejamento']) {
+    assert.equal((await proxy(route)).location,'http://localhost:3000/auth/login');
+    assert.equal((await proxy(route,{method:'GET',headers:{'next-action':'test-action'}})).location,'http://localhost:3000/auth/login');
+    assert.equal((await proxy(route,{method:'POST'})).location,'http://localhost:3000/auth/login');
+    assert.equal((await proxy(route,{method:'POST',headers:{'next-action':'test-action'}})).location,undefined);
+  }
+  for(const route of ['/calendario','/financas','/planejamento/other','/hoje/other'])assert.equal((await proxy(route,{method:'POST',headers:{'next-action':'test-action'}})).location,'http://localhost:3000/auth/login');
+});
 test('redirect de sessão expirada preserva cookies e headers de renovação',async()=>{
   const response=await proxyHarness({refresh:true})('/ideias');
   assert.equal(response.cookies.getAll()[0].name,'session-test');
@@ -87,7 +98,7 @@ test('only explicit POST Banco Mestre Server Actions defer session denial to the
         assert.equal((await proxy(route,options)).location,'http://localhost:3000/auth/login');
       }
     }
-    for(const route of ['/hoje','/projetos','/banco-mestre','/banco-mestre/areas-publico','/banco-mestre/areas/outra','/banco-mestre/11111111-1111-4111-8111-111111111111']) {
+    for(const route of ['/calendario','/projetos','/banco-mestre','/banco-mestre/areas-publico','/banco-mestre/areas/outra','/banco-mestre/11111111-1111-4111-8111-111111111111']) {
       assert.equal((await proxy(route,{method:'POST',headers:{'Next-Action':'spoofed'}})).location,'http://localhost:3000/auth/login');
     }
   }

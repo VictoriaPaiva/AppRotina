@@ -41,7 +41,7 @@ test('server action requires verified session and invalidates list/detail only a
   const bundle=fixture('academia');
   const denied=actionHarness({sub:null});assert.equal((await denied.saveMasterActivity({mode:'create',bundle})).kind,'Unauthorized');assert.deepEqual(denied.calls,['auth']);assert.deepEqual(denied.invalidated,[]);
   const conflict=actionHarness({code:'PT409'});assert.equal((await conflict.saveMasterActivity({mode:'edit',bundle,expectedRevision:3})).kind,'Conflict');assert.deepEqual(conflict.invalidated,[]);
-  const valid=actionHarness();const result=await valid.saveMasterActivity({mode:'create',bundle});assert.equal(result.ok,true);assert.deepEqual(valid.calls,['auth',['save',undefined]]);assert.deepEqual(valid.invalidated,['/banco-mestre','/banco-mestre/'+bundle.activity.id]);
+  const valid=actionHarness();const result=await valid.saveMasterActivity({mode:'create',bundle});assert.equal(result.ok,true);assert.deepEqual(valid.calls,['auth',['save',undefined]]);assert.deepEqual(valid.invalidated,['/banco-mestre','/banco-mestre/'+bundle.activity.id,'/planejamento','/hoje']);
   assert.deepEqual(Object.keys(result).sort(),['activityId','ok','revision']);
 });
 test('new/edit pages load real areas and preserve the aggregate revision for the existing form',async()=>{

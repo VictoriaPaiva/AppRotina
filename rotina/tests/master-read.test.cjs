@@ -62,7 +62,9 @@ const renderList=(activities=[],areas=[],error)=>renderToStaticMarkup(React.crea
 test('existing list renders real summary without config, genuine empty and safe errors',()=>{
   const b=fixture('trabalho');const {config:ignored,...activity}=b.activity;void ignored;
   const html=renderList([activity],[{id:activity.areaId,name:'Remote area',active:true}]);
-  assert(html.includes(activity.name));assert(html.includes('Remote area'));assert(html.includes('/banco-mestre/'+activity.id));assert(html.includes('/banco-mestre/nova'));assert(!html.includes('Dados locais'));
+    assert(html.includes(activity.name));assert(html.includes('Remote area'));assert(html.includes('/banco-mestre/'+activity.id));assert(html.includes('/banco-mestre/nova'));assert(!html.includes('Dados locais'));
+    assert(html.includes('/planejamento?activity='+activity.id));
+    assert(!renderList([{...activity,status:'inactive'}],[{id:activity.areaId,name:'Remote area',active:true}]).includes('/planejamento?activity='));
   assert(renderList().includes('Seu Banco Mestre está vazio'));
   const failed=renderList([],[],{status:'error',kind:'Unauthorized',message:'Entre na sua conta.'});assert(failed.includes('/auth/login'));assert(!failed.includes('está vazio'));
   const network=renderList([],[],{status:'error',kind:'Unknown',message:'Não foi possível concluir a operação.'});assert(network.includes('role="alert"'));assert(network.includes('Tentar novamente'));assert(!network.includes('está vazio'));

@@ -54,14 +54,14 @@ before(async()=>{
 beforeEach(async()=>{await db.exec('rollback');await user();});
 after(async()=>{await db.close();});
 
-test('Official Database matches columns, defaults, nullable fields and public FKs',async()=>{
+test('Official Database plus local MVP extension matches columns, defaults, nullable fields and public FKs',async()=>{
   const source=ts.createSourceFile('database.types.ts',await readFile('lib/banco-mestre/data/database.types.ts','utf8'),ts.ScriptTarget.Latest,true);
   const dbtype=source.statements.find(n=>ts.isTypeAliasDeclaration(n)&&n.name.text==='Database').type;
   const property=(node,name)=>node.members.find(m=>m.name.getText(source)===name)?.type;
   const literal=n=>ts.isLiteralTypeNode(n)?n.literal.text??(n.literal.kind===ts.SyntaxKind.TrueKeyword):null;
   const schema=property(dbtype,'public');
   const tables=property(schema,'Tables').members;
-  assert.deepEqual(tables.map(t=>t.name.getText(source)).sort(),['activities','areas','commitment_configs','fixed_schedules','goals','planning_contexts','recurrence_rules','reminder_configs','time_windows']);
+  assert.deepEqual(tables.map(t=>t.name.getText(source)).sort(),['activities','areas','commitment_configs','daily_plan_items','fixed_schedules','goals','planning_contexts','recurrence_rules','reminder_configs','time_windows']);
   const sorted=rows=>rows.sort((a,b)=>a.conname.localeCompare(b.conname));
   for(const table of tables) {
     const name=table.name.getText(source);

@@ -120,6 +120,7 @@ export function BancoMestreList({error}:{error?:ReadFailure}) {
                     <CardFooter className="px-5 pb-5">
 
                       <Button asChild variant="outline" className="rounded-xl"><Link href={'/banco-mestre/' + activity.id} aria-label={'Ver detalhes de ' + activity.name}>Ver detalhes</Link></Button>
+                      {activity.status === 'active' && <Button asChild className="ml-2 rounded-xl"><Link href={'/planejamento?activity=' + activity.id} aria-label={'Planejar ' + activity.name}>Planejar</Link></Button>}
                     </CardFooter>
                   </Card>
                 </article>

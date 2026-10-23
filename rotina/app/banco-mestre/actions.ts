@@ -17,6 +17,8 @@ export async function saveMasterActivity(input:unknown):Promise<SaveActivityResu
   if(result.ok) {
     revalidatePath('/banco-mestre');
     revalidatePath('/banco-mestre/'+result.activityId);
+    revalidatePath('/planejamento');
+    revalidatePath('/hoje');
   }
   return result;
 }
