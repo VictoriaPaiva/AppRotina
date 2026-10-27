@@ -109,3 +109,17 @@ test('not found is safe; malformed dates, ownership and audit fields never enter
   for(const extra of [{user_id:B},{completed_at:'2026-10-22T00:00:00Z'},{updated_at:'x'},{plannedDate:'2026-02-30'},{id:'bad'}])await assert.rejects(()=>repo.create({id:randomUUID(),activityId:randomUUID(),plannedDate:'2026-10-22',...extra}),kind('Validation'));
   assert(!('delete' in repo));assert(!('rpc' in client && Object.keys(repo).includes('rpc')));
 });
+
+test('calendar interval includes boundaries, completed/inactive history, empty month and A/B isolation',async()=>{
+  await user(A);
+  const a=await activity(), p=await create(a.id,'2029-02-01'), end=await create(a.id,'2029-02-28');
+  await create(a.id,'2029-03-01');
+  await repo.setCompleted({id:end.id,expected:planSnapshot(end),completed:true});
+  await db.query("update activities set status='inactive' where id=$1",[a.id]);
+  const rows=await repo.listByRange('2029-02-01','2029-02-28');
+  assert.deepEqual(rows.map(i=>i.id),[p.id,end.id]);assert.equal(rows[0].completedAt,null);assert(rows[1].completedAt);
+  assert.deepEqual(await repo.listByRange('2029-01-01','2029-01-31'),[]);
+  await assert.rejects(()=>repo.listByRange('2029-03-01','2029-02-01'),kind('Validation'));
+  await user(B);assert.deepEqual(await createPlanRepository(client,B).listByRange('2029-02-01','2029-02-28'),[]);
+  await user(A);
+});

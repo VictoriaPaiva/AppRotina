@@ -71,13 +71,13 @@ test('proxy falha fechado sem configuração, sessão expirada ou falha de auten
 
 test('planning actions reach server authentication after logout only on exact POST routes',async()=>{
   const proxy=proxyHarness();
-  for(const route of ['/hoje','/planejamento']) {
+  for(const route of ['/hoje','/planejamento','/financas']) {
     assert.equal((await proxy(route)).location,'http://localhost:3000/auth/login');
     assert.equal((await proxy(route,{method:'GET',headers:{'next-action':'test-action'}})).location,'http://localhost:3000/auth/login');
     assert.equal((await proxy(route,{method:'POST'})).location,'http://localhost:3000/auth/login');
     assert.equal((await proxy(route,{method:'POST',headers:{'next-action':'test-action'}})).location,undefined);
   }
-  for(const route of ['/calendario','/financas','/planejamento/other','/hoje/other'])assert.equal((await proxy(route,{method:'POST',headers:{'next-action':'test-action'}})).location,'http://localhost:3000/auth/login');
+  for(const route of ['/calendario','/financas/contas/other','/planejamento/other','/hoje/other'])assert.equal((await proxy(route,{method:'POST',headers:{'next-action':'test-action'}})).location,'http://localhost:3000/auth/login');
 });
 test('redirect de sessão expirada preserva cookies e headers de renovação',async()=>{
   const response=await proxyHarness({refresh:true})('/ideias');
@@ -87,11 +87,11 @@ test('redirect de sessão expirada preserva cookies e headers de renovação',as
   assert.equal(response.headers.get('cache-control'),'private, no-store');
 });
 
-test('only explicit POST Banco Mestre Server Actions defer session denial to the authenticated action',async()=>{
+test('only explicit POST editor Server Actions defer session denial to the authenticated action',async()=>{
   const edit='/banco-mestre/11111111-1111-4111-8111-111111111111/editar';
   for(const settings of [{},{error:{code:'expired'}},{throws:true}]) {
     const proxy=proxyHarness(settings);
-    for(const route of [edit,'/banco-mestre/nova','/banco-mestre/areas']) {
+    for(const route of ['/financas','/financas/contas/nova','/financas/contas/11111111-1111-4111-8111-111111111111','/financas/nova','/financas/11111111-1111-4111-8111-111111111111',edit,'/banco-mestre/nova','/banco-mestre/areas','/projetos/nova','/projetos/11111111-1111-4111-8111-111111111111','/ideias/nova','/ideias/11111111-1111-4111-8111-111111111111']) {
       const response=await proxy(route,{method:'POST',headers:{'Next-Action':'test-action'}});
       assert.equal(response.location,undefined);assert.equal(response.headers.get('cache-control'),'private, no-store');
       for(const options of [{},{method:'POST'},{method:'GET',headers:{'Next-Action':'test-action'}},{method:'POST',headers:{'Next-Action':' '}},{method:'PUT',headers:{'Next-Action':'test-action'}}]) {

@@ -74,7 +74,7 @@ export function UpdatePasswordForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading || !hasEnvVars}>
                 {isLoading ? "Salvando…" : "Salvar nova senha"}
               </Button>

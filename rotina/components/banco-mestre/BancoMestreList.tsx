@@ -117,10 +117,10 @@ export function BancoMestreList({error}:{error?:ReadFailure}) {
                         {activity.duration.mode !== 'unknown' && activity.type !== 'checklistGoal' && <div><dt className="font-medium">Duração</dt><dd className="mt-1 text-muted-foreground">{formatDuration(activity.duration)}</dd></div>}
                       </dl>
                     </CardContent>
-                    <CardFooter className="px-5 pb-5">
+                    <CardFooter className="flex flex-wrap gap-2 px-5 pb-5">
 
                       <Button asChild variant="outline" className="rounded-xl"><Link href={'/banco-mestre/' + activity.id} aria-label={'Ver detalhes de ' + activity.name}>Ver detalhes</Link></Button>
-                      {activity.status === 'active' && <Button asChild className="ml-2 rounded-xl"><Link href={'/planejamento?activity=' + activity.id} aria-label={'Planejar ' + activity.name}>Planejar</Link></Button>}
+                      {activity.status === 'active' && <Button asChild className="rounded-xl"><Link href={'/planejamento?activity=' + activity.id} aria-label={'Planejar ' + activity.name}>Planejar</Link></Button>}
                     </CardFooter>
                   </Card>
                 </article>

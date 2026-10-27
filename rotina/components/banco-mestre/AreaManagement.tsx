@@ -24,7 +24,7 @@ function MutationError({error}:{error:Failure|null}) {
   return <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm">
     <p>{error.kind==='Conflict'?'Esta área foi alterada em outra sessão ou a tentativa de criação já foi registrada.':error.message}</p>
     <p>O que você digitou foi mantido neste formulário.</p>
-    {error.kind==='Unauthorized' && <Button asChild variant="outline"><Link href="/auth/login">Entrar novamente</Link></Button>}
+    {error.kind==='Unauthorized' && <Button asChild variant="outline"><Link href="/auth/login" target="_blank" rel="noopener noreferrer">Entrar novamente em outra aba</Link></Button>}
     {error.kind==='Conflict' && <><p>Confira os dados mais recentes antes de continuar. Não houve tentativa de sobrescrita automática.</p><Button type="button" variant="outline" onClick={()=>{if(window.confirm('Recarregar a página descartará os rascunhos desta tela. Continuar?'))window.location.reload();}}>Recarregar áreas</Button></>}
     {error.kind==='Unknown' && <p>Confira a lista antes de tentar novamente: a resposta pode ter sido interrompida após o salvamento.</p>}
   </div>;

@@ -34,7 +34,7 @@ test('civil dates use explicit MVP timezone and handle month/year boundaries wit
 test('actions validate strict inputs, verify claims and only then construct owner-scoped repository',async()=>{
   const h=actionHarness();assert.deepEqual(await h.actions.createDailyPlan(create),{ok:true});
   assert.deepEqual(h.calls,[{method:'create',input:create}]);assert.equal(h.auth(),1);
-  assert.deepEqual(h.invalidations,['/planejamento','/hoje']);
+  assert.deepEqual(h.invalidations,['/planejamento','/hoje','/calendario']);
   for(const extra of [{user_id:A},{completed_at:'x'},{updated_at:'x'},{id:'invalid'},{plannedDate:'2026-02-30'}])assert.equal((await h.actions.createDailyPlan({...create,...extra})).kind,'Validation');
   assert.equal(h.clients(),1);assert.deepEqual(Object.keys(h.actions).sort(),['createDailyPlan','rescheduleDailyPlan','setDailyPlanCompleted']);
 });

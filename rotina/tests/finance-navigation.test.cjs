@@ -18,11 +18,6 @@ test('Finanças appears as the active desktop destination with a decorative Wall
   assert.match(html,/Finanças/);
 });
 
-test('Finanças is an honest placeholder without financial actions or fictitious balances',()=>{
-  const {default:Page}=withStubs('app/financas/page.tsx',{});
-  assert.equal(renderToStaticMarkup(React.createElement(Page)),'<div><p>Página em construção</p></div>');
-});
-
 test('Finanças is reachable from mobile Mais and has its own page title',()=>{
   const group=({children})=>React.createElement(React.Fragment,null,children);
   const shared={

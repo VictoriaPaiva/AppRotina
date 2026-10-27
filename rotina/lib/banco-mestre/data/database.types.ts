@@ -1,5 +1,9 @@
 /** Generated with Supabase CLI 2.120.0: gen types typescript --linked --schema public.
  * daily_plan_items regenerated from the linked development schema on 2026-10-22.
+ * ideas mirrored from migration 20261026000100; checked against PostgreSQL by data-layer tests.
+ * projects/project_tasks mirrored from migration 20261027000100; checked by SQL tests.
+ * financial_transactions mirrored from migration 20261027000200; checked by SQL tests.
+ * fixed_expenses/months and linked transactions mirrored from 20261027000300.
  * All public schema contracts compared; compatibility aliases appended at the end.
  * Numeric transport validation remains in mapper/validation.
  */
@@ -19,6 +23,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      fixed_expenses: {
+        Row: { id: string; user_id: string; name: string; due_day: number; category: string; created_at: string; updated_at: string; default_amount_cents: number; active: boolean; starts_on: string }
+        Insert: { id?: string; user_id: string; name: string; due_day: number; category?: string; created_at?: string; updated_at?: string; default_amount_cents: number; active?: boolean; starts_on: string }
+        Update: { id?: string; user_id?: string; name?: string; due_day?: number; category?: string; created_at?: string; updated_at?: string; default_amount_cents?: number; active?: boolean; starts_on?: string }
+        Relationships: []
+      }
+      fixed_expense_months: {
+        Row: { id: string; user_id: string; name: string; due_day: number; category: string; created_at: string; updated_at: string; fixed_expense_id: string; reference_month: string; amount_cents: number; paid_at: string | null; financial_transaction_id: string | null }
+        Insert: { id?: string; user_id: string; name: string; due_day: number; category: string; created_at?: string; updated_at?: string; fixed_expense_id: string; reference_month: string; amount_cents: number; paid_at?: string | null; financial_transaction_id?: string | null }
+        Update: { id?: string; user_id?: string; name?: string; due_day?: number; category?: string; created_at?: string; updated_at?: string; fixed_expense_id?: string; reference_month?: string; amount_cents?: number; paid_at?: string | null; financial_transaction_id?: string | null }
+        Relationships: [{ foreignKeyName: "fixed_expense_months_owner_expense_fkey"; columns: ["user_id", "fixed_expense_id"]; isOneToOne: false; referencedRelation: "fixed_expenses"; referencedColumns: ["user_id", "id"] }, { foreignKeyName: "fixed_expense_months_owner_transaction_fkey"; columns: ["user_id", "financial_transaction_id"]; isOneToOne: false; referencedRelation: "financial_transactions"; referencedColumns: ["user_id", "id"] }]
+      }
+
+      financial_transactions: {
+        Row: { fixed_expense_month_id: string | null; id: string; user_id: string; type: string; date: string; amount_cents: number; description: string; category: string; created_at: string; updated_at: string }
+        Insert: { fixed_expense_month_id?: string | null; id?: string; user_id: string; type: string; date: string; amount_cents: number; description: string; category: string; created_at?: string; updated_at?: string }
+        Update: { fixed_expense_month_id?: string | null; id?: string; user_id?: string; type?: string; date?: string; amount_cents?: number; description?: string; category?: string; created_at?: string; updated_at?: string }
+        Relationships: [{ foreignKeyName: "financial_transactions_owner_bill_fkey"; columns: ["user_id", "fixed_expense_month_id"]; isOneToOne: false; referencedRelation: "fixed_expense_months"; referencedColumns: ["user_id", "id"] }]
+      }
+      projects: {
+        Row: { id: string; user_id: string; title: string; description: string; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; title: string; description?: string; created_at?: string; updated_at?: string }
+        Update: { id?: string; user_id?: string; title?: string; description?: string; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      project_tasks: {
+        Row: { id: string; user_id: string; project_id: string; title: string; completed_at: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; project_id: string; title: string; completed_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; user_id?: string; project_id?: string; title?: string; completed_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [{ foreignKeyName: "project_tasks_owner_project_fkey"; columns: ["user_id", "project_id"]; isOneToOne: false; referencedRelation: "projects"; referencedColumns: ["user_id", "id"] }]
+      }
+
+      ideas: {
+        Row: { id: string; user_id: string; title: string; content: string; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; title: string; content?: string; created_at?: string; updated_at?: string }
+        Update: { id?: string; user_id?: string; title?: string; content?: string; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
       daily_plan_items: {
         Row: {
           activity_id: string
@@ -520,6 +562,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      initialize_fixed_expense_month: { Args: { p_reference_month: string }; Returns: number }
+      save_fixed_expense: { Args: { p_id: string; p_name: string; p_default_amount_cents: number; p_due_day: number; p_category: string; p_active: boolean; p_expected_updated_at?: string }; Returns: Json }
+      save_fixed_expense_month: { Args: { p_id: string; p_amount_cents: number; p_paid: boolean; p_expected_updated_at: string }; Returns: Json }
       get_activity_aggregate: { Args: { p_activity_id: string }; Returns: Json }
       save_activity_aggregate: {
         Args: {

@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Link from 'next/link';
 
 export default function Page() {
   return (
@@ -22,6 +23,7 @@ export default function Page() {
               <p className="text-sm text-muted-foreground">
                 Enviamos um link de confirmação para seu e-mail. Confirme sua conta antes de entrar.
               </p>
+              <Link className="mt-4 block text-sm underline" href="/auth/login">Voltar para entrar</Link>
             </CardContent>
           </Card>
         </div>

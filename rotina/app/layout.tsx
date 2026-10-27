@@ -43,7 +43,7 @@ export default function RootLayout({
           <div className="flex min-h-screen">
             <Suspense fallback={<div aria-hidden="true" className="hidden min-h-screen w-64 shrink-0 border-r bg-surface md:block" />}><Sidebar /></Suspense>
 
-            <main className="min-w-0 flex-1 pb-20 md:pb-0">
+            <main className="min-w-0 flex-1 pb-40 md:pb-24">
               <Suspense fallback={<div aria-hidden="true" className="h-16 border-b bg-surface" />}><TopBar /></Suspense>
               <div className="mx-auto max-w-7xl p-4 md:p-8">
                 {children}

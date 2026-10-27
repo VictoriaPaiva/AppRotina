@@ -1,0 +1,109 @@
+﻿import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/banco-mestre/data/database.types';
+import { PersistenceError, toPersistenceError } from '@/lib/banco-mestre/data/errors';
+import { fail, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
+import type { Project, ProjectTask, ProjectRepository } from './contracts';
+import { createProjectInput, updateProjectInput, projectText, PROJECT_TITLE_LIMIT, PROJECT_DESCRIPTION_LIMIT } from './validation';
+import { createTaskInput, updateTaskInput } from './validation';
+const COLUMNS = 'id,user_id,title,description,created_at,updated_at';
+const TASK_COLUMNS = 'id,user_id,project_id,title,completed_at,created_at,updated_at';
+export function createProjectRepository(client: Pick<SupabaseClient<Database>, 'from'>, verifiedUserId: string): ProjectRepository {
+  const owner = uuid(verifiedUserId, 'owner');
+  async function operation<T>(fn: () => Promise<T>): Promise<T> {
+    try { return await fn(); } catch (error) {
+      if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') throw new PersistenceError('Conflict', error);
+      throw toPersistenceError(error);
+    }
+  }
+  function rows(data: unknown): Project[] {
+    if (!Array.isArray(data)) fail('projects.response');
+    return data.map(value => {
+      const v = record(value, 'project');
+      if (uuid(v.user_id) !== owner) fail('project.owner');
+      return {id: uuid(v.id), title: projectText(v.title, 'title', PROJECT_TITLE_LIMIT, true), description: projectText(v.description, 'description', PROJECT_DESCRIPTION_LIMIT),
+        createdAt: timestamp(v.created_at, 'createdAt'), updatedAt: timestamp(v.updated_at, 'updatedAt')};
+    });
+  }
+  async function get(id: string): Promise<Project> {
+    const {data, error} = await client.from('projects').select(COLUMNS).eq('user_id', owner).eq('id', uuid(id)).limit(1);
+    if (error) throw error;
+    const result = rows(data);
+    if (!result.length) throw new PersistenceError('NotFound');
+    return result[0];
+  }
+  function taskRows(data: unknown): ProjectTask[] {
+    if (!Array.isArray(data)) fail('tasks.response');
+    return data.map(value => {
+      const v = record(value, 'task');
+      if (uuid(v.user_id) !== owner) fail('task.owner');
+      return {id: uuid(v.id), projectId: uuid(v.project_id), title: projectText(v.title, 'title', PROJECT_TITLE_LIMIT, true),
+        completedAt: v.completed_at === null ? null : timestamp(v.completed_at, 'completedAt'),
+        createdAt: timestamp(v.created_at, 'createdAt'), updatedAt: timestamp(v.updated_at, 'updatedAt')};
+    });
+  }
+  return {
+    tasks: projectId => operation(async () => {
+      const result: ProjectTask[] = [];
+      for (let offset = 0;; offset += 500) {
+        let query = client.from('project_tasks').select(TASK_COLUMNS).eq('user_id', owner);
+        if (projectId !== undefined) query = query.eq('project_id', uuid(projectId));
+        const {data, error} = await query.order('created_at').order('id').range(offset, offset + 499);
+        if (error) throw error;
+        const page = taskRows(data); result.push(...page);
+        if (page.length < 500) return result;
+      }
+    }),
+    createTask: input => operation(async () => {
+      const v = createTaskInput(input);
+      await get(v.projectId);
+      const {data, error} = await client.from('project_tasks').insert({id: v.id, user_id: owner, project_id: v.projectId, title: v.title}).select(TASK_COLUMNS);
+      if (error) throw error;
+      const result = taskRows(data);
+      if (result.length !== 1 || result[0].id !== v.id || result[0].projectId !== v.projectId) fail('task.create');
+      return result[0];
+    }),
+    updateTask: input => operation(async () => {
+      const v = updateTaskInput(input);
+      // Non-null is a completion request; the trigger assigns the actual database time.
+      const {data, error} = await client.from('project_tasks').update({title: v.title, completed_at: v.completed ? '2000-01-01T00:00:00Z' : null})
+        .eq('user_id', owner).eq('project_id', v.projectId).eq('id', v.id).eq('updated_at', v.expectedUpdatedAt).select(TASK_COLUMNS);
+      if (error) throw error;
+      const result = taskRows(data);
+      if (result.length === 1) return result[0];
+      if (result.length !== 0) fail('task.update');
+      const current = await client.from('project_tasks').select(TASK_COLUMNS).eq('user_id', owner).eq('project_id', v.projectId).eq('id', v.id).limit(1);
+      if (current.error) throw current.error;
+      throw new PersistenceError(taskRows(current.data).length ? 'Conflict' : 'NotFound');
+    }),
+    list: () => operation(async () => {
+      const result: Project[] = [];
+      for (let offset = 0;; offset += 500) {
+        const {data, error} = await client.from('projects').select(COLUMNS).eq('user_id', owner)
+          .order('created_at', {ascending: false}).order('id').range(offset, offset + 499);
+        if (error) throw error;
+        const page = rows(data); result.push(...page);
+        if (page.length < 500) return result;
+      }
+    }),
+    get: id => operation(() => get(id)),
+    create: input => operation(async () => {
+      const v = createProjectInput(input);
+      const {data, error} = await client.from('projects').insert({id: v.id, user_id: owner, title: v.title, description: v.description}).select(COLUMNS);
+      if (error) throw error;
+      const result = rows(data);
+      if (result.length !== 1 || result[0].id !== v.id) fail('projects.create');
+      return result[0];
+    }),
+    update: input => operation(async () => {
+      const v = updateProjectInput(input);
+      const {data, error} = await client.from('projects').update({title: v.title, description: v.description})
+        .eq('id', v.id).eq('user_id', owner).eq('updated_at', v.expectedUpdatedAt).select(COLUMNS);
+      if (error) throw error;
+      const result = rows(data);
+      if (result.length === 1) return result[0];
+      if (result.length !== 0) fail('projects.update');
+      await get(v.id);
+      throw new PersistenceError('Conflict');
+    }),
+  };
+}

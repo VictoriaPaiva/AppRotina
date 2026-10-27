@@ -13,7 +13,7 @@ async function mutate<T>(input: unknown, validate: (input: unknown) => T, save: 
     const {data, error} = await client.auth.getClaims();
     if (error || !data?.claims?.sub) throw new PersistenceError('Unauthorized');
     await save(createPlanRepository(client, data.claims.sub), value);
-    revalidatePath('/planejamento'); revalidatePath('/hoje');
+    revalidatePath('/planejamento'); revalidatePath('/hoje'); revalidatePath('/calendario');
     return {ok: true};
   } catch (error) {
     const failure = readFailure(error);

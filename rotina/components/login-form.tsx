@@ -96,7 +96,7 @@ export function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading || !hasEnvVars}>
                 {isLoading ? "Entrando…" : "Entrar"}
               </Button>

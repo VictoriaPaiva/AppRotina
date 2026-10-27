@@ -49,7 +49,7 @@ export function PlanningBoard({data, todayMode = false, initialActivityId = ''}:
   }
   function renderItem(item: PlanViewItem) {
     return <li key={item.id}><Card><CardContent className="space-y-3 p-4">
-      <div><Link className="font-medium underline" href={'/banco-mestre/' + item.activityId}>{item.name}</Link>
+      <div className="min-w-0 break-words"><Link className="font-medium underline" href={'/banco-mestre/' + item.activityId}>{item.name}</Link>
         <p className="text-sm text-muted-foreground">Planejado para {formatPlanDate(item.plannedDate)}{!item.active && ' · Atividade inativa no Banco Mestre'}</p></div>
       <Button type="button" variant="outline" disabled={disabled} onClick={() => void run(() => setDailyPlanCompleted({id: item.id, expected: planSnapshot(item), completed: item.completedAt === null}))}>
         {item.completedAt === null ? 'Concluir' : 'Desfazer conclusão'}

@@ -12,7 +12,10 @@ export async function updateSession(request: NextRequest) {
   // Ordinary navigation/POSTs keep the redirect policy, including spoofed GETs.
   const authenticatedActionRequest=request.method==='POST'
     && Boolean(request.headers.get('next-action')?.trim())
-    && (request.nextUrl.pathname==='/banco-mestre/areas'
+    && (request.nextUrl.pathname==='/financas'
+      || /^\/financas\/contas\/(?:nova|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(request.nextUrl.pathname)
+      || request.nextUrl.pathname==='/banco-mestre/areas'
+      || /^\/(?:projetos|ideias|financas)\/(?:nova|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(request.nextUrl.pathname)
       || request.nextUrl.pathname==='/planejamento' || request.nextUrl.pathname==='/hoje'
       || /^\/banco-mestre\/(?:nova|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/editar)$/i.test(request.nextUrl.pathname));
   const config=getSupabasePublicConfig();

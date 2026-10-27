@@ -61,7 +61,7 @@ test('Official Database matches columns, defaults, nullable fields and public FK
   const literal=n=>ts.isLiteralTypeNode(n)?n.literal.text??(n.literal.kind===ts.SyntaxKind.TrueKeyword):null;
   const schema=property(dbtype,'public');
   const tables=property(schema,'Tables').members;
-  assert.deepEqual(tables.map(t=>t.name.getText(source)).sort(),['activities','areas','commitment_configs','daily_plan_items','fixed_schedules','goals','planning_contexts','recurrence_rules','reminder_configs','time_windows']);
+  assert.deepEqual(tables.map(t=>t.name.getText(source)).sort(),['activities','areas','commitment_configs','daily_plan_items','financial_transactions','fixed_expense_months','fixed_expenses','fixed_schedules','goals','ideas','planning_contexts','project_tasks','projects','recurrence_rules','reminder_configs','time_windows']);
   const sorted=rows=>rows.sort((a,b)=>a.conname.localeCompare(b.conname));
   for(const table of tables) {
     const name=table.name.getText(source);
@@ -92,15 +92,15 @@ test('Official Database matches columns, defaults, nullable fields and public FK
     assert.deepEqual(ownerFk,[{conname:name+'_user_id_fkey'}]);
   }
   const functions=property(schema,'Functions').members;
-  assert.deepEqual(functions.map(f=>f.name.getText(source)).sort(),['get_activity_aggregate','save_activity_aggregate']);
+  assert.deepEqual(functions.map(f=>f.name.getText(source)).sort(),['get_activity_aggregate','initialize_fixed_expense_month','save_activity_aggregate','save_fixed_expense','save_fixed_expense_month']);
   for(const fn of functions) {
     const name=fn.name.getText(source),args=property(fn.type,'Args').members;
     const sql=(await db.query("select proargnames,pronargs,pronargdefaults,pg_get_function_result(oid) result from pg_proc where pronamespace='public'::regnamespace and proname=$1",[name])).rows;
-    assert.equal(sql.length,1);assert.equal(sql[0].result,'jsonb');
-    assert.equal(property(fn.type,'Returns').getText(source),'Json');
+    assert.equal(sql.length,1);assert.equal(sql[0].result,name==='initialize_fixed_expense_month'?'integer':'jsonb');
+    assert.equal(property(fn.type,'Returns').getText(source),name==='initialize_fixed_expense_month'?'number':'Json');
     assert.deepEqual(args.map(a=>a.name.getText(source)).sort(),[...sql[0].proargnames].sort());
     assert.equal(args.filter(a=>!a.questionToken).length,sql[0].pronargs-sql[0].pronargdefaults);
-    assert.equal(sql[0].pronargdefaults,name==='save_activity_aggregate'?2:0);
+    assert.equal(sql[0].pronargdefaults,name==='save_activity_aggregate'?2:name==='save_fixed_expense'?1:0);
   }
 });
 for(const name of ['aniversario-mae','dentista','trabalho','academia','faxina','agua','escovar','cabelo']) test('repository → RPC real → mapper preserva '+name,async()=>{

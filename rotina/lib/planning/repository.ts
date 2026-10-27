@@ -53,6 +53,19 @@ export function createPlanRepository(client: Pick<SupabaseClient<Database>, 'fro
     throw new PersistenceError(visible.data.length ? 'Conflict' : 'NotFound');
   }
   return {
+    listByRange: (start, end) => operation(async () => {
+      const from = localDate(start, 'start'), to = localDate(end, 'end');
+      if (from > to) fail('range');
+      const result: DailyPlanItem[] = [];
+      for (let offset = 0;; offset += 500) {
+        const {data, error} = await client.from('daily_plan_items').select(COLUMNS).eq('user_id', owner)
+          .gte('planned_date', from).lte('planned_date', to)
+          .order('planned_date').order('created_at').order('id').range(offset, offset + 499);
+        if (error) throw error;
+        const page = rows(data); result.push(...page);
+        if (page.length < 500) return result;
+      }
+    }),
     listByDate: date => operation(() => list(date, false)),
     listPending: today => operation(() => list(today, true)),
     create: input => operation(async () => {

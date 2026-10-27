@@ -23,6 +23,7 @@ export function toPersistenceError(error: unknown): PersistenceError {
   if (error instanceof PersistenceError) return error;
   if (error instanceof MapperError) return new PersistenceError('Validation', error);
   const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+  if (code === 'PT404') return new PersistenceError('NotFound', error);
   if (code === 'PT409') return new PersistenceError('Conflict', error);
   // Preserve the existing policy for genuine serialization failures and deadlocks.
   if (['40001','40P01'].includes(code)) return new PersistenceError('Conflict', error);

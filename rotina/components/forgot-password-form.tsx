@@ -59,6 +59,7 @@ export function ForgotPasswordForm({
             <p className="text-sm text-muted-foreground">
               Se houver uma conta com este e-mail, você receberá um link para redefinir sua senha.
             </p>
+            <Link className="mt-4 block text-sm underline" href="/auth/login">Voltar para entrar</Link>
           </CardContent>
         </Card>
       ) : (
@@ -89,7 +90,7 @@ export function ForgotPasswordForm({
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
+                {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading || !hasEnvVars}>
                   {isLoading ? "Enviando…" : "Enviar link de recuperação"}
                 </Button>

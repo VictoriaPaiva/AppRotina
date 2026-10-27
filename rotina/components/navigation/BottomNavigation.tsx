@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -74,9 +73,6 @@ export function BottomNavigation() {
               </DropdownMenuItem>
             );
           })}
-          <DropdownMenuSeparator />
-          {/* Placeholder: configurações ainda não possui rota funcional. */}
-          <DropdownMenuItem disabled>Configurações</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <div className="px-2">

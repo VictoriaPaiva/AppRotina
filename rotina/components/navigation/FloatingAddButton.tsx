@@ -16,7 +16,8 @@ export function FloatingAddButton() {
       <DropdownMenuSeparator />
       <DropdownMenuItem asChild><Link href="/banco-mestre/nova">Item da rotina</Link></DropdownMenuItem>
       <DropdownMenuSeparator />
-      {['Projeto', 'Ideia'].map(label => <DropdownMenuItem key={label} disabled>{label}<span className="ml-auto text-xs">Em breve</span></DropdownMenuItem>)}
+      <DropdownMenuItem asChild><Link href="/projetos/nova">Projeto</Link></DropdownMenuItem>
+      <DropdownMenuItem asChild><Link href="/ideias/nova">Ideia</Link></DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>;
 }

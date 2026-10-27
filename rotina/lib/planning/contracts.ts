@@ -14,6 +14,7 @@ export interface ChangePlanInput { id: string; expected: PlanSnapshot }
 export interface CompletePlanInput extends ChangePlanInput { completed: boolean }
 export interface ReschedulePlanInput extends ChangePlanInput { plannedDate: string }
 export interface PlanRepository {
+  listByRange(start: string, end: string): Promise<DailyPlanItem[]>;
   listByDate(date: string): Promise<DailyPlanItem[]>;
   listPending(today: string): Promise<DailyPlanItem[]>;
   create(input: CreatePlanInput): Promise<DailyPlanItem>;

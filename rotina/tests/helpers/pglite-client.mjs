@@ -11,6 +11,8 @@ export function pgliteClient(db,tables) {
         insert(value){operation='insert';payload=value;return query;},
         update(value){operation='update';payload=value;return query;},
         eq(key,value){filters.push([ident(key),'=',value]);return query;},
+        gte(key,value){filters.push([ident(key),'>=',value]);return query;},
+        lte(key,value){filters.push([ident(key),'<=',value]);return query;},
         lt(key,value){filters.push([ident(key),'<',value]);return query;},
         is(key,value){assert.equal(value,null);filters.push([ident(key),'is',null]);return query;},
         order(key,{ascending=true}={}){orders.push(ident(key)+(ascending?' asc':' desc'));return query;},
