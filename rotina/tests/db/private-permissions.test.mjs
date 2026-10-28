@@ -69,7 +69,8 @@ test('authenticated sem USAGE/CREATE; apenas três EXECUTE técnicos para CHECKs
   assert.deepEqual(acl,{usage:false,create:false});
   const rows=(await db.query("select proname,has_function_privilege('authenticated',oid,'EXECUTE') as exec,has_function_privilege('anon',oid,'EXECUTE') as anon,prosecdef from pg_proc where pronamespace='routine_private'::regnamespace")).rows;
   assert.deepEqual(rows.filter(r=>r.exec).map(r=>r.proname).sort(),['valid_date','valid_days','valid_time']);
-  assert(rows.every(r=>!r.anon&&!r.prosecdef));
+  assert(rows.every(r=>!r.anon && r.prosecdef===(r.proname==='before_account_delete')));
+  assert.equal(rows.find(r=>r.proname==='before_account_delete').exec,false);
   for(const sql of ["select routine_private.valid_date(date '2026-10-12')","select routine_private.valid_time(time '09:00')","select routine_private.valid_days(array[1,2]::smallint[])"]) await denied(sql);
 });
 test('dez helpers internos diretamente bloqueados, inclusive plano preparado antes do hardening',async()=>{

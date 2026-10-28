@@ -222,7 +222,7 @@ test('logout in another tab: editor POST passes proxy, action denies write and f
     'next/server':{NextResponse:{next:response,redirect:()=>({...response(),redirected:true})}},
     './configuration':{getSupabasePublicConfig:()=>({url:'https://example.com',key:'test-only'})},
     '@/lib/auth/policy':policy,
-    '@supabase/ssr':{createServerClient:()=>({auth:{getClaims:async()=>({data:{claims:{sub:session?owner:null}},error:null})}})},
+    '@supabase/ssr':{createServerClient:()=>({auth:{getUser:async()=>({data:{user:session?{id:owner}:null},error:null})}})},
   });
   const request=method=>{const url=new URL('http://localhost:3000/banco-mestre/'+bundle.activity.id+'/editar');url.clone=()=>new URL(url);return {method,nextUrl:url,headers:new Headers({'Next-Action':'test-action'}),cookies:{getAll:()=>[],set(){}}};};
   assert(!((await updateSession(request('GET'))).redirected));

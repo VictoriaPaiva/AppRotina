@@ -1,6 +1,6 @@
 # Preparação para uso oficial — limpeza temporária
 
-**Preparado, não executado. A limpeza real aguarda confirmação da usuária.** Não é exclusão de conta. Não há migration, função instalada, grant, policy, alteração de schema ou uso de service_role.
+**Atualização — 28/10/2026: limpeza autorizada concluída pela usuária na interface. Relatório OK e nova prévia com as 16 tabelas zeradas confirmados pela usuária; Auth, outras contas e estrutura preservados. Execução novamente bloqueada e servidor local reiniciado.** O procedimento e os registros de preparação abaixo são históricos. Não é exclusão de conta. Não há migration, função instalada, grant, policy, alteração de schema ou uso de service_role.
 
 ## Auditoria antes da implementação
 

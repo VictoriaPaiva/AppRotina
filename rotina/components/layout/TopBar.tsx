@@ -2,8 +2,10 @@
 
 import { LogoutButton } from '@/components/logout-button';
 import { usePathname } from "next/navigation";
+import Link from 'next/link';
 
 const pageTitles: Record<string, string> = {
+  "/conta": "Minha conta",
   "/hoje": "Hoje",
   "/planejamento": "Planejamento",
   "/calendario": "Calendário",
@@ -27,6 +29,7 @@ export function TopBar() {
         </h1>
 
         <div className="flex shrink-0 items-center gap-2" role="group" aria-label="Ações globais">
+          <Link href="/conta" className="rounded px-3 py-2 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Minha conta</Link>
           <LogoutButton variant="ghost" size="icon" />
         </div>
       </div>

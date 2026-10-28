@@ -33,6 +33,7 @@ test('Finanças is reachable from mobile Mais and has its own page title',()=>{
   const html=renderToStaticMarkup(React.createElement(BottomNavigation));
   assert.match(html,/href="\/financas" aria-current="page">Finanças/);
   const {TopBar}=withStubs('components/layout/TopBar.tsx',{
+    'next/link':{default:'a'},
     ...shared,
     '@/components/logout-button':{LogoutButton:()=>null},
     'lucide-react':{Search:()=>null,Settings:()=>null},

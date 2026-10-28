@@ -83,7 +83,7 @@ before(async()=>{
  alter function auth.uid() owner to managed_auth_owner;revoke all on function auth.uid() from public;
  grant usage on schema auth to ${installer} with grant option;
  grant execute on function auth.uid() to ${installer} with grant option;
- grant references on auth.users to ${installer};
+   grant references,trigger on auth.users to ${installer};
  grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;
  insert into auth.users values('${A}');`);
  const deploy=await connect();await deploy.query(`set role ${installer}`);

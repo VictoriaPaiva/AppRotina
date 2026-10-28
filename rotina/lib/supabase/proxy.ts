@@ -47,8 +47,10 @@ export async function updateSession(request: NextRequest) {
   });
   // Mantém a verificação imediatamente após criar o cliente, como no starter SSR.
   try {
-    const {data,error}=await supabase.auth.getClaims();
-    if(protectedRoute && !authenticatedActionRequest && (error || !data?.claims?.sub)) return loginRedirect();
+    // Online user lookup rejects deleted users even while their JWT signature is valid.
+    const {data,error}=await supabase.auth.getUser();
+    if(protectedRoute && error?.code==='user_not_found') return loginRedirect();
+    if(protectedRoute && !authenticatedActionRequest && (error || !data?.user?.id)) return loginRedirect();
   } catch {
     if(protectedRoute && !authenticatedActionRequest) return loginRedirect();
   }

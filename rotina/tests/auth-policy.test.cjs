@@ -15,7 +15,7 @@ function withStubs(file,stubs,environment=process.env.NODE_ENV){
   return mod.exports;
 }
 test('protege sete rotas, subrotas e protected; callbacks e prefixos semelhantes são públicos',()=>{
-  for(const route of ['hoje','planejamento','calendario','projetos','banco-mestre','ideias','financas','protected']) {
+  for(const route of ['hoje','planejamento','calendario','projetos','banco-mestre','ideias','financas','conta','protected']) {
     assert(policy.requiresSession('/'+route));assert(policy.requiresSession('/'+route+'/item'));assert(!policy.requiresSession('/'+route+'-publico'));
   }
   for(const route of ['/','/auth/login','/auth/sign-up','/auth/confirm','/auth/forgot-password','/auth/update-password','/auth/error','/auth/sign-up-success']) assert(!policy.requiresSession(route));
@@ -48,9 +48,9 @@ function proxyHarness({configured=true,sub=null,error=null,throws=false,refresh=
   const NextResponse={next:response,redirect(url){const r=response();r.location=url.href;return r;}};
   const stubs={
     'next/server':{NextResponse},'./configuration':{getSupabasePublicConfig:()=>configured?{url:'https://example.com',key:'test-only'}:null},'@/lib/auth/policy':policy,
-    '@supabase/ssr':{createServerClient(_url,_key,opts){return {auth:{async getClaims(){
+    '@supabase/ssr':{createServerClient(_url,_key,opts){return {auth:{async getUser(){
       if(refresh) {opts.cookies.setAll([{name:'session-test',value:'non-real-cookie',options:{httpOnly:true}}],{'Expires':'0','Pragma':'no-cache'});opts.cookies.setAll([{name:'second-cookie',value:'test',options:{}}],{});}
-      if(throws) throw Error('unavailable');return {data:{claims:{sub}},error};
+      if(throws) throw Error('unavailable');return {data:{user:sub?{id:sub}:null},error};
     }}};}}
   };
   return async(route,{method='GET',headers={}}={})=>{
@@ -78,6 +78,10 @@ test('planning actions reach server authentication after logout only on exact PO
     assert.equal((await proxy(route,{method:'POST',headers:{'next-action':'test-action'}})).location,undefined);
   }
   for(const route of ['/calendario','/financas/contas/other','/planejamento/other','/hoje/other'])assert.equal((await proxy(route,{method:'POST',headers:{'next-action':'test-action'}})).location,'http://localhost:3000/auth/login');
+});
+
+test('deleted user is rejected online even on a Server Action POST with otherwise valid JWT',async()=>{
+  assert.equal((await proxyHarness({error:{code:'user_not_found'}})('/hoje',{method:'POST',headers:{'next-action':'test'}})).location,'http://localhost:3000/auth/login');
 });
 test('redirect de sessão expirada preserva cookies e headers de renovação',async()=>{
   const response=await proxyHarness({refresh:true})('/ideias');

@@ -1,4 +1,4 @@
-const mainRoutes=['/hoje','/planejamento','/calendario','/projetos','/banco-mestre','/ideias','/financas'];
+const mainRoutes=['/hoje','/planejamento','/calendario','/projetos','/banco-mestre','/ideias','/financas','/conta'];
 export function requiresSession(path: string): boolean {
   return [...mainRoutes,'/protected'].some(root=>path === root || path.startsWith(root+'/'));
 }

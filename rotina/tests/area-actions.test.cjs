@@ -96,16 +96,16 @@ test('pending repository never invalidates; network/database rejection produces 
 });
 
 test('areas Server Action POST passes proxy after logout but still requires getClaims before any repository',async()=>{
-  const response=()=>({headers:new Headers(),cookies:{getAll:()=>[],set(){}}});let proxyClaims=0;
+  const response=()=>({headers:new Headers(),cookies:{getAll:()=>[],set(){}}});let proxyUsers=0;
   const {updateSession}=withStubs('lib/supabase/proxy.ts',{
     'next/server':{NextResponse:{next:response,redirect:()=>({...response(),redirected:true})}},
     './configuration':{getSupabasePublicConfig:()=>({url:'https://example.com',key:'test-only'})},
     '@/lib/auth/policy':load('lib/auth/policy.ts'),
-    '@supabase/ssr':{createServerClient:()=>({auth:{getClaims:async()=>{proxyClaims++;return {data:{claims:null},error:null};}}})},
+    '@supabase/ssr':{createServerClient:()=>({auth:{getUser:async()=>{proxyUsers++;return {data:{user:null},error:null};}}})},
   });
   const request=method=>{const url=new URL('http://localhost:3000/banco-mestre/areas');url.clone=()=>new URL(url);return {method,nextUrl:url,headers:new Headers({'Next-Action':'forged-header-is-not-auth'}),cookies:{getAll:()=>[],set(){}}};};
   assert((await updateSession(request('GET'))).redirected);
-  assert(!(await updateSession(request('POST'))).redirected);assert.equal(proxyClaims,2);
+  assert(!(await updateSession(request('POST'))).redirected);assert.equal(proxyUsers,2);
   const {actions,calls,paths}=harness({claims:null});
   const result=await actions.createMasterArea(cases[0][2]);assert.equal(result.kind,'Unauthorized');
   assert.deepEqual(calls,['client','claims']);assert.deepEqual(paths,[]);

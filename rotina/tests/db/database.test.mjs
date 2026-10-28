@@ -52,7 +52,7 @@ test('nove tabelas com RLS, grants restritos e sem colunas JSON', async () => {
     assert.equal(row.anon,false); assert.equal(row.del,!['areas','activities'].includes(t));
   }
   assert.equal((await db.query("select count(*)::int n from information_schema.columns where table_schema='public' and table_name=any($1) and data_type in ('json','jsonb')",[tables])).rows[0].n,0);
-  assert.equal((await db.query("select count(*)::int n from pg_proc where pronamespace='routine_private'::regnamespace and prosecdef")).rows[0].n,0);
+  assert.deepEqual((await db.query("select proname from pg_proc where pronamespace='routine_private'::regnamespace and prosecdef order by proname")).rows,[{proname:'before_account_delete'}]);
 });
 test('salva atomicamente os cinco tipos e quantidade decimal', async () => {
   for (const [type,relations] of [

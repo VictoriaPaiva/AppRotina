@@ -9,6 +9,8 @@ import { randomUUID } from 'node:crypto';
 
 const exec=promisify(execFile);
 const windows=process.platform==='win32';
+const testFile=process.argv[2]==='--account-deletion'?'tests/postgres/account-deletion.test.mjs':'tests/postgres/progress-concurrency.test.mjs';
+if(process.argv[2] && process.argv[2]!=='--account-deletion')throw Error('Unknown local suite.');
 const bin=resolve(process.env.ROTINA_PG_BIN ?? 'node_modules/.cache/rotina-pg17/pgsql/bin');
 const exe=name=>join(bin,name+(windows?'.exe':''));
 for(const name of ['postgres','pg_ctl','initdb']){
@@ -37,7 +39,7 @@ try {
  started=true;
  console.log('Local server ready; starting independent-session tests.');
  const status=await new Promise((done,fail)=>{
-  const child=spawn(process.execPath,['--test','--test-concurrency=1','--test-timeout=30000','tests/postgres/progress-concurrency.test.mjs'],{
+  const child=spawn(process.execPath,['--test','--test-concurrency=1','--test-timeout=30000',testFile],{
    stdio:'inherit',windowsHide:true,
    env:{...process.env,ROTINA_PG_PORT:String(port),ROTINA_PG_DATA:data},
   });
