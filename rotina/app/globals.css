@@ -116,3 +116,29 @@
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
 }
+
+/* Fluid controls, without hiding page overflow or changing desktop dimensions. */
+fieldset { min-width: 0; }
+@media (max-width: 1279px) {
+  [data-slot="button"]:not([data-global-fab]) { min-height: 2.75rem; height: auto; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+  [data-slot="button"][aria-label] { min-width: 2.75rem; }
+  main input:not([type="checkbox"]):not([type="radio"]), main select:not([size]), main textarea:not([hidden]) {
+    min-width: 0; max-width: 100%; min-height: 2.75rem; font-size: 1rem;
+  }
+  [role^="menuitem"] { min-height: 2.75rem; }
+  /* A focused editor needs the visual viewport; navigation returns on blur. */
+  body:has(input:not([type="checkbox"]):not([type="radio"]):focus, textarea:focus, [contenteditable="true"]:focus) :is([data-mobile-navigation], [data-global-fab]) {
+    visibility: hidden; pointer-events: none;
+  }
+}
+@media (pointer: coarse) {
+  button, [role^="menuitem"], label:has(input[type="checkbox"]) { min-height: 2.75rem; }
+  button[aria-label], button[role="checkbox"], label:has(input[type="checkbox"]) { min-width: 2.75rem; }
+  main input:not([type="checkbox"]):not([type="radio"]), main select:not([size]), main textarea:not([hidden]) {
+    min-height: 2.75rem; font-size: 1rem;
+  }
+  summary { min-height: 2.75rem; padding-block: 0.75rem; }
+  body:has(input:not([type="checkbox"]):not([type="radio"]):focus, textarea:focus) [aria-label="Adicionar algo"] {
+    visibility: hidden; pointer-events: none;
+  }
+}

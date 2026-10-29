@@ -12,6 +12,9 @@ export function isEmailOtpType(value: unknown): value is 'email' | 'signup' | 'r
   return typeof value === 'string' && ['email','signup','recovery','invite','email_change'].includes(value);
 }
 export function authErrorMessage(error: unknown): string {
+  const name=typeof error==='object' && error!==null && 'name' in error?error.name:'';
+  if(name==='AuthSessionMissingError')return 'Sua sessão expirou. Entre novamente.';
+  if(name==='AuthRetryableFetchError')return 'Falha de conexão. Verifique sua rede e tente novamente.';
   const code=typeof error === 'object' && error !== null && 'code' in error ? error.code : '';
   switch(code) {
     case 'user_not_found': case 'invalid_credentials': return 'E-mail ou senha incorretos.';

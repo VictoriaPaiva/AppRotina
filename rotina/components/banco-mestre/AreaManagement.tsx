@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useRef, useState, type FormEvent } from 'react';
+import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -37,6 +38,7 @@ export function AreaCreateForm({returnTo}:{returnTo?:string}={}) {
   const [error,setError]=useState<Failure|null>(null);
   const [saved,setSaved]=useState(false);
   const id=useRef<string|null>(null);
+  useDraftProtection(name!==''&&!saved,saving);
   const inFlight=useRef(false);
   const completed=useRef(false);
   async function submit(event:FormEvent) {
@@ -77,6 +79,7 @@ export function AreaRow({area}:{area:ManagedArea}) {
   const inFlight=useRef(false);const completed=useRef(false);
   const expected={name:area.name,active:area.active,sortPosition:area.sortPosition,updatedAt:area.updatedAt};
   const changed=name!==area.name;
+  useDraftProtection(changed&&!saved,saving);
   const blocked=saving || saved || error?.kind==='Conflict';
   async function save(kind:'name'|'active') {
     if(inFlight.current || completed.current || error?.kind==='Conflict') return;

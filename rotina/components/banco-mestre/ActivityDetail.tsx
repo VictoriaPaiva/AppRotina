@@ -11,14 +11,14 @@ function windowSummary(window: TimeWindow) {
   const days = 'weekdays' in window && window.weekdays?.length ? window.weekdays.map(day => weekdayShort[day]).join('/') : 'Todos os dias';
   return days + (window.kind === 'timeRange' ? ' · ' + window.startTime + '–' + window.endTime + (window.endDayOffset ? ' (dia seguinte)' : '') : '');
 }
-function section(title: string, content: ReactNode) { return <Card className="rounded-2xl"><CardContent className="space-y-3 p-5"><h3 className="font-semibold">{title}</h3>{content}</CardContent></Card>; }
+function section(title: string, content: ReactNode) { return <Card className="rounded-2xl"><CardContent className="space-y-3 p-5"><h2 className="font-semibold">{title}</h2>{content}</CardContent></Card>; }
 
 export function ActivityRouteView({result}:{result:DetailReadResult}) {
   if(result.status==='error') return <Card><CardContent className="space-y-3 p-5"><h2 className="text-lg font-semibold">{result.kind==='NotFound'?'Item não encontrado':result.kind==='Validation'?'Item indisponível':'Não foi possível carregar o item'}</h2><p role="alert" className="text-sm text-muted-foreground">{result.message}</p><Button asChild variant="outline"><Link href={result.kind==='Unauthorized'?'/auth/login':'/banco-mestre'}>{result.kind==='Unauthorized'?'Entrar':'Voltar ao Banco Mestre'}</Link></Button></CardContent></Card>;
   const {activity,goals,rules,windows}=result.item.bundle;
   const context = activity.type === 'commitment' || activity.type === 'fixedActivity' || activity.type === 'variableActivity' ? activity.config : undefined;
   return <div className="space-y-5">
-    <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="min-w-0 break-words text-xl font-semibold">{activity.name}</h2><div className="flex flex-wrap gap-2"><Button asChild><Link href={'/banco-mestre/'+activity.id+'/editar'}>Editar item</Link></Button><Button asChild variant="outline"><Link href="/banco-mestre">Voltar à lista</Link></Button></div></div>
+    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="min-w-0 break-words text-xl font-semibold">{activity.name}</h1><div className="flex flex-wrap gap-2"><Button asChild><Link href={'/banco-mestre/'+activity.id+'/editar'}>Editar item</Link></Button><Button asChild variant="outline"><Link href="/banco-mestre">Voltar à lista</Link></Button></div></div>
     {section('Geral', <><dl className="grid gap-4 sm:grid-cols-2">{[
       ['Área', result.areas.find(area => area.id === activity.areaId)?.name || 'Área não definida'], ['Tipo', activityTypeLabels[activity.type]], ['Importância', importanceLabels[activity.defaultImportance]], ['Status', statusLabels[activity.status]],
     ].map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-sm font-medium">{label}</dt><dd className="mt-1 break-words text-sm text-muted-foreground">{value}</dd></div>)}</dl><p className="text-sm text-muted-foreground">{itemTypeDescriptions[activity.type]}</p>{activity.description && <p className="whitespace-pre-wrap break-words text-sm">{activity.description}</p>}</>)}

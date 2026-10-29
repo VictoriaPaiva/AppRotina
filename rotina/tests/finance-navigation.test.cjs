@@ -28,6 +28,7 @@ test('Finanças is reachable from mobile Mais and has its own page title',()=>{
     ...shared,
     'next/link':{default:({children,...props})=>React.createElement('a',props,children)},
     '@/components/theme/ThemeToggle':{ThemeToggle:()=>null},
+    './FloatingAddButton':{FloatingAddButton:()=>null},
     '@/components/ui/dropdown-menu':Object.fromEntries(['DropdownMenu','DropdownMenuContent','DropdownMenuItem','DropdownMenuSeparator','DropdownMenuTrigger'].map(name=>[name,group])),
   });
   const html=renderToStaticMarkup(React.createElement(BottomNavigation));
@@ -36,7 +37,7 @@ test('Finanças is reachable from mobile Mais and has its own page title',()=>{
     'next/link':{default:'a'},
     ...shared,
     '@/components/logout-button':{LogoutButton:()=>null},
-    'lucide-react':{Search:()=>null,Settings:()=>null},
+    'lucide-react':{Search:()=>null,Settings:()=>null,UserRound:'svg'},
   });
-  assert.match(renderToStaticMarkup(React.createElement(TopBar)),/<h1[^>]*>Finanças<\/h1>/);
+  assert.match(renderToStaticMarkup(React.createElement(TopBar)),/<p[^>]*>Finanças<\/p>/);
 });

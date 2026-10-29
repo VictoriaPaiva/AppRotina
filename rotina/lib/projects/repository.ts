@@ -42,6 +42,21 @@ export function createProjectRepository(client: Pick<SupabaseClient<Database>, '
     });
   }
   return {
+    taskProgress: () => operation(async () => {
+      const result: {projectId:string;completedAt:string|null}[] = [];
+      for(let offset=0;;offset+=500) {
+        const {data,error}=await client.from('project_tasks').select('user_id,project_id,completed_at').eq('user_id',owner)
+          .order('project_id').order('created_at').order('id').range(offset,offset+499);
+        if(error) throw error;
+        if(!Array.isArray(data)) fail('tasks.response');
+        for(const value of data) {
+          const v=record(value,'task');
+          if(uuid(v.user_id)!==owner) fail('task.owner');
+          result.push({projectId:uuid(v.project_id),completedAt:v.completed_at===null?null:timestamp(v.completed_at,'completedAt')});
+        }
+        if(data.length<500) return result;
+      }
+    }),
     tasks: projectId => operation(async () => {
       const result: ProjectTask[] = [];
       for (let offset = 0;; offset += 500) {

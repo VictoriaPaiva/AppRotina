@@ -9,6 +9,8 @@ function withStubs(file,stubs={}) {
   const mod={exports:{}};
   new Function('exports','require','module',source)(mod.exports,name=>{
     if(Object.hasOwn(stubs,name))return stubs[name];
+    // DOM navigation protection has its own event tests; component fixtures do not mount a browser.
+    if(name==='@/lib/forms/draft-protection')return {useDraftProtection:()=>()=>{},confirmPageLeave:()=>true,allowPageLeave:()=>{}};
     if(name==='react'||name==='react/jsx-runtime')return require(name);
     assert(false,'Missing stub: '+name);
   },mod);

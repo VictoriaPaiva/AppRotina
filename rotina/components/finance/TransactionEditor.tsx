@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
+import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,8 @@ export function TransactionEditor({transaction, initialDate}: {transaction?: Fin
   let amountCents: number | null = null;
   try {amountCents = parseAmount(amount);} catch { /* Invalid text stays editable. */ }
   const dirty = !saved || type !== saved.type || date !== saved.date || amountCents !== saved.amountCents || description !== saved.description || category !== saved.category;
+  const hasDraft=saved?dirty:type!=='expense'||date!==initialDate||amount!==''||description!==''||category!=='';
+  const allowNavigation=useDraftProtection(hasDraft,busy);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving.current || navigating.current) return;
@@ -39,12 +42,13 @@ export function TransactionEditor({transaction, initialDate}: {transaction?: Fin
       setFailure({ok: false, kind: 'Unknown', message: 'Não foi possível confirmar o salvamento. Seu rascunho foi mantido. Consulte os dados salvos antes de tentar novamente.'});
     } finally {saving.current = false; setBusy(false);}
   }
-  function reload() {if (!dirty || window.confirm('Recarregar descarta o rascunho não salvo. Deseja continuar?')) window.location.reload();}
+  function reload() {if (!hasDraft || window.confirm('Recarregar descarta o rascunho não salvo. Deseja continuar?')) {allowNavigation();window.location.reload();}}
   const disabled = busy || navigating.current;
   const backMonth = (saved?.date ?? initialDate).slice(0,7);
   return <div className="mx-auto max-w-3xl space-y-5">
     <Link className="underline" href={`/financas?month=${backMonth}`}>Voltar ao mês</Link><h1 className="text-2xl font-semibold">{saved ? 'Editar lançamento' : 'Novo lançamento'}</h1>
     <form onSubmit={submit} className="space-y-5">
+      {hasDraft && <p aria-live="polite" className="text-sm text-muted-foreground">Alterações não salvas.</p>}
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2"><Label htmlFor="transaction-type">Tipo</Label><select id="transaction-type" className="h-10 w-full rounded-md border border-input bg-background px-3" value={type} disabled={disabled} onChange={event => {setType(event.target.value as 'income' | 'expense'); setSuccess(false);}}><option value="income">Receita</option><option value="expense">Despesa</option></select></div>
         <div className="space-y-2"><Label htmlFor="transaction-date">Data</Label><Input id="transaction-date" type="date" min="0001-01-01" max="9999-12-31" required value={date} disabled={disabled} onChange={event => {setDate(event.target.value); setSuccess(false);}} /></div>

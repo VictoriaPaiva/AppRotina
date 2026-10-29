@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import {DropdownMenuItem} from '@/components/ui/dropdown-menu';
 
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+export function ThemeToggle({ compact = false,menuItem=false }: { compact?: boolean;menuItem?:boolean }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const dark = mounted && resolvedTheme === "dark";
@@ -16,6 +17,9 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   function toggleTheme() {
     setTheme(dark ? "light" : "dark");
   }
+  if(menuItem)return <DropdownMenuItem disabled={!mounted} onSelect={toggleTheme} aria-label={dark?'Ativar modo claro':'Ativar modo escuro'}>
+    {dark?<Sun size={18} aria-hidden="true"/>:<Moon size={18} aria-hidden="true"/>}<span>{dark?'Modo claro':'Modo escuro'}</span>
+  </DropdownMenuItem>;
 
   return (
     <button

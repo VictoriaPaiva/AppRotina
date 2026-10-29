@@ -17,10 +17,11 @@ const items = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  if(pathname.startsWith('/auth/'))return null;
 
   return (
     <aside
-      className="hidden min-h-screen w-64 shrink-0 border-r p-4 md:block"
+      className="hidden min-h-screen w-64 shrink-0 border-r p-4 xl:block"
       style={{
         background: "var(--surface)",
         color: "var(--text-primary)",

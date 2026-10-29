@@ -64,13 +64,14 @@ export function PlanningBoard({data, todayMode = false, initialActivityId = ''}:
       </form>}
     </CardContent></Card></li>;
   }
-  if (data.status === 'error') return <Card><CardContent className="space-y-3 p-5"><p role="alert">{data.message}</p>
+  if (data.status === 'error') return <Card><CardContent className="space-y-3 p-5"><h1 className="text-2xl font-semibold">{todayMode?'Hoje':'Planejamento'}</h1><p role="alert">{data.message}</p>
     {data.kind === 'Unauthorized' ? <Button asChild><Link href="/auth/login">Entrar novamente</Link></Button> : <Button onClick={reload}>Tentar novamente</Button>}
     <Button asChild variant="outline"><Link href="/planejamento">Abrir planejamento de hoje</Link></Button>
   </CardContent></Card>;
   const active = data.activities.filter(activity => activity.active);
   const open = data.items.filter(item => item.completedAt === null), done = data.items.filter(item => item.completedAt !== null);
   return <div className="space-y-6">
+    <h1 className="text-2xl font-semibold">{todayMode?'Hoje':'Planejamento'}</h1>
     <p className="text-sm text-muted-foreground">{formatPlanDate(data.date)} · Fuso: America/Sao_Paulo. Planejamento manual; metas e recorrências não são executadas automaticamente.</p>
     <nav className="flex flex-wrap gap-2" aria-label="Datas do planejamento">
       <Button asChild variant="outline"><Link href="/hoje">Hoje</Link></Button>

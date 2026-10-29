@@ -33,7 +33,7 @@ test('server verifies claims before repository and never substitutes mocks on fa
   let reads=0;const stubs={
     '@/lib/supabase/server':{createClient:async()=>({auth:{getClaims:async()=>({data:{claims:{sub:id}},error:null})}})},
     '@/lib/banco-mestre/data/errors':{PersistenceError},'@/lib/banco-mestre/data/read-model':load('lib/banco-mestre/data/read-model.ts'),
-    './repository':{createProjectRepository:(_client,owner)=>{assert.equal(owner,id);return {list:async()=>{reads++;return [project];},tasks:async()=>[],get:async requested=>{assert.equal(requested,id);return project;}};}},
+    './repository':{createProjectRepository:(_client,owner)=>{assert.equal(owner,id);return {list:async()=>{reads++;return [project];},taskProgress:async()=>[],tasks:async()=>[],get:async requested=>{assert.equal(requested,id);return project;}};}},
   };
   const server=withStubs('lib/projects/server.ts',stubs);assert.deepEqual((await server.readProjects()).projects,[project]);assert.deepEqual((await server.readProject(id)).project,project);
   for(const result of [{data:null,error:null},{data:{claims:{sub:id}},error:{code:'expired'}}]) {

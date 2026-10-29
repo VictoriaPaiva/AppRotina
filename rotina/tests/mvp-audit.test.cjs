@@ -7,10 +7,10 @@ const root=path.resolve(__dirname,'..');
 test('module headers and logout remain accessible on creation/detail/edit routes without dead global controls',()=>{
   const titles={'hoje':'Hoje','planejamento':'Planejamento','calendario':'Calendário','banco-mestre':'Banco Mestre','ideias':'Ideias','projetos':'Projetos','financas':'Finanças'};
   for(const [route,title] of Object.entries(titles))for(const suffix of ['', '/nova', '/11111111-1111-4111-8111-111111111111', '/11111111-1111-4111-8111-111111111111/editar']) {
-    const {TopBar}=withStubs('components/layout/TopBar.tsx',{'next/link':{default:'a'},'next/navigation':{usePathname:()=>'/'+route+suffix},'@/components/logout-button':{LogoutButton:()=>React.createElement('button',null,'Sair')}});
+    const {TopBar}=withStubs('components/layout/TopBar.tsx',{'lucide-react':{UserRound:'svg'},'next/link':{default:'a'},'next/navigation':{usePathname:()=>'/'+route+suffix},'@/components/logout-button':{LogoutButton:()=>React.createElement('button',null,'Sair')}});
     const html=renderToStaticMarkup(React.createElement(TopBar));assert(html.includes(title));assert(html.includes('Sair'));assert(!/Buscar|Configurações|disabled/.test(html));
   }
-  const {TopBar}=withStubs('components/layout/TopBar.tsx',{'next/link':{default:'a'},'next/navigation':{usePathname:()=>'/projetos-publico'},'@/components/logout-button':{LogoutButton:()=>null}});
+  const {TopBar}=withStubs('components/layout/TopBar.tsx',{'lucide-react':{UserRound:'svg'},'next/link':{default:'a'},'next/navigation':{usePathname:()=>'/projetos-publico'},'@/components/logout-button':{LogoutButton:()=>null}});
   assert.equal(renderToStaticMarkup(React.createElement(TopBar)),'');
 });
 test('home opens the actual app; failed reads can reload the current URL without redirecting away from month/date',()=>{

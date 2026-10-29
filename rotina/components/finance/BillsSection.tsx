@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
+import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ export function BillRow({item, onSaved}: {item: BillMonth; onSaved: (value: Bill
   const [busy,setBusy] = useState(false), [failure,setFailure] = useState<Failure | null>(null), [success,setSuccess] = useState(false);
   const saving = useRef(false);
   let cents: number | null = null; try {cents = parseAmount(amount);} catch { /* Keep draft editable. */ }
+  useDraftProtection(cents!==saved.amountCents,busy);
   async function save(paid: boolean) {
     if (saving.current || cents === null) return;
     if (paid !== (saved.paidAt !== null) && !window.confirm(paid ? `Confirmar pagamento de ${formatMoney(cents)}? Será criada uma despesa na data de hoje.` : 'Desfazer pagamento e remover somente a despesa vinculada a esta conta?')) return;
@@ -27,7 +29,7 @@ export function BillRow({item, onSaved}: {item: BillMonth; onSaved: (value: Bill
     finally {saving.current = false; setBusy(false);}
   }
   return <li className="space-y-3 rounded-xl border bg-card p-4">
-    <form onSubmit={event=>{event.preventDefault();void save(saved.paidAt !== null);}} className="grid items-end gap-4 lg:grid-cols-[minmax(0,1fr)_180px_90px_auto]">
+    <form onSubmit={event=>{event.preventDefault();void save(saved.paidAt !== null);}} className="grid items-end gap-4 xl:grid-cols-[minmax(0,1fr)_180px_90px_auto]">
       <div className="min-w-0"><h3 className="break-words font-semibold">{saved.name}</h3><p className="break-words text-sm text-muted-foreground">{saved.category}</p><Link className="text-sm underline" href={`/financas/contas/${saved.fixedExpenseId}`}>Editar cadastro</Link></div>
       <div className="space-y-1"><label className="block text-sm" htmlFor={`bill-amount-${saved.id}`}>Valor deste mês (R$)</label><Input id={`bill-amount-${saved.id}`} inputMode="decimal" value={amount} disabled={busy} onChange={event=>{setAmount(event.target.value);setSuccess(false);}} /></div>
       <p className="pb-2 text-sm">Dia {saved.dueDay}</p>

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export function SignUpForm({
   className,
@@ -26,16 +26,20 @@ export function SignUpForm({
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const inFlight=useRef(false);
   const router = useRouter();
 
   const handleSignUp = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if(inFlight.current || !hasEnvVars)return;
+    inFlight.current=true;
     setIsLoading(true);
     setError(null);
 
     if (password !== repeatPassword) {
       setError("As senhas não coincidem.");
       setIsLoading(false);
+      inFlight.current=false;
       return;
     }
 
@@ -54,6 +58,7 @@ export function SignUpForm({
     } catch (error: unknown) {
       setError(authErrorMessage(error));
     } finally {
+      inFlight.current=false;
       setIsLoading(false);
     }
   };
@@ -62,7 +67,7 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Criar conta</CardTitle>
+          <CardTitle className="text-2xl"><h1>Criar conta</h1></CardTitle>
           <CardDescription>Crie sua conta no Rotina.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -71,7 +76,7 @@ export function SignUpForm({
               A conexão de autenticação ainda não está disponível neste ambiente.
             </p>
           )}
-          <form onSubmit={handleSignUp}>
+          <form aria-busy={isLoading} onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">E-mail</Label>
@@ -82,6 +87,7 @@ export function SignUpForm({
                   placeholder="voce@exemplo.com"
                   required
                   value={email}
+                  disabled={isLoading}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
@@ -95,6 +101,7 @@ export function SignUpForm({
                   type="password"
                   required
                   value={password}
+                  disabled={isLoading}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
@@ -108,6 +115,7 @@ export function SignUpForm({
                   type="password"
                   required
                   value={repeatPassword}
+                  disabled={isLoading}
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>

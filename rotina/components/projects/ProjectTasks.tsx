@@ -1,5 +1,6 @@
 'use client';
 import { useRef, useState } from 'react';
+import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ export function TaskRow({task, onSaved}: {task: ProjectTask; onSaved: (task: Pro
   const [saved, setSaved] = useState(task), [title, setTitle] = useState(task.title);
   const [busy, setBusy] = useState(false), [failure, setFailure] = useState<Failure | null>(null);
   const [success, setSuccess] = useState(false), saving = useRef(false);
+  useDraftProtection(title!==saved.title,busy);
   async function save(completed: boolean) {
     if (saving.current) return;
     saving.current = true; setBusy(true); setFailure(null); setSuccess(false);
@@ -27,10 +29,10 @@ export function TaskRow({task, onSaved}: {task: ProjectTask; onSaved: (task: Pro
   }
   const valid = !!title.trim() && Array.from(title).length <= 200;
   return <li className="space-y-3 rounded-xl border bg-card p-4">
-    <form onSubmit={event => {event.preventDefault(); void save(saved.completedAt !== null);}} className="flex flex-wrap items-center gap-3">
-      <input type="checkbox" aria-label={`Concluir ou desfazer: ${saved.title}`} checked={saved.completedAt !== null} disabled={busy || !valid} onChange={event => void save(event.target.checked)} />
+    <form onSubmit={event => {event.preventDefault(); void save(saved.completedAt !== null);}} className="grid grid-cols-[44px_minmax(0,1fr)] items-center gap-3 lg:flex lg:flex-wrap">
+      <label className="inline-flex min-h-11 min-w-11 items-center justify-center lg:min-h-0 lg:min-w-0"><input type="checkbox" aria-label={`Concluir ou desfazer: ${saved.title}`} checked={saved.completedAt !== null} disabled={busy || !valid} onChange={event => void save(event.target.checked)} /></label>
       <Input aria-label={`Título da tarefa ${saved.title}`} className={`min-w-0 flex-1 ${saved.completedAt ? 'line-through' : ''}`} value={title} disabled={busy} required onChange={event => {setTitle(event.target.value); setSuccess(false);}} />
-      <Button type="submit" variant="outline" disabled={busy || !valid || title === saved.title}>{busy ? 'Salvando…' : 'Salvar tarefa'}</Button>
+      <Button type="submit" variant="outline" className="col-span-2 w-full lg:w-auto" disabled={busy || !valid || title === saved.title}>{busy ? 'Salvando…' : 'Salvar tarefa'}</Button>
     </form>
     <p className="text-sm text-muted-foreground">{saved.completedAt ? 'Concluída' : 'Pendente'}</p><TaskFailure failure={failure} />{success && <p role="status">Tarefa salva.</p>}
     {failure && <Link className="block underline" href={`/projetos/${task.projectId}`} target="_blank" rel="noopener noreferrer">Consultar projeto em outra aba</Link>}
@@ -41,6 +43,7 @@ export function ProjectTasks({projectId, initialTasks}: {projectId: string; init
   const [busy, setBusy] = useState(false), [failure, setFailure] = useState<Failure | null>(null);
   const [success, setSuccess] = useState(false), saving = useRef(false), attemptId = useRef<string | null>(null);
   const progress = projectProgress(tasks);
+  useDraftProtection(title!=='',busy);
   async function add(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving.current) return;
@@ -57,7 +60,7 @@ export function ProjectTasks({projectId, initialTasks}: {projectId: string; init
     <h2 className="text-xl font-semibold">Tarefas e progresso</h2>
     <p aria-live="polite">{progress.percentage}% · {progress.completed}/{progress.total} tarefas concluídas</p>
     <progress className="h-3 w-full accent-project" aria-label="Progresso do projeto" value={progress.percentage} max={100} />
-    <form onSubmit={add} className="flex flex-wrap gap-3"><Input aria-label="Nova tarefa" placeholder="Título da nova tarefa" required value={title} disabled={busy} className="min-w-0 flex-1" onChange={event => {setTitle(event.target.value); setSuccess(false);}} /><Button disabled={busy || !title.trim() || Array.from(title).length > 200}>{busy ? 'Adicionando…' : 'Adicionar tarefa'}</Button></form>
+    <form onSubmit={add} className="flex flex-col gap-3 sm:flex-row"><Input aria-label="Nova tarefa" placeholder="Título da nova tarefa" required value={title} disabled={busy} className="min-w-0 flex-1" onChange={event => {setTitle(event.target.value); setSuccess(false);}} /><Button disabled={busy || !title.trim() || Array.from(title).length > 200}>{busy ? 'Adicionando…' : 'Adicionar tarefa'}</Button></form>
     <p className="text-xs text-muted-foreground">Títulos de tarefas: até 200 caracteres.</p><TaskFailure failure={failure} />{success && <p role="status">Tarefa adicionada.</p>}
     {failure && <Link className="block underline" href={`/projetos/${projectId}`} target="_blank" rel="noopener noreferrer">Consultar projeto em outra aba</Link>}
     {!tasks.length ? <p>Este projeto ainda não tem tarefas.</p> : <ul className="space-y-3">{tasks.map(task => <TaskRow key={task.id} task={task} onSaved={updated => setTasks(current => current.map(item => item.id === updated.id ? updated : item))} />)}</ul>}

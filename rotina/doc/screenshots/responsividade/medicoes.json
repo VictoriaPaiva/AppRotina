@@ -1,0 +1,1702 @@
+{
+  "results": [
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "hoje",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "planejamento",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 4
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "calendario",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "projetos",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "banco-mestre",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "ideias",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "financas",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [
+        {
+          "tag": "TR",
+          "class": "border-b bg-muted/40"
+        },
+        {
+          "tag": "TH",
+          "class": "p-3"
+        },
+        {
+          "tag": "TH",
+          "class": "p-3"
+        }
+      ],
+      "inputs": 3
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "conta",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "areas",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "activity",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 14
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "project",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 2,
+      "outside": [],
+      "inputs": 7
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "idea",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "transaction",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "fixed",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "/auth/login",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "/auth/sign-up",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "/auth/forgot-password",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "/auth/update-password",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "innerWidth": 320
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "hoje",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "planejamento",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 4
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "calendario",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "projetos",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "banco-mestre",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "ideias",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "financas",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [
+        {
+          "tag": "TR",
+          "class": "border-b bg-muted/40"
+        },
+        {
+          "tag": "TH",
+          "class": "p-3"
+        },
+        {
+          "tag": "TH",
+          "class": "p-3"
+        }
+      ],
+      "inputs": 3
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "conta",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "areas",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "activity",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 14
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "project",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 2,
+      "outside": [],
+      "inputs": 7
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "idea",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "transaction",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "fixed",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "/auth/login",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "/auth/sign-up",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "/auth/forgot-password",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "screen": "/auth/update-password",
+      "documentWidth": 360,
+      "clientWidth": 360,
+      "innerWidth": 360
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "hoje",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "planejamento",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 4
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "calendario",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "projetos",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "banco-mestre",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "ideias",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "financas",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [
+        {
+          "tag": "TR",
+          "class": "border-b bg-muted/40"
+        },
+        {
+          "tag": "TH",
+          "class": "p-3"
+        }
+      ],
+      "inputs": 3
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "conta",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "areas",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "activity",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 14
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "project",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 2,
+      "outside": [],
+      "inputs": 7
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "idea",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "transaction",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "fixed",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "/auth/login",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "/auth/sign-up",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "/auth/forgot-password",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "/auth/update-password",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "innerWidth": 390
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "hoje",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "planejamento",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 4
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "calendario",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "projetos",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "banco-mestre",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "ideias",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "financas",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 3
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "conta",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "areas",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "activity",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 14
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "project",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 2,
+      "outside": [],
+      "inputs": 7
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "idea",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "transaction",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "fixed",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "/auth/login",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "/auth/sign-up",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "/auth/forgot-password",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "/auth/update-password",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "innerWidth": 768
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "hoje",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "planejamento",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 4
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "calendario",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "projetos",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "banco-mestre",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "ideias",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "financas",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 3
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "conta",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "areas",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "activity",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 14
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "project",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 2,
+      "outside": [],
+      "inputs": 7
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "idea",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "transaction",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 0,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "fixed",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024,
+      "sidebar": false,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "/auth/login",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "/auth/sign-up",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "/auth/forgot-password",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "/auth/update-password",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "innerWidth": 1024
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "hoje",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 7,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "planejamento",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 10,
+      "outside": [],
+      "inputs": 4
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "calendario",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "projetos",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "banco-mestre",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "ideias",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "financas",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 5,
+      "outside": [],
+      "inputs": 3
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "conta",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 4,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "areas",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 6,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "activity",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 5,
+      "outside": [],
+      "inputs": 14
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "project",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 11,
+      "outside": [],
+      "inputs": 7
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "idea",
+      "documentWidth": 1265,
+      "clientWidth": 1265,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 3,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "transaction",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 6,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "fixed",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280,
+      "sidebar": true,
+      "smallControls": 7,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "/auth/login",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "/auth/sign-up",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "/auth/forgot-password",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "screen": "/auth/update-password",
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "innerWidth": 1280
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "hoje",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 7,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "planejamento",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 10,
+      "outside": [],
+      "inputs": 4
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "calendario",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "projetos",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "banco-mestre",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "ideias",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 1,
+      "outside": [],
+      "inputs": 0
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "financas",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 5,
+      "outside": [],
+      "inputs": 3
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "conta",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 4,
+      "outside": [],
+      "inputs": 1
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "areas",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 6,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "activity",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 5,
+      "outside": [],
+      "inputs": 14
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "project",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 11,
+      "outside": [],
+      "inputs": 7
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "idea",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 3,
+      "outside": [],
+      "inputs": 2
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "transaction",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 6,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "fixed",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440,
+      "sidebar": true,
+      "smallControls": 7,
+      "outside": [],
+      "inputs": 5
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "/auth/login",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "/auth/sign-up",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "/auth/forgot-password",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "/auth/update-password",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "innerWidth": 1440
+    }
+  ],
+  "menus": [
+    {
+      "width": 320,
+      "height": 800,
+      "label": "Adicionar algo",
+      "menu": {
+        "left": 0,
+        "top": 556,
+        "right": 256,
+        "bottom": 748,
+        "links": [
+          "/banco-mestre/nova",
+          "/projetos/nova",
+          "/ideias/nova"
+        ],
+        "height": 192
+      }
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "label": "Mais páginas e opções",
+      "menu": {
+        "left": 128,
+        "top": 465,
+        "right": 320,
+        "bottom": 748,
+        "links": [
+          "/planejamento",
+          "/banco-mestre",
+          "/ideias",
+          "/financas",
+          "/conta"
+        ],
+        "height": 283
+      }
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "label": "Adicionar algo",
+      "menu": {
+        "left": 0,
+        "top": 556,
+        "right": 256,
+        "bottom": 748,
+        "links": [
+          "/banco-mestre/nova",
+          "/projetos/nova",
+          "/ideias/nova"
+        ],
+        "height": 192
+      }
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "label": "Mais páginas e opções",
+      "menu": {
+        "left": 168,
+        "top": 465,
+        "right": 360,
+        "bottom": 748,
+        "links": [
+          "/planejamento",
+          "/banco-mestre",
+          "/ideias",
+          "/financas",
+          "/conta"
+        ],
+        "height": 283
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "label": "Adicionar algo",
+      "menu": {
+        "left": 0,
+        "top": 600,
+        "right": 256,
+        "bottom": 792,
+        "links": [
+          "/banco-mestre/nova",
+          "/projetos/nova",
+          "/ideias/nova"
+        ],
+        "height": 192
+      }
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "label": "Mais páginas e opções",
+      "menu": {
+        "left": 198,
+        "top": 509,
+        "right": 390,
+        "bottom": 792,
+        "links": [
+          "/planejamento",
+          "/banco-mestre",
+          "/ideias",
+          "/financas",
+          "/conta"
+        ],
+        "height": 283
+      }
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "label": "Adicionar algo",
+      "menu": {
+        "left": 150,
+        "top": 780,
+        "right": 406,
+        "bottom": 972,
+        "links": [
+          "/banco-mestre/nova",
+          "/projetos/nova",
+          "/ideias/nova"
+        ],
+        "height": 192
+      }
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "label": "Mais páginas e opções",
+      "menu": {
+        "left": 576,
+        "top": 689,
+        "right": 768,
+        "bottom": 972,
+        "links": [
+          "/planejamento",
+          "/banco-mestre",
+          "/ideias",
+          "/financas",
+          "/conta"
+        ],
+        "height": 283
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "label": "Adicionar algo",
+      "menu": {
+        "left": 278,
+        "top": 524,
+        "right": 534,
+        "bottom": 716,
+        "links": [
+          "/banco-mestre/nova",
+          "/projetos/nova",
+          "/ideias/nova"
+        ],
+        "height": 192
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "label": "Mais páginas e opções",
+      "menu": {
+        "left": 832,
+        "top": 433,
+        "right": 1024,
+        "bottom": 716,
+        "links": [
+          "/planejamento",
+          "/banco-mestre",
+          "/ideias",
+          "/financas",
+          "/conta"
+        ],
+        "height": 283
+      }
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "label": "Adicionar algo",
+      "menu": {
+        "left": 1000,
+        "top": 556,
+        "right": 1256,
+        "bottom": 712,
+        "links": [
+          "/banco-mestre/nova",
+          "/projetos/nova",
+          "/ideias/nova"
+        ],
+        "height": 156
+      }
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "label": "Adicionar algo",
+      "menu": {
+        "left": 1160,
+        "top": 656,
+        "right": 1416,
+        "bottom": 812,
+        "links": [
+          "/banco-mestre/nova",
+          "/projetos/nova",
+          "/ideias/nova"
+        ],
+        "height": 156
+      }
+    }
+  ],
+  "keyboard": [
+    {
+      "width": 320,
+      "height": 800,
+      "add": true,
+      "bottom": true
+    },
+    {
+      "width": 360,
+      "height": 800,
+      "add": true,
+      "bottom": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "add": true,
+      "bottom": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "add": true,
+      "bottom": true
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "add": true,
+      "bottom": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "add": true,
+      "bottom": false
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "add": true,
+      "bottom": false
+    }
+  ],
+  "errors": [],
+  "blockedWrites": 0,
+  "blockedPaths": []
+}

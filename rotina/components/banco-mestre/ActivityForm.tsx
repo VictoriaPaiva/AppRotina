@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import {useDraftProtection,confirmPageLeave} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,6 +36,9 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   const inFlight=useRef(false);
   const completed=useRef(false);
   const activityId=useRef<string|null>(initial?.activity.id??null);
+  const originalDraft=useRef(JSON.stringify(draft));
+  const dirty=JSON.stringify(draft)!==originalDraft.current;
+  const allowNavigation=useDraftProtection(dirty&&!saved,saving);
   const change = <K extends keyof ActivityDraft>(key: K, value: ActivityDraft[K]) => setDraft(current => ({ ...current, [key]: value }));
   const patchGoal = (index: number, patch: Partial<GoalDraft>) => setDraft(current => ({ ...current, goals: current.goals.map((row, i) => i === index ? { ...row, ...patch } : row) }));
   const patchRule = (index: number, patch: Partial<RuleDraft>) => setDraft(current => ({ ...current, rules: current.rules.map((row, i) => i === index ? { ...row, ...patch } : row) }));
@@ -53,7 +57,7 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   function validity(key: string, row: { startsOn: string; endsOn: string }, onChange: (patch: { startsOn?: string; endsOn?: string }) => void) { return <details className="space-y-3"><summary className="cursor-pointer text-sm font-medium">Período de validade (opcional)</summary><div className="grid gap-4 pt-3 sm:grid-cols-2">{field(key + '.startsOn', 'Válida a partir de', row.startsOn, value => onChange({ startsOn: value }), undefined, 'date')}{field(key + '.endsOn', 'Válida até (opcional)', row.endsOn, value => onChange({ endsOn: value }), undefined, 'date')}</div></details>; }
   function timeFields(label: string, hoursKey: string, minutesKey: string, h: string, m: string, onHours: (v: string) => void, onMinutes: (v: string) => void) { return <fieldset className="min-w-0 space-y-2"><legend className="text-sm font-medium">{label}</legend><div className="grid grid-cols-2 gap-3">{field(hoursKey, 'Horas', h, onHours, undefined, 'number')}{field(minutesKey, 'Minutos', m, onMinutes, undefined, 'number')}</div></fieldset>; }
   function durationFields(label: string, h: 'hours' | 'minimumHours' | 'idealHours', m: 'minutes' | 'minimum' | 'ideal') { return timeFields(label, h, m, draft[h], draft[m], v => change(h, v), v => change(m, v)); }
-  function section(title: string, children: ReactNode) { return <Card className="rounded-2xl"><CardContent className="space-y-4 p-5"><h3 className="font-semibold">{title}</h3>{children}</CardContent></Card>; }
+  function section(title: string, children: ReactNode) { return <Card className="rounded-2xl"><CardContent className="space-y-4 p-5"><h2 className="font-semibold">{title}</h2>{children}</CardContent></Card>; }
   function switchType(value: string) {
     const type = value as ActivityDraft['type'];
     if (type === draft.type) return;
@@ -92,23 +96,24 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   const metas = draft.type === 'variableActivity' || draft.type === 'checklistGoal';
   const repetition = draft.type === 'reminder' || draft.type === 'commitment';
 
-  if(failure) return <Card><CardContent className="space-y-3 p-5"><h2 className="text-xl font-semibold">Não foi possível carregar o formulário</h2><p role="alert">{failure.message}</p>{failure.kind==='Unauthorized'?<Button asChild><Link href="/auth/login">Entrar</Link></Button>:<Button type="button" variant="outline" onClick={()=>router.refresh()}>Tentar novamente</Button>}</CardContent></Card>;
+  if(failure) return <Card><CardContent className="space-y-3 p-5"><h1 className="text-xl font-semibold">Não foi possível carregar o formulário</h1><p role="alert">{failure.message}</p>{failure.kind==='Unauthorized'?<Button asChild><Link href="/auth/login">Entrar</Link></Button>:<Button type="button" variant="outline" onClick={()=>router.refresh()}>Tentar novamente</Button>}</CardContent></Card>;
   if(saved) return <Card><CardContent className="space-y-3 p-5"><p role="status">Item salvo.</p><Button asChild><Link href={'/banco-mestre/'+saved.activityId}>Ver item salvo</Link></Button></CardContent></Card>;
   if(!areas.some(area=>area.active || initial?.activity.areaId===area.id)) {
     const noAreas=areas.length===0;
     return <Card><CardContent className="space-y-3 p-5">
-      <h2 className="text-xl font-semibold">{noAreas?'Crie sua primeira área':'Todas as áreas estão inativas'}</h2>
+      <h1 className="text-xl font-semibold">{noAreas?'Crie sua primeira área':'Todas as áreas estão inativas'}</h1>
       <p>{noAreas?'Para cadastrar seu primeiro item, é necessário criar uma área no Banco Mestre.':'Para cadastrar um novo item, crie uma área ou reative uma das áreas existentes.'}</p>
       <Button asChild><Link href="/banco-mestre/areas?returnTo=/banco-mestre/nova">{noAreas?'Criar primeira área':'Criar ou reativar área'}</Link></Button>
       <Button asChild variant="outline"><Link href="/banco-mestre">Voltar ao Banco Mestre</Link></Button>
     </CardContent></Card>;
   }
 
-  return <form ref={formRef} onSubmit={submit} noValidate aria-busy={saving} className="space-y-5">
+  return <form ref={formRef} onSubmit={submit} noValidate aria-busy={saving} className="mx-auto w-full max-w-4xl space-y-5">
+    {dirty && <p aria-live="polite" className="text-sm text-muted-foreground">Alterações não salvas.</p>}
     {saving && <p role="status" aria-live="polite">Salvando item…</p>}
-    {saveError && <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm"><p>{saveError.message}</p>{saveError.kind==='Conflict' ? <><p>Suas alterações foram mantidas neste formulário. Confira a versão salva antes de continuar; recarregar descartará este rascunho.</p><Button type="button" variant="outline" onClick={()=>{if(window.confirm('Recarregar a versão salva e descartar as alterações deste formulário?'))window.location.reload();}}>Recarregar versão salva</Button><Button asChild variant="outline"><Link href={'/banco-mestre/'+activityId.current}>Verificar item salvo</Link></Button></> : saveError.kind==='Unauthorized'?<Button asChild variant="outline"><Link href="/auth/login" target="_blank" rel="noopener noreferrer">Entrar novamente em outra aba</Link></Button> : saveError.kind==='Unknown'?<p>Antes de tentar novamente, confira o Banco Mestre caso a conexão tenha sido interrompida durante o salvamento.</p>:null}</div>}
+    {saveError && <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm"><p>{saveError.message}</p>{saveError.kind==='Conflict' ? <><p>Suas alterações foram mantidas neste formulário. Confira a versão salva antes de continuar; recarregar descartará este rascunho.</p><Button type="button" variant="outline" onClick={()=>{if(window.confirm('Recarregar a versão salva e descartar as alterações deste formulário?')){allowNavigation();window.location.reload();}}}>Recarregar versão salva</Button><Button asChild variant="outline"><Link href={'/banco-mestre/'+activityId.current}>Verificar item salvo</Link></Button></> : saveError.kind==='Unauthorized'?<Button asChild variant="outline"><Link href="/auth/login" target="_blank" rel="noopener noreferrer">Entrar novamente em outra aba</Link></Button> : saveError.kind==='Unknown'?<p>Antes de tentar novamente, confira o Banco Mestre caso a conexão tenha sido interrompida durante o salvamento.</p>:null}</div>}
     <fieldset disabled={saving} className="min-w-0 space-y-5">
-    <div className="space-y-2"><h2 className="text-xl font-semibold">{initial ? 'Editar item da rotina' : 'Novo item da rotina'}</h2><p className="text-sm text-muted-foreground">As alterações serão salvas na sua conta ao confirmar.</p></div>
+    <div className="space-y-2"><h1 className="text-xl font-semibold">{initial ? 'Editar item da rotina' : 'Novo item da rotina'}</h1><p className="text-sm text-muted-foreground">As alterações serão salvas na sua conta ao confirmar.</p></div>
     {submitted && Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Revise os campos indicados antes de salvar.</p>}
     {section('Sobre o item', <>
       {field('name', 'Nome', draft.name, v => change('name', v))}
@@ -164,7 +169,7 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
       <p className="text-sm text-muted-foreground">Tempos opcionais, registrados para uso futuro no planejamento. Não reservam horário nesta etapa.</p>
       <div className="grid gap-4 sm:grid-cols-2">{timeFields('Preparação (opcional)', 'preparationHours', 'preparationMinutes', draft.preparationHours, draft.preparationMinutes, v => change('preparationHours', v), v => change('preparationMinutes', v))}{timeFields('Ida (opcional)', 'outboundHours', 'outboundMinutes', draft.outboundHours, draft.outboundMinutes, v => change('outboundHours', v), v => change('outboundMinutes', v))}{timeFields('Volta (opcional)', 'returnHours', 'returnMinutes', draft.returnHours, draft.returnMinutes, v => change('returnHours', v), v => change('returnMinutes', v))}</div>
     </>)}
-    <div className="flex flex-wrap gap-3"><Button type="submit" disabled={saving || saveError?.kind==='Conflict'}>{saving?'Salvando…':'Salvar item'}</Button><Button type="button" variant="outline" onClick={() => { router.push(initial ? '/banco-mestre/' + initial.activity.id : '/banco-mestre'); }}>Cancelar</Button></div>
+    <div className="flex flex-wrap gap-3"><Button type="submit" disabled={saving || saveError?.kind==='Conflict'}>{saving?'Salvando…':'Salvar item'}</Button><Button type="button" variant="outline" onClick={() => { if(confirmPageLeave()){allowNavigation();router.push(initial ? '/banco-mestre/' + initial.activity.id : '/banco-mestre');} }}>Cancelar</Button></div>
     </fieldset>
   </form>;
 }

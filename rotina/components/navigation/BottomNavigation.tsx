@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 const items = [
@@ -22,22 +23,25 @@ const moreItems = [
   { href: "/banco-mestre", label: "Banco Mestre" },
   { href: "/ideias", label: "Ideias" },
   { href: "/financas", label: "Finanças" },
+  { href: "/conta", label: "Minha conta" },
 ];
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  if(pathname.startsWith('/auth/'))return null;
   const moreActive = moreItems.some((item) => (pathname === item.href || pathname.startsWith(item.href + "/")));
 
   return (
     <nav
       aria-label="Navegação principal mobile"
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-center border-t bg-card md:hidden"
+      data-mobile-navigation
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-center border-t bg-card pb-[env(safe-area-inset-bottom)] xl:hidden"
     >
       {items.map((item) => {
         const active = (pathname === item.href || pathname.startsWith(item.href + "/"));
 
         return (
-          <Link
+            <Link
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
@@ -46,7 +50,7 @@ export function BottomNavigation() {
             }`}
           >
             {item.label}
-          </Link>
+            </Link>
         );
       })}
       <DropdownMenu>
@@ -62,7 +66,7 @@ export function BottomNavigation() {
             Mais
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="top" align="end" sideOffset={8} className="z-[60] min-w-48" aria-label="Mais páginas e opções">
+        <DropdownMenuContent side="top" align="end" sideOffset={8} className="z-[60] min-w-48 max-w-[calc(100vw-1rem)]" aria-label="Mais páginas e opções">
           {moreItems.map((item) => {
             const active = (pathname === item.href || pathname.startsWith(item.href + "/"));
             return (
@@ -73,11 +77,10 @@ export function BottomNavigation() {
               </DropdownMenuItem>
             );
           })}
+          <DropdownMenuSeparator/>
+          <ThemeToggle menuItem/>
         </DropdownMenuContent>
       </DropdownMenu>
-      <div className="px-2">
-        <ThemeToggle compact />
-      </div>
     </nav>
   );
 }

@@ -1,5 +1,6 @@
 ﻿'use client';
 import { useRef, useState } from 'react';
+import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ export function IdeaEditor({idea}: {idea?: Idea}) {
   const [success, setSuccess] = useState(false);
   const saving = useRef(false), attemptId = useRef<string | null>(null), navigating = useRef(false);
   const dirty = title !== (saved?.title ?? '') || content !== (saved?.content ?? '');
+  const allowNavigation=useDraftProtection(dirty,busy);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving.current || navigating.current) return;
@@ -39,12 +41,13 @@ export function IdeaEditor({idea}: {idea?: Idea}) {
     } finally { saving.current = false; setBusy(false); }
   }
   function reload() {
-    if ((!dirty || window.confirm('Recarregar descarta o texto não salvo. Deseja continuar?'))) window.location.reload();
+    if ((!dirty || window.confirm('Recarregar descarta o texto não salvo. Deseja continuar?'))) {allowNavigation();window.location.reload();}
   }
   return <div className="mx-auto max-w-4xl space-y-5">
     <Link href="/ideias" className="text-sm underline">Voltar às ideias</Link>
     <h1 className="text-2xl font-semibold">{saved ? 'Editar ideia' : 'Nova ideia'}</h1>
     <form onSubmit={submit} className="space-y-5">
+      {dirty && <p aria-live="polite" className="text-sm text-muted-foreground">Alterações não salvas.</p>}
       <div className="space-y-2"><Label htmlFor="idea-title">Título</Label><Input id="idea-title" required value={title} disabled={busy || navigating.current} onChange={event => {setTitle(event.target.value); setSuccess(false);}} aria-describedby="title-limit" /><p id="title-limit" className="text-xs text-muted-foreground">Até {IDEA_TITLE_LIMIT} caracteres.</p></div>
       <div className="space-y-2"><Label htmlFor="idea-content">Conteúdo</Label><textarea id="idea-content" value={content} disabled={busy || navigating.current} onChange={event => {setContent(event.target.value); setSuccess(false);}} rows={16} aria-describedby="content-limit" className="w-full resize-y rounded-md border border-input bg-background p-3 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" /><p id="content-limit" className="text-xs text-muted-foreground">Até {IDEA_CONTENT_LIMIT.toLocaleString('pt-BR')} caracteres. Conteúdo opcional.</p></div>
       {failure && <div role="alert" className="space-y-3"><p>{failure.message}</p><p className="text-sm">Seu texto foi mantido neste formulário.</p>{failure.kind === 'Unauthorized' && <Link className="block underline" href="/auth/login" target="_blank" rel="noopener noreferrer">Entrar novamente em outra aba</Link>}<Button type="button" variant="outline" onClick={reload}>Recarregar dados salvos</Button>{!saved && attemptId.current && <Link className="block underline" href={`/ideias/${attemptId.current}`} target="_blank" rel="noopener noreferrer">Consultar esta tentativa em outra aba</Link>}</div>}

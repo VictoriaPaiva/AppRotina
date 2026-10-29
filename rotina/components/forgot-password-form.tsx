@@ -14,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export function ForgotPasswordForm({
   className,
@@ -24,11 +24,14 @@ export function ForgotPasswordForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const inFlight=useRef(false);
 
   const handleForgotPassword = async (
     e: React.SubmitEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
+    if(inFlight.current || !hasEnvVars)return;
+    inFlight.current=true;
     setIsLoading(true);
     setError(null);
 
@@ -43,6 +46,7 @@ export function ForgotPasswordForm({
     } catch (error: unknown) {
       setError(authErrorMessage(error));
     } finally {
+      inFlight.current=false;
       setIsLoading(false);
     }
   };
@@ -52,7 +56,7 @@ export function ForgotPasswordForm({
       {success ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Confira seu e-mail</CardTitle>
+            <CardTitle className="text-2xl"><h1>Confira seu e-mail</h1></CardTitle>
             <CardDescription>Enviamos as instruções para recuperar sua senha.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -65,7 +69,7 @@ export function ForgotPasswordForm({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Redefinir senha</CardTitle>
+            <CardTitle className="text-2xl"><h1>Redefinir senha</h1></CardTitle>
             <CardDescription>
               Informe seu e-mail para receber um link de recuperação.
             </CardDescription>
@@ -76,7 +80,7 @@ export function ForgotPasswordForm({
                 A conexão de autenticação ainda não está disponível neste ambiente.
               </p>
             )}
-            <form onSubmit={handleForgotPassword}>
+            <form aria-busy={isLoading} onSubmit={handleForgotPassword}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
                   <Label htmlFor="email">E-mail</Label>
@@ -87,6 +91,7 @@ export function ForgotPasswordForm({
                     placeholder="voce@exemplo.com"
                     required
                     value={email}
+                  disabled={isLoading}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>

@@ -1,11 +1,13 @@
 ﻿import type { PersistenceErrorKind } from '@/lib/banco-mestre/data/errors';
 export interface Project { id: string; title: string; description: string; createdAt: string; updatedAt: string }
 export interface ProjectTask { id: string; projectId: string; title: string; completedAt: string | null; createdAt: string; updatedAt: string }
+export type ProjectTaskProgress = Pick<ProjectTask,'projectId'|'completedAt'>;
 export interface CreateTaskInput { id: string; projectId: string; title: string }
 export interface UpdateTaskInput extends CreateTaskInput { expectedUpdatedAt: string; completed: boolean }
 export interface CreateProjectInput { id: string; title: string; description: string }
 export interface UpdateProjectInput extends CreateProjectInput { expectedUpdatedAt: string }
 export interface ProjectRepository {
+  taskProgress(): Promise<ProjectTaskProgress[]>;
   tasks(projectId?: string): Promise<ProjectTask[]>;
   createTask(input: CreateTaskInput): Promise<ProjectTask>;
   updateTask(input: UpdateTaskInput): Promise<ProjectTask>;

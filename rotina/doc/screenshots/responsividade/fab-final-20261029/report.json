@@ -1,0 +1,667 @@
+{
+  "views": 25,
+  "results": [
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "hoje",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "fab": {
+        "x": 248,
+        "y": 672,
+        "width": 56,
+        "height": 56,
+        "right": 304,
+        "bottom": 728,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 755,
+      "inBar": false,
+      "contentBottom": 640,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "calendario",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "fab": {
+        "x": 248,
+        "y": 672,
+        "width": 56,
+        "height": 56,
+        "right": 304,
+        "bottom": 728,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 755,
+      "inBar": false,
+      "contentBottom": 640,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "financas",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "fab": {
+        "x": 248,
+        "y": 672,
+        "width": 56,
+        "height": 56,
+        "right": 304,
+        "bottom": 728,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 755,
+      "inBar": false,
+      "contentBottom": 640,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "activity",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "fab": {
+        "x": 248,
+        "y": 672,
+        "width": 56,
+        "height": 56,
+        "right": 304,
+        "bottom": 728,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 755,
+      "inBar": false,
+      "contentBottom": 640,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 320,
+      "height": 800,
+      "screen": "transaction",
+      "documentWidth": 320,
+      "clientWidth": 320,
+      "fab": {
+        "x": 248,
+        "y": 672,
+        "width": 56,
+        "height": 56,
+        "right": 304,
+        "bottom": 728,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 755,
+      "inBar": false,
+      "contentBottom": 640,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "hoje",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "fab": {
+        "x": 318,
+        "y": 716,
+        "width": 56,
+        "height": 56,
+        "right": 374,
+        "bottom": 772,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 799,
+      "inBar": false,
+      "contentBottom": 684,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "calendario",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "fab": {
+        "x": 318,
+        "y": 716,
+        "width": 56,
+        "height": 56,
+        "right": 374,
+        "bottom": 772,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 799,
+      "inBar": false,
+      "contentBottom": 684,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "financas",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "fab": {
+        "x": 318,
+        "y": 716,
+        "width": 56,
+        "height": 56,
+        "right": 374,
+        "bottom": 772,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 799,
+      "inBar": false,
+      "contentBottom": 684,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "activity",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "fab": {
+        "x": 318,
+        "y": 716,
+        "width": 56,
+        "height": 56,
+        "right": 374,
+        "bottom": 772,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 799,
+      "inBar": false,
+      "contentBottom": 684,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "screen": "transaction",
+      "documentWidth": 390,
+      "clientWidth": 390,
+      "fab": {
+        "x": 318,
+        "y": 716,
+        "width": 56,
+        "height": 56,
+        "right": 374,
+        "bottom": 772,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 799,
+      "inBar": false,
+      "contentBottom": 684,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "hoje",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "fab": {
+        "x": 696,
+        "y": 896,
+        "width": 56,
+        "height": 56,
+        "right": 752,
+        "bottom": 952,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 979,
+      "inBar": false,
+      "contentBottom": 864,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "calendario",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "fab": {
+        "x": 696,
+        "y": 896,
+        "width": 56,
+        "height": 56,
+        "right": 752,
+        "bottom": 952,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 979,
+      "inBar": false,
+      "contentBottom": 864,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "financas",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "fab": {
+        "x": 696,
+        "y": 896,
+        "width": 56,
+        "height": 56,
+        "right": 752,
+        "bottom": 952,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 979,
+      "inBar": false,
+      "contentBottom": 864,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "activity",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "fab": {
+        "x": 696,
+        "y": 896,
+        "width": 56,
+        "height": 56,
+        "right": 752,
+        "bottom": 952,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 979,
+      "inBar": false,
+      "contentBottom": 864,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "screen": "transaction",
+      "documentWidth": 768,
+      "clientWidth": 768,
+      "fab": {
+        "x": 696,
+        "y": 896,
+        "width": 56,
+        "height": 56,
+        "right": 752,
+        "bottom": 952,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 979,
+      "inBar": false,
+      "contentBottom": 649,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "hoje",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "fab": {
+        "x": 952,
+        "y": 640,
+        "width": 56,
+        "height": 56,
+        "right": 1008,
+        "bottom": 696,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 723,
+      "inBar": false,
+      "contentBottom": 608,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "calendario",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "fab": {
+        "x": 952,
+        "y": 640,
+        "width": 56,
+        "height": 56,
+        "right": 1008,
+        "bottom": 696,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 723,
+      "inBar": false,
+      "contentBottom": 608,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "financas",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "fab": {
+        "x": 952,
+        "y": 640,
+        "width": 56,
+        "height": 56,
+        "right": 1008,
+        "bottom": 696,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 723,
+      "inBar": false,
+      "contentBottom": 608,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "activity",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "fab": {
+        "x": 952,
+        "y": 640,
+        "width": 56,
+        "height": 56,
+        "right": 1008,
+        "bottom": 696,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 723,
+      "inBar": false,
+      "contentBottom": 608,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "screen": "transaction",
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "fab": {
+        "x": 952,
+        "y": 640,
+        "width": 56,
+        "height": 56,
+        "right": 1008,
+        "bottom": 696,
+        "position": "fixed",
+        "zIndex": "40"
+      },
+      "fabVisible": true,
+      "navigationVisible": true,
+      "navigationTop": 723,
+      "inBar": false,
+      "contentBottom": 608,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "hoje",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "fab": {
+        "x": 1345,
+        "y": 820,
+        "width": 56,
+        "height": 56,
+        "right": 1401,
+        "bottom": 876,
+        "position": "fixed",
+        "zIndex": "50"
+      },
+      "fabVisible": true,
+      "navigationVisible": false,
+      "navigationTop": 0,
+      "inBar": false,
+      "contentBottom": 804,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "calendario",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "fab": {
+        "x": 1345,
+        "y": 820,
+        "width": 56,
+        "height": 56,
+        "right": 1401,
+        "bottom": 876,
+        "position": "fixed",
+        "zIndex": "50"
+      },
+      "fabVisible": true,
+      "navigationVisible": false,
+      "navigationTop": 0,
+      "inBar": false,
+      "contentBottom": 804,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "financas",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "fab": {
+        "x": 1345,
+        "y": 820,
+        "width": 56,
+        "height": 56,
+        "right": 1401,
+        "bottom": 876,
+        "position": "fixed",
+        "zIndex": "50"
+      },
+      "fabVisible": true,
+      "navigationVisible": false,
+      "navigationTop": 0,
+      "inBar": false,
+      "contentBottom": 804,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "activity",
+      "documentWidth": 1425,
+      "clientWidth": 1425,
+      "fab": {
+        "x": 1345,
+        "y": 820,
+        "width": 56,
+        "height": 56,
+        "right": 1401,
+        "bottom": 876,
+        "position": "fixed",
+        "zIndex": "50"
+      },
+      "fabVisible": true,
+      "navigationVisible": false,
+      "navigationTop": 0,
+      "inBar": false,
+      "contentBottom": 804,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "screen": "transaction",
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "fab": {
+        "x": 1360,
+        "y": 820,
+        "width": 56,
+        "height": 56,
+        "right": 1416,
+        "bottom": 876,
+        "position": "fixed",
+        "zIndex": "50"
+      },
+      "fabVisible": true,
+      "navigationVisible": false,
+      "navigationTop": 0,
+      "inBar": false,
+      "contentBottom": 617,
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover"
+    }
+  ],
+  "menus": [
+    {
+      "width": 320,
+      "height": 800,
+      "left": 48,
+      "top": 472,
+      "right": 304,
+      "bottom": 664,
+      "links": [
+        "/banco-mestre/nova",
+        "/projetos/nova",
+        "/ideias/nova"
+      ]
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "left": 118,
+      "top": 516,
+      "right": 374,
+      "bottom": 708,
+      "links": [
+        "/banco-mestre/nova",
+        "/projetos/nova",
+        "/ideias/nova"
+      ]
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "left": 496,
+      "top": 696,
+      "right": 752,
+      "bottom": 888,
+      "links": [
+        "/banco-mestre/nova",
+        "/projetos/nova",
+        "/ideias/nova"
+      ]
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "left": 752,
+      "top": 440,
+      "right": 1008,
+      "bottom": 632,
+      "links": [
+        "/banco-mestre/nova",
+        "/projetos/nova",
+        "/ideias/nova"
+      ]
+    },
+    {
+      "width": 1440,
+      "height": 900,
+      "left": 1160,
+      "top": 656,
+      "right": 1416,
+      "bottom": 812,
+      "links": [
+        "/banco-mestre/nova",
+        "/projetos/nova",
+        "/ideias/nova"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "route": "/banco-mestre/nova",
+      "navigation": "protected login, isolated session"
+    },
+    {
+      "route": "/projetos/nova",
+      "navigation": "protected login, isolated session"
+    },
+    {
+      "route": "/ideias/nova",
+      "navigation": "protected login, isolated session"
+    }
+  ],
+  "safeArea": {
+    "right": 36,
+    "bottom": 106
+  },
+  "blockedWrites": 0,
+  "errors": []
+}

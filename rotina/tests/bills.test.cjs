@@ -78,6 +78,13 @@ test('new fixed bill keeps draft and attempt UUID after network loss; blocks dup
   h.change('fixed-name','Aluguel');h.change('fixed-amount','1500,00');h.change('fixed-due','27');await h.submit();assert.equal(h.paths.length,0);assert.equal(h.find(n=>n.props?.id==='fixed-name').props.value,'Aluguel');
   const pending=h.submit();h.submit();assert.equal(calls.length,2);assert.equal(calls[0].id,calls[1].id);resolve({ok:true,value:{...expense,id:calls[1].id}});await pending;assert.deepEqual(h.paths,['/financas']);assert.equal(h.refreshes(),1);
 });
+test('fixed expense edit disables unchanged saves, explains invalid cents and adopts confirmed snapshot',async()=>{
+  const calls=[],h=harness('FixedExpenseEditor',{saveFixedExpense:async value=>{calls.push(value);return {ok:true,value:{...expense,defaultAmountCents:value.defaultAmountCents,updatedAt:'2026-10-28T13:00:00Z'}};}},expense);
+  assert(h.find(n=>n.props?.type==='submit').props.disabled);await h.submit();assert.equal(calls.length,0);
+  h.change('fixed-amount','invalid');assert(h.find(n=>n.props?.role==='alert'));assert(h.find(n=>n.props?.type==='submit').props.disabled);
+  h.change('fixed-amount','213,47');assert(!h.find(n=>n.props?.type==='submit').props.disabled);await h.submit();assert.equal(calls.length,1);assert.equal(calls[0].defaultAmountCents,21347);assert(h.find(n=>n.props?.type==='submit').props.disabled);assert(h.find(n=>n.props?.role==='status'));
+});
+
 test('overview shows independent reference, month navigation, totals, empty state and inactive definitions',()=>{
   const {BillsSection}=withStubs('components/finance/BillsSection.tsx',{'next/link':{default:'a'},'next/navigation':{useRouter:()=>({refresh(){}})},'@/components/ui/button':{Button:({children})=>children},'@/components/ui/input':{Input:'input'},'@/lib/finance/validation':money,'@/lib/finance/bills':bills,'@/lib/finance/summary':summary,'@/app/financas/contas/actions':{}});
   const html=renderToStaticMarkup(React.createElement(BillsSection,{month:'2026-11',currentMonth:'2026-10',initialItems:[],definitions:[{...expense,active:false}],calendarMonth:'2026-12'}));

@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export function LoginForm({
   className,
@@ -25,10 +25,13 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const inFlight=useRef(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if(inFlight.current || !hasEnvVars)return;
+    inFlight.current=true;
     setIsLoading(true);
     setError(null);
 
@@ -44,6 +47,7 @@ export function LoginForm({
     } catch (error: unknown) {
       setError(authErrorMessage(error));
     } finally {
+      inFlight.current=false;
       setIsLoading(false);
     }
   };
@@ -52,7 +56,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Entrar</CardTitle>
+          <CardTitle className="text-2xl"><h1>Entrar</h1></CardTitle>
           <CardDescription>
             Entre com seu e-mail e senha para acessar o Rotina.
           </CardDescription>
@@ -63,7 +67,7 @@ export function LoginForm({
               A conexão de autenticação ainda não está disponível neste ambiente.
             </p>
           )}
-          <form onSubmit={handleLogin}>
+          <form aria-busy={isLoading} onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">E-mail</Label>
@@ -74,6 +78,7 @@ export function LoginForm({
                   placeholder="voce@exemplo.com"
                   required
                   value={email}
+                  disabled={isLoading}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
@@ -93,6 +98,7 @@ export function LoginForm({
                   type="password"
                   required
                   value={password}
+                  disabled={isLoading}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>

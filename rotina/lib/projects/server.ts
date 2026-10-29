@@ -12,7 +12,7 @@ export async function projectRepositoryForSession() {
 export async function readProjects() {
   try {
     const repo = await projectRepositoryForSession();
-    const [projects, tasks] = await Promise.all([repo.list(), repo.tasks()]);
+    const [projects, tasks] = await Promise.all([repo.list(), repo.taskProgress()]);
     return {status: 'ready' as const, projects, tasks};
   }
   catch (error) { return readFailure(error); }
@@ -20,7 +20,7 @@ export async function readProjects() {
 export async function readProject(id: string) {
   try {
     const repo = await projectRepositoryForSession();
-    const project = await repo.get(id), tasks = await repo.tasks(id);
+    const [project,tasks] = await Promise.all([repo.get(id),repo.tasks(id)]);
     return {status: 'ready' as const, project, tasks};
   }
   catch (error) { return readFailure(error); }

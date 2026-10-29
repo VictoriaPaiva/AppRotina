@@ -41,11 +41,16 @@ for(const task of tasks.slice(1))await repo.updateTask({id:task.id,projectId:pro
 assert.equal(projectProgress(await repo.tasks(project.id)).percentage,100);
 const undone=await repo.updateTask({id:edited.id,projectId:project.id,title:edited.title,completed:false,expectedUpdatedAt:edited.updatedAt});assert.equal(undone.completedAt,null);
 const refreshed=await createProjectRepository(client,A).tasks(project.id);assert.equal(refreshed.length,12);assert.equal(projectProgress(refreshed).percentage,92);
+const summaries=await repo.taskProgress();assert.equal(summaries.filter(t=>t.projectId===project.id).length,12);
+assert.deepEqual(projectProgress(summaries.filter(t=>t.projectId===project.id)),projectProgress(refreshed));
+assert(summaries.every(t=>Object.keys(t).sort().join(',')==='completedAt,projectId'));
 });
 test('task RLS, composite FK and grants reject cross-owner reads/writes and project moves',async()=>{
 const project=await create('Owner A',''),task=await repo.createTask({id:randomUUID(),projectId:project.id,title:'Private'});
 await user(B);const b=createProjectRepository(client,B);
 assert.deepEqual(await b.tasks(project.id),[]);
+assert.deepEqual(await b.taskProgress(),[]);
+assert.deepEqual(await createProjectRepository(client,A).taskProgress(),[]); // RLS still wins over a forged repository owner.
 await assert.rejects(()=>b.updateTask({id:task.id,projectId:project.id,title:'Attack',completed:true,expectedUpdatedAt:task.updatedAt}),e=>e.kind==='NotFound');
 await assert.rejects(()=>b.createTask({id:randomUUID(),projectId:project.id,title:'Attack'}),e=>e.kind==='NotFound');
 await assert.rejects(()=>db.query('insert into project_tasks(user_id,project_id,title) values($1,$2,$3)',[B,project.id,'Cross owner']),e=>e.code==='23503');
