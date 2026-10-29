@@ -1,0 +1,6 @@
+# Generated environment/link metadata must not enter any deployment or commit.
+**/supabase/.temp/
+**/supabase/.branches/
+**/.vercel/
+**/.env*
+!**/.env.example
