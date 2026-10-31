@@ -44,7 +44,7 @@ test('SSR selects financial reference and lazily initializes only after verified
 });
 function harness(component,actions,initial) {
   const slots=[],callbacks=[],paths=[];let cursor=0,refreshes=0;
-  const react={useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
+  const react={useLayoutEffect(){cursor++;},useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
   const file=component==='BillRow'?'BillsSection':'FixedExpenseEditor';
   const components=withStubs('components/finance/'+file+'.tsx',{react,'next/link':{default:'a'},'next/navigation':{useRouter:()=>({replace:p=>paths.push(p),refresh(){refreshes++;}})},'@/components/ui/button':{Button:'button'},'@/components/ui/input':{Input:'input'},'@/components/ui/label':{Label:'label'},
     '@/lib/finance/validation':money,'@/lib/finance/bills':bills,'@/lib/finance/summary':summary,'@/app/financas/contas/actions':actions});

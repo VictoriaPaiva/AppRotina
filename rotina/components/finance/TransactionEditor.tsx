@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,22 @@ export function TransactionEditor({transaction, initialDate}: {transaction?: Fin
   const [busy, setBusy] = useState(false), [success, setSuccess] = useState(false);
   const [failure, setFailure] = useState<Extract<FinanceResult, {ok: false}> | null>(null);
   const saving = useRef(false), attemptId = useRef<string | null>(null), navigating = useRef(false);
+  useLayoutEffect(() => () => {
+    // Activity retains hidden routes. Retire only a confirmed creation.
+    if (transaction || !navigating.current) return;
+    navigating.current = false;
+    attemptId.current = null;
+    saving.current = false;
+    setSaved(undefined);
+    setType('expense');
+    setDate(initialDate);
+    setAmount('');
+    setDescription('');
+    setCategory('');
+    setBusy(false);
+    setFailure(null);
+    setSuccess(false);
+  }, [transaction, initialDate]);
   let amountCents: number | null = null;
   try {amountCents = parseAmount(amount);} catch { /* Invalid text stays editable. */ }
   const dirty = !saved || type !== saved.type || date !== saved.date || amountCents !== saved.amountCents || description !== saved.description || category !== saved.category;

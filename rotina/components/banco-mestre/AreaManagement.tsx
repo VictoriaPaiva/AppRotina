@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useRef, useState, type FormEvent } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -41,6 +41,17 @@ export function AreaCreateForm({returnTo}:{returnTo?:string}={}) {
   useDraftProtection(name!==''&&!saved,saving);
   const inFlight=useRef(false);
   const completed=useRef(false);
+  useLayoutEffect(() => () => {
+    // Refresh keeps this form mounted; Activity also preserves it on navigation.
+    if (!completed.current) return;
+    id.current=null;
+    completed.current=false;
+    inFlight.current=false;
+    setSaved(false);
+    setName('');
+    setError(null);
+    setSaving(false);
+  }, []);
   async function submit(event:FormEvent) {
     event.preventDefault();
     if(inFlight.current || completed.current || error?.kind==='Conflict') return;
