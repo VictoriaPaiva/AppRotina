@@ -42,8 +42,8 @@ test('server verifies claims before repository and never substitutes mocks on fa
   }assert.equal(reads,1);
 });
 function editorHarness({initial=project,create,update}={}) {
-  const slots=[],paths=[];let cursor=0,refreshes=0;
-  const react={useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
+  const slots=[],paths=[];let cursor=0,refreshes=0,cleanup;
+  const react={useLayoutEffect(setup){cursor++;cleanup??=setup();},useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
   const {ProjectEditor}=withStubs('components/projects/ProjectEditor.tsx',{
     react,'next/link':{default:'a'},'next/navigation':{useRouter:()=>({replace:p=>paths.push(p),refresh(){refreshes++;}})},
     '@/components/ui/button':{Button:'button'},'@/components/ui/input':{Input:'input'},'@/components/ui/label':{Label:'label'},
@@ -52,8 +52,51 @@ function editorHarness({initial=project,create,update}={}) {
   const nodes=(node,predicate)=>!node||typeof node!=='object'?[]:[...(predicate(node)?[node]:[]),...[node.props?.children].flat(Infinity).flatMap(child=>nodes(child,predicate))];
   const render=()=>{cursor=0;return ProjectEditor({project:initial});};
   const find=predicate=>nodes(render(),predicate)[0];
-  return {find,paths,refreshes:()=>refreshes,change:(field,value)=>find(n=>n.props?.id===field).props.onChange({target:{value}}),submit:()=>find(n=>n.type==='form').props.onSubmit({preventDefault(){}})};
+  return {find,paths,hide(){cleanup?.();cleanup=undefined;},refreshes:()=>refreshes,change:(field,value)=>find(n=>n.props?.id===field).props.onChange({target:{value}}),submit:()=>find(n=>n.type==='form').props.onSubmit({preventDefault(){}})};
 }
+
+test('completed creation hidden by Activity reopens empty and creates B with new ID, preserving A without automatic writes',async()=>{
+  const records=new Map(),calls=[];
+  const h=editorHarness({initial:null,create:async input=>{
+    assert(!records.has(input.id));calls.push({...input});
+    const saved={...project,...input};records.set(input.id,saved);return {ok:true,project:saved};
+  },update:async()=>assert.fail('new flow must never update A')});
+  let first;
+  for(const title of ['Projeto A','Projeto B']) {
+    assert.equal(h.find(n=>n.type==='h1').props.children,'Novo projeto');
+    for(const field of ['project-title','project-description']) {
+      const input=h.find(n=>n.props?.id===field);assert.equal(input.props.value,'');assert.equal(input.props.disabled,false);
+    }
+    assert(!h.find(n=>n.props?.role==='status'||n.props?.role==='alert'));
+    assert.equal(h.paths.length,calls.length);
+    h.change('project-title',title);h.change('project-description',title+' description');await h.submit();
+    const saved=calls.at(-1);assert.equal(h.paths.at(-1),`/projetos/${saved.id}`);
+    assert(h.find(n=>n.props?.role==='status'));assert(h.find(n=>n.props?.href==='/projetos'));
+    await h.submit();assert.equal(calls.length,title==='Projeto A'?1:2);
+    if(!first)first={...records.get(saved.id)};
+    h.hide(); // Keep hook slots/refs: navigation hides, rather than unmounts.
+    assert.equal(h.find(n=>n.type==='h1').props.children,'Novo projeto');
+    assert.equal(calls.length,title==='Projeto A'?1:2);
+    assert.deepEqual(records.get(first.id),first);
+  }
+  assert.notEqual(calls[0].id,calls[1].id);assert.equal(records.size,2);
+  assert.deepEqual(calls.map(c=>c.title),['Projeto A','Projeto B']);
+});
+
+test('Activity hide preserves unfinished drafts and uncertain create UUID; edits retain authoritative snapshot',async()=>{
+  const calls=[];
+  const draft=editorHarness({initial:null,create:async input=>{calls.push(input);return {ok:false,kind:'Unknown',message:'Unconfirmed'};}});
+  draft.change('project-title','Draft');draft.change('project-description','Keep text');
+  draft.hide();assert.equal(draft.find(n=>n.props?.id==='project-title').props.value,'Draft');
+  await draft.submit();draft.hide();
+  assert.equal(draft.find(n=>n.props?.id==='project-description').props.value,'Keep text');
+  assert(draft.find(n=>n.props?.role==='alert'));await draft.submit();assert.equal(calls[0].id,calls[1].id);
+  const updates=[],edit=editorHarness({update:async input=>{updates.push(input);return {ok:true,project:{...project,title:input.title,updatedAt:'2026-10-31T12:00:00Z'}};}});
+  edit.change('project-title','Edited A');await edit.submit();edit.hide();
+  assert.equal(edit.find(n=>n.props?.id==='project-title').props.value,'Edited A');
+  edit.change('project-title','Edited again');await edit.submit();
+  assert.equal(updates[1].id,project.id);assert.equal(updates[1].expectedUpdatedAt,'2026-10-31T12:00:00Z');
+});
 test('editing preserves draft on expired session/network/conflict, never reports false success',async()=>{
   for(const failure of ['throw','Unauthorized','Conflict']) {
     const calls=[],h=editorHarness({update:async input=>{calls.push(input);if(failure==='throw')throw Error('network');return {ok:false,kind:failure,message:'Falha segura'};}});
