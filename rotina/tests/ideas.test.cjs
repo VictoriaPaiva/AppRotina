@@ -51,8 +51,8 @@ test('real list has empty/multiple states, short escaped previews, dates and det
   assert(!html.includes('x'.repeat(181)));assert.equal(presentation.ideaPreview('a\n  b'),'a b');
 });
 function editorHarness({initial=idea,create,update}={}) {
-  const slots=[],paths=[];let cursor=0,refreshes=0;
-  const react={useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
+  const slots=[],paths=[];let cursor=0,refreshes=0,cleanup;
+  const react={useLayoutEffect(setup){cursor++;cleanup??=setup();},useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
   const {IdeaEditor}=withStubs('components/ideas/IdeaEditor.tsx',{
     react,'next/link':{default:'a'},'next/navigation':{useRouter:()=>({replace:p=>paths.push(p),refresh(){refreshes++;}})},
     '@/components/ui/button':{Button:'button'},'@/components/ui/input':{Input:'input'},'@/components/ui/label':{Label:'label'},
@@ -61,8 +61,58 @@ function editorHarness({initial=idea,create,update}={}) {
   const nodes=(node,predicate)=>!node||typeof node!=='object'?[]:[...(predicate(node)?[node]:[]),...[node.props?.children].flat(Infinity).flatMap(child=>nodes(child,predicate))];
   const render=()=>{cursor=0;return IdeaEditor({idea:initial});};
   const find=predicate=>nodes(render(),predicate)[0];
-  return {find,paths,refreshes:()=>refreshes,change:(field,value)=>find(n=>n.props?.id===field).props.onChange({target:{value}}),submit:()=>find(n=>n.type==='form').props.onSubmit({preventDefault(){}})};
+  return {find,paths,hide(){cleanup?.();cleanup=undefined;},refreshes:()=>refreshes,change:(field,value)=>find(n=>n.props?.id===field).props.onChange({target:{value}}),submit:()=>find(n=>n.type==='form').props.onSubmit({preventDefault(){}})};
 }
+
+test('Activity retires completed idea A, reopens empty and creates distinct B without writes to A or automatic navigation',async()=>{
+  const records=new Map(),calls=[];
+  const h=editorHarness({initial:null,create:async input=>{
+    assert(!records.has(input.id));calls.push({...input});
+    const saved={...idea,...input};records.set(input.id,saved);return {ok:true,idea:saved};
+  },update:async()=>assert.fail('new flow must never update idea A')});
+  let first;
+  for(const title of ['Ideia A','Ideia B']) {
+    assert.equal(h.find(n=>n.type==='h1').props.children,'Nova ideia');
+    for(const field of ['idea-title','idea-content']) {
+      const input=h.find(n=>n.props?.id===field);assert.equal(input.props.value,'');assert.equal(input.props.disabled,false);
+    }
+    assert(!h.find(n=>n.props?.role==='status'||n.props?.role==='alert'));
+    assert.equal(h.paths.length,calls.length);
+    h.change('idea-title',title);h.change('idea-content',title+' content');await h.submit();
+    const saved=calls.at(-1);assert.equal(h.paths.at(-1),`/ideias/${saved.id}`);
+    assert(h.find(n=>n.props?.role==='status'));assert(h.find(n=>n.props?.href==='/ideias'));
+    await h.submit();assert.equal(calls.length,title==='Ideia A'?1:2);
+    if(!first)first={...records.get(saved.id)};
+    h.hide(); // Retain hook slots/refs across navigation, as Activity does.
+    assert.equal(h.find(n=>n.type==='h1').props.children,'Nova ideia');
+    assert.equal(calls.length,title==='Ideia A'?1:2);
+    assert.deepEqual(records.get(first.id),first);
+  }
+  assert.notEqual(calls[0].id,calls[1].id);assert.equal(records.size,2);
+  assert.deepEqual(calls.map(c=>c.title),['Ideia A','Ideia B']);
+});
+
+test('Activity preserves unfinished idea drafts, uncertain attempt UUID and existing edit snapshots',async()=>{
+  const calls=[];
+  const draft=editorHarness({initial:null,create:async input=>{calls.push(input);return {ok:false,kind:'Unknown',message:'Unconfirmed'};}});
+  draft.change('idea-title','Draft');draft.change('idea-content','Keep text');
+  draft.hide();assert.equal(draft.find(n=>n.props?.id==='idea-title').props.value,'Draft');
+  await draft.submit();draft.hide();
+  assert.equal(draft.find(n=>n.props?.id==='idea-content').props.value,'Keep text');
+  assert(draft.find(n=>n.props?.role==='alert'));await draft.submit();assert.equal(calls[0].id,calls[1].id);
+  const updates=[],edit=editorHarness({update:async input=>{updates.push(input);return {ok:true,idea:{...idea,title:input.title,updatedAt:'2026-10-31T12:00:00Z'}};}});
+  edit.change('idea-title','Edited A');edit.hide();
+  assert.equal(edit.find(n=>n.props?.id==='idea-title').props.value,'Edited A');
+  await edit.submit();edit.hide(); // Confirmed edits remain in the edit flow.
+  assert.equal(edit.find(n=>n.type==='h1').props.children,'Editar ideia');
+  assert.equal(edit.find(n=>n.props?.id==='idea-title').props.value,'Edited A');
+  edit.change('idea-title','Edited again');await edit.submit();
+  assert.equal(updates[1].id,idea.id);assert.equal(updates[1].expectedUpdatedAt,'2026-10-31T12:00:00Z');
+  const fresh=editorHarness({initial:null,create:async()=>assert.fail('opening new idea must not write')});
+  assert.equal(fresh.find(n=>n.props?.id==='idea-title').props.value,'');
+  assert.equal(fresh.find(n=>n.props?.id==='idea-content').props.value,'');
+  assert.deepEqual(fresh.paths,[]);
+});
 test('editing preserves draft on expired session/network/conflict, never reports false success',async()=>{
   for(const failure of ['throw','Unauthorized','Conflict']) {
     const calls=[],h=editorHarness({update:async input=>{calls.push(input);if(failure==='throw')throw Error('network');return {ok:false,kind:failure,message:'Falha segura'};}});
