@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -20,6 +20,20 @@ export function IdeaEditor({idea}: {idea?: Idea}) {
   const [failure, setFailure] = useState<Extract<IdeaResult, {ok: false}> | null>(null);
   const [success, setSuccess] = useState(false);
   const saving = useRef(false), attemptId = useRef<string | null>(null), navigating = useRef(false);
+  useLayoutEffect(() => () => {
+    // Activity preserves hidden routes, including the saved idea and refs.
+    // Retire only a confirmed creation; preserve edits and unfinished drafts.
+    if (idea || !navigating.current) return;
+    navigating.current = false;
+    attemptId.current = null;
+    saving.current = false;
+    setSaved(undefined);
+    setTitle('');
+    setContent('');
+    setBusy(false);
+    setFailure(null);
+    setSuccess(false);
+  }, [idea]);
   const dirty = title !== (saved?.title ?? '') || content !== (saved?.content ?? '');
   const allowNavigation=useDraftProtection(dirty,busy);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
