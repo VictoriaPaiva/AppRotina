@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {useDraftProtection,confirmPageLeave} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
@@ -37,6 +37,22 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   const completed=useRef(false);
   const activityId=useRef<string|null>(initial?.activity.id??null);
   const originalDraft=useRef(JSON.stringify(draft));
+  useLayoutEffect(() => () => {
+    // Cache Components hides routes with Activity, preserving state and refs.
+    // Retire a completed creation on hide; keep unsaved drafts and edits intact.
+    if (initial || !completed.current) return;
+    const fresh = createDraft();
+    originalDraft.current = JSON.stringify(fresh);
+    activityId.current = null;
+    completed.current = false;
+    inFlight.current = false;
+    setDraft(fresh);
+    setErrors({});
+    setSubmitted(false);
+    setSaving(false);
+    setSaveError(null);
+    setSaved(null);
+  }, [initial]);
   const dirty=JSON.stringify(draft)!==originalDraft.current;
   const allowNavigation=useDraftProtection(dirty&&!saved,saving);
   const change = <K extends keyof ActivityDraft>(key: K, value: ActivityDraft[K]) => setDraft(current => ({ ...current, [key]: value }));
