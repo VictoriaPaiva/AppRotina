@@ -129,3 +129,14 @@ test('conflict reload requires consent before discarding local draft',async()=>{
     consent=true;reload();assert.equal(reloads,1);
   } finally {global.window=originalWindow;}
 });
+
+test('V0.3 manual/hybrid editor sends independent progress, preserves draft and resets completed new flow',async()=>{
+  const calls=[],h=editorHarness({initial:null,create:async input=>{calls.push(input);return {ok:true,project:{...project,...input}};}});
+  h.change('project-title','Puzzle');h.change('project-progress-mode','manual');h.change('project-manual-progress','42');
+  h.hide();assert.equal(h.find(n=>n.props?.id==='project-manual-progress').props.value,42);
+  await h.submit();assert.equal(calls[0].progressMode,'manual');assert.equal(calls[0].manualProgressPercent,42);
+  h.hide();assert.equal(h.find(n=>n.props?.id==='project-progress-mode').props.value,'tasks');
+  assert(!h.find(n=>n.props?.id==='project-manual-progress'));
+  h.change('project-title','Second');h.change('project-progress-mode','hybrid');assert.equal(h.find(n=>n.props?.id==='project-manual-progress').props.value,0);
+  h.change('project-manual-progress','100');await h.submit();assert.equal(calls[1].manualProgressPercent,100);assert.equal(calls[1].progressMode,'hybrid');assert.notEqual(calls[0].id,calls[1].id);
+});

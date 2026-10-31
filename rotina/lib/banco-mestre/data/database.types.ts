@@ -1,7 +1,7 @@
 /** Generated with Supabase CLI 2.120.0: gen types typescript --linked --schema public.
  * daily_plan_items regenerated from the linked development schema on 2026-10-22.
  * ideas mirrored from migration 20261026000100; checked against PostgreSQL by data-layer tests.
- * projects/project_tasks mirrored from migration 20261027000100; checked by SQL tests.
+ * projects/project_tasks mirrored through migration 20261031000100; checked by SQL tests.
  * financial_transactions mirrored from migration 20261027000200; checked by SQL tests.
  * fixed_expenses/months and linked transactions mirrored from 20261027000300.
  * All public schema contracts compared; compatibility aliases appended at the end.
@@ -43,16 +43,16 @@ export type Database = {
         Relationships: [{ foreignKeyName: "financial_transactions_owner_bill_fkey"; columns: ["user_id", "fixed_expense_month_id"]; isOneToOne: false; referencedRelation: "fixed_expense_months"; referencedColumns: ["user_id", "id"] }]
       }
       projects: {
-        Row: { id: string; user_id: string; title: string; description: string; created_at: string; updated_at: string }
-        Insert: { id?: string; user_id: string; title: string; description?: string; created_at?: string; updated_at?: string }
-        Update: { id?: string; user_id?: string; title?: string; description?: string; created_at?: string; updated_at?: string }
+        Row: { progress_mode: string; manual_progress_percent: number; id: string; user_id: string; title: string; description: string; created_at: string; updated_at: string }
+        Insert: { progress_mode?: string; manual_progress_percent?: number; id?: string; user_id: string; title: string; description?: string; created_at?: string; updated_at?: string }
+        Update: { progress_mode?: string; manual_progress_percent?: number; id?: string; user_id?: string; title?: string; description?: string; created_at?: string; updated_at?: string }
         Relationships: []
       }
       project_tasks: {
-        Row: { id: string; user_id: string; project_id: string; title: string; completed_at: string | null; created_at: string; updated_at: string }
-        Insert: { id?: string; user_id: string; project_id: string; title: string; completed_at?: string | null; created_at?: string; updated_at?: string }
-        Update: { id?: string; user_id?: string; project_id?: string; title?: string; completed_at?: string | null; created_at?: string; updated_at?: string }
-        Relationships: [{ foreignKeyName: "project_tasks_owner_project_fkey"; columns: ["user_id", "project_id"]; isOneToOne: false; referencedRelation: "projects"; referencedColumns: ["user_id", "id"] }]
+        Row: { parent_task_id: string | null; progress_stage: string; progress_weight: number; id: string; user_id: string; project_id: string; title: string; completed_at: string | null; created_at: string; updated_at: string }
+        Insert: { parent_task_id?: string | null; progress_stage?: string; progress_weight?: number; id?: string; user_id: string; project_id: string; title: string; completed_at?: string | null; created_at?: string; updated_at?: string }
+        Update: { parent_task_id?: string | null; progress_stage?: string; progress_weight?: number; id?: string; user_id?: string; project_id?: string; title?: string; completed_at?: string | null; created_at?: string; updated_at?: string }
+        Relationships: [{ foreignKeyName: "project_tasks_owner_project_fkey"; columns: ["user_id", "project_id"]; isOneToOne: false; referencedRelation: "projects"; referencedColumns: ["user_id", "id"] }, { foreignKeyName: "project_tasks_parent_fkey"; columns: ["user_id", "project_id", "parent_task_id"]; isOneToOne: false; referencedRelation: "project_tasks"; referencedColumns: ["user_id", "project_id", "id"] }]
       }
 
       ideas: {
