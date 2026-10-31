@@ -67,7 +67,9 @@ test('new/edit pages load real areas and preserve the aggregate revision for the
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};
 function formHarness(props,action) {
   const slots=[];let cursor=0;const navigations=[];
+  let cleanup;
   const react={
+    useLayoutEffect(setup){cursor++;cleanup??=setup();},
     useId(){cursor++;return 'test-form';},
     useRef(initial){const i=cursor++;slots[i]??={current:initial};return slots[i];},
     useState(initial){const i=cursor++;if(!slots[i])slots[i]={value:typeof initial==='function'?initial():initial};return [slots[i].value,value=>{slots[i].value=typeof value==='function'?value(slots[i].value):value;}];},
@@ -84,8 +86,49 @@ function formHarness(props,action) {
   const field=(tree,name)=>nodes(tree,node=>node.props?.['data-field']===name)[0];
   const text=tree=>JSON.stringify(tree,(key,value)=>typeof value==='function'?undefined:value);
   const event={preventDefault(){}};
-  return {render,nodes,field,text,event,navigations};
+  const hide=()=>{cleanup?.();cleanup=undefined;};
+  return {render,nodes,field,text,event,navigations,hide};
 }
+
+test('Activity hide/show retires completed creation: A then fresh B with distinct ID and no automatic writes',async()=>{
+  const calls=[],area={id:crypto.randomUUID(),name:'Area',active:true};
+  const h=formHarness({areas:[area]},async input=>{
+    calls.push(input);return {ok:true,activityId:input.bundle.activity.id,revision:1};
+  });
+  for(const name of ['Item A','Item B']) {
+    let tree=h.render();assert.equal(tree.type,'form');
+    assert.equal(h.field(tree,'name').props.value,'');
+    assert.equal(h.field(tree,'areaId').props.value,'');
+    assert(!h.text(tree).includes('Item salvo'));
+    assert(!h.text(tree).includes('Alterações não salvas'));
+    h.field(tree,'name').props.onChange({target:{value:name}});
+    h.field(tree,'areaId').props.onChange({target:{value:area.id}});
+    tree=h.render();await tree.props.onSubmit(h.event);
+    const saved=h.render();assert(h.text(saved).includes('Item salvo'));
+    const id=calls.at(-1).bundle.activity.id;
+    assert(h.nodes(saved,n=>n.props?.href==='/banco-mestre/'+id).length);
+    await tree.props.onSubmit(h.event); // Still blocked while success is visible.
+    assert.equal(calls.length,name==='Item A'?1:2);
+    h.hide(); // Same hook slots survive navigation, just like React Activity.
+    h.render();assert.equal(calls.length,name==='Item A'?1:2);
+  }
+  assert.notEqual(calls[0].bundle.activity.id,calls[1].bundle.activity.id);
+  assert.deepEqual(calls.map(c=>[c.mode,c.bundle.activity.name]),[['create','Item A'],['create','Item B']]);
+  assert.deepEqual(h.navigations,calls.map(c=>'/banco-mestre/'+c.bundle.activity.id));
+});
+
+test('Activity cleanup preserves unsaved creation, failed save and existing edit',async()=>{
+  const area={id:crypto.randomUUID(),name:'Area',active:true};
+  for(const initial of [undefined,fixture('academia')]) {
+    const h=formHarness({initial,expectedRevision:initial?3:undefined,areas:[initial?{...area,id:initial.activity.areaId}:area]},async()=>({ok:false,kind:'Unknown',message:'Try again'}));
+    let tree=h.render();h.field(tree,'name').props.onChange({target:{value:'Draft'}});
+    h.hide();tree=h.render();assert.equal(h.field(tree,'name').props.value,'Draft');
+    if(!initial)h.field(tree,'areaId').props.onChange({target:{value:area.id}});
+    tree=h.render();await tree.props.onSubmit(h.event);
+    h.hide();tree=h.render();assert.equal(h.field(tree,'name').props.value,'Draft');
+    assert(h.text(tree).includes('Try again'));
+  }
+});
 test('create form waits for confirmation, blocks double submit and navigates only with saved ID',async()=>{
   const gate=deferred(),calls=[];const area={id:crypto.randomUUID(),name:'Real area',active:true};
   const h=formHarness({areas:[area]},async input=>{calls.push(input);return gate.promise;});
@@ -206,6 +249,7 @@ test('edit success uses original revision and redirects to the repository result
   tree=h.render();await tree.props.onSubmit(h.event);
   assert.equal(calls[0].expectedRevision,11);assert.equal(calls[0].bundle.activity.name,'Updated');
   assert.deepEqual(h.navigations,['/banco-mestre/'+savedId]);
+  h.hide();assert(h.text(h.render()).includes('Item salvo'));
   const fs=require('node:fs');const path=require('node:path');
   for(const file of ['app/banco-mestre/actions.ts','components/banco-mestre/ActivityForm.tsx','lib/banco-mestre/data/write-model.ts']) {
     const source=fs.readFileSync(path.resolve(__dirname,'..',file),'utf8');
