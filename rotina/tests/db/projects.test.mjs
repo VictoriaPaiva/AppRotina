@@ -23,7 +23,8 @@ async function user(id=A){await db.exec('reset role');await db.query("select set
 const create=(title='Ideia real',description='Conteúdo\ncom linhas')=>repo.create({id:randomUUID(),title,description});
 before(async()=>{
 await db.exec(`create role authenticated nologin;create role anon nologin;create schema auth;create schema routine_private;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;insert into auth.users values('${A}'),('${B}');`);
-await db.exec(await readFile('supabase/migrations/20261027000100_projects.sql','utf8'));await user();
+await db.exec(await readFile('supabase/migrations/20261027000100_projects.sql','utf8'));
+await db.exec(await readFile('supabase/migrations/20261031000100_projects_advanced.sql','utf8'));await user();
 });
 test('tasks create/edit/complete/undo, 0/partial/100 progress, refresh and stale snapshots',async()=>{
 const {projectProgress}=load('lib/projects/progress.ts');
@@ -43,7 +44,7 @@ const undone=await repo.updateTask({id:edited.id,projectId:project.id,title:edit
 const refreshed=await createProjectRepository(client,A).tasks(project.id);assert.equal(refreshed.length,12);assert.equal(projectProgress(refreshed).percentage,92);
 const summaries=await repo.taskProgress();assert.equal(summaries.filter(t=>t.projectId===project.id).length,12);
 assert.deepEqual(projectProgress(summaries.filter(t=>t.projectId===project.id)),projectProgress(refreshed));
-assert(summaries.every(t=>Object.keys(t).sort().join(',')==='completedAt,projectId'));
+assert(summaries.every(t=>Object.keys(t).sort().join(',')==='completedAt,id,parentTaskId,progressStage,progressWeight,projectId'));
 });
 test('task RLS, composite FK and grants reject cross-owner reads/writes and project moves',async()=>{
 const project=await create('Owner A',''),task=await repo.createTask({id:randomUUID(),projectId:project.id,title:'Private'});
@@ -86,4 +87,78 @@ for(const [title,description] of [['',''],['   ',''],['x'.repeat(201),''],['ok',
 await assert.rejects(()=>create(title,description),e=>e.kind==='Validation');
 await assert.rejects(()=>db.query('insert into projects(user_id,title,description) values($1,$2,$3)',[A,title,description]),e=>e.code==='23514');
 }
+});
+
+test('V0.3 manual 0 -> 42 -> 100 persists across repository reload; hybrid never overwrites task stages',async()=>{
+  let project=await repo.create({id:randomUUID(),title:'Manual',description:'',progressMode:'manual',manualProgressPercent:0});
+  assert.equal((await repo.get(project.id)).manualProgressPercent,0);
+  for(const percent of [42,100]) {
+    project=await repo.update({id:project.id,title:project.title,description:'',progressMode:'manual',manualProgressPercent:percent,expectedUpdatedAt:project.updatedAt});
+    assert.equal((await createProjectRepository(client,A).get(project.id)).manualProgressPercent,percent);
+  }
+  const leaf=await repo.createTask({id:randomUUID(),projectId:project.id,title:'Partial',progressStage:'in_progress'});
+  project=await repo.update({id:project.id,title:project.title,description:'',progressMode:'hybrid',manualProgressPercent:42,expectedUpdatedAt:project.updatedAt});
+  assert.equal(project.manualProgressPercent,42);assert.equal(project.progressMode,'hybrid');
+  assert.equal((await repo.tasks(project.id))[0].progressStage,leaf.progressStage);
+});
+
+test('V0.3 seven stages synchronize completion, keep timestamps, reopen and retain exact conflicts',async()=>{
+  const project=await create();let task=await repo.createTask({id:randomUUID(),projectId:project.id,title:'Leaf'});
+  for(const stage of ['started','early_progress','in_progress','advanced','finishing','completed','in_progress']) {
+    const previous=task;
+    task=await repo.updateTask({id:task.id,projectId:project.id,title:task.title,progressStage:stage,progressWeight:3,completed:stage==='completed',expectedUpdatedAt:task.updatedAt});
+    assert.equal(task.progressStage,stage);assert.equal(task.completedAt!==null,stage==='completed');assert.equal(task.progressWeight,3);
+    await assert.rejects(()=>repo.updateTask({id:task.id,projectId:project.id,title:'Lost',completed:false,expectedUpdatedAt:previous.updatedAt}),e=>e.kind==='Conflict');
+  }
+  await db.query("update project_tasks set completed_at=now() where id=$1",[task.id]);
+  assert.equal((await repo.tasks(project.id))[0].progressStage,'completed');
+  await db.query('update project_tasks set completed_at=null where id=$1',[task.id]);
+  assert.equal((await repo.tasks(project.id))[0].progressStage,'not_started');
+});
+
+test('V0.3 hierarchy enforces project/owner, self-parent, existing parent, immutable edges and derived parent stage',async()=>{
+  const project=await create(),other=await create('Other');
+  const root=await repo.createTask({id:randomUUID(),projectId:project.id,title:'Root'});
+  const child=await repo.createTask({id:randomUUID(),projectId:project.id,parentTaskId:root.id,title:'Child'});
+  const grandchild=await repo.createTask({id:randomUUID(),projectId:project.id,parentTaskId:child.id,title:'Grandchild',progressStage:'completed',progressWeight:5});
+  assert.equal(grandchild.parentTaskId,child.id);
+  const {projectProgress}=load('lib/projects/progress.ts');assert.equal(projectProgress(await repo.tasks(project.id)).percentage,100);
+  await assert.rejects(()=>repo.createTask({id:randomUUID(),projectId:other.id,parentTaskId:root.id,title:'Cross project'}),e=>e.kind==='Validation');
+  await assert.rejects(()=>repo.updateTask({id:root.id,projectId:project.id,title:root.title,completed:true,expectedUpdatedAt:root.updatedAt}),e=>e.kind==='Validation');
+  const renamed=await repo.updateTask({id:root.id,projectId:project.id,title:'New root',completed:false,progressWeight:2,expectedUpdatedAt:root.updatedAt});assert.equal(renamed.title,'New root');
+  await assert.rejects(()=>db.query('update project_tasks set parent_task_id=$1 where id=$2',[child.id,root.id]),e=>e.code==='42501');
+  const self=randomUUID();await assert.rejects(()=>db.query('insert into project_tasks(id,user_id,project_id,title,parent_task_id) values($1,$2,$3,$4,$1)',[self,A,project.id,'Self']),e=>e.code==='23514');
+  await user(B);const b=createProjectRepository(client,B),bp=await b.create({id:randomUUID(),title:'B',description:''});
+  await assert.rejects(()=>b.createTask({id:randomUUID(),projectId:bp.id,parentTaskId:root.id,title:'Cross owner'}),e=>e.kind==='Validation');
+  assert.deepEqual(await b.tasks(project.id),[]);await user();
+  await db.exec('reset role');
+  await assert.rejects(()=>db.query('update project_tasks set parent_task_id=$1 where id=$2',[grandchild.id,root.id]),e=>e.code==='23514');
+  const x=randomUUID(),y=randomUUID();
+  await assert.rejects(()=>db.query('insert into project_tasks(id,user_id,project_id,title,parent_task_id) values($1,$3,$4,$5,$2),($2,$3,$4,$5,$1)',[x,y,A,project.id,'Cycle']),e=>e.code==='23514');
+  await user();
+});
+
+test('V0.3 SQL constraints reject invalid modes, percentages, stages and weights',async()=>{
+  const project=await create();
+  for(const [column,value] of [['progress_mode','auto'],['manual_progress_percent',-1],['manual_progress_percent',101]])await assert.rejects(()=>db.query(`update projects set ${column}=$1 where id=$2`,[value,project.id]),e=>e.code==='23514');
+  for(const [stage,weight] of [['invalid',1],['started',0],['started',-1]])await assert.rejects(()=>db.query('insert into project_tasks(user_id,project_id,title,progress_stage,progress_weight) values($1,$2,$3,$4,$5)',[A,project.id,'Invalid',stage,weight]),e=>e.code==='23514');
+});
+
+test('V0.3 migration upgrades legacy data without changing identities or historical timestamps',async()=>{
+  const legacy=new PGlite();
+  try {
+    await legacy.exec(`create role authenticated nologin;create role anon nologin;create schema auth;create schema routine_private;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;insert into auth.users values('${A}');`);
+    await legacy.exec(await readFile('supabase/migrations/20261027000100_projects.sql','utf8'));
+    const p=randomUUID(),done=randomUUID(),open=randomUUID();
+    await legacy.query("insert into projects(id,user_id,title) values($1,$2,'Legacy')",[p,A]);
+    for(const id of [done,open])await legacy.query("insert into project_tasks(id,user_id,project_id,title) values($1,$2,$3,'Legacy task')",[id,A,p]);
+    await legacy.query('update project_tasks set completed_at=now() where id=$1',[done]);
+    const before=(await legacy.query('select id,created_at::text,updated_at::text,completed_at::text from project_tasks order by id')).rows;
+    await legacy.exec(await readFile('supabase/migrations/20261031000100_projects_advanced.sql','utf8'));
+    assert.deepEqual((await legacy.query('select id,created_at::text,updated_at::text,completed_at::text from project_tasks order by id')).rows,before);
+    assert.deepEqual((await legacy.query('select progress_mode,manual_progress_percent from projects')).rows,[{progress_mode:'tasks',manual_progress_percent:0}]);
+    const rows=(await legacy.query('select id,progress_stage,progress_weight,parent_task_id from project_tasks')).rows;
+    assert.equal(rows.find(t=>t.id===done).progress_stage,'completed');assert.equal(rows.find(t=>t.id===open).progress_stage,'not_started');
+    assert(rows.every(t=>t.progress_weight===1&&t.parent_task_id===null));
+  } finally {await legacy.close();}
 });

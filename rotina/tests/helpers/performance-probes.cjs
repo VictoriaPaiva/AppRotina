@@ -35,7 +35,7 @@ async function httpProbes(origin,routes=['/hoje','/planejamento','/calendario','
 }
 async function taskPayloadProbe() {
   const {randomUUID}=require('node:crypto'),owner=randomUUID(),project=randomUUID();
-  const records=Array.from({length:1000},()=>({id:randomUUID(),user_id:owner,project_id:project,title:'T'.repeat(200),completed_at:null,created_at:'2026-10-28T12:00:00Z',updated_at:'2026-10-28T12:00:00Z'}));
+  const records=Array.from({length:1000},()=>({id:randomUUID(),user_id:owner,project_id:project,parent_task_id:null,progress_stage:'not_started',progress_weight:1,title:'T'.repeat(200),completed_at:null,created_at:'2026-10-28T12:00:00Z',updated_at:'2026-10-28T12:00:00Z'}));
   let bytes=0,queries=0;
   const client={from(){let columns,offset=0,end=499;const q={select(c){columns=c.split(',');return q;},eq(){return q;},order(){return q;},range(a,b){offset=a;end=b;return q;},then(resolve){const data=records.slice(offset,end+1).map(row=>Object.fromEntries(columns.map(k=>[k,row[k]])));bytes+=Buffer.byteLength(JSON.stringify(data));queries++;resolve({data,error:null});}};return q;}};
   const repo=load('lib/projects/repository.ts').createProjectRepository(client,owner);

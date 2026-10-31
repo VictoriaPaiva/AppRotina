@@ -1,10 +1,12 @@
 ﻿import type { PersistenceErrorKind } from '@/lib/banco-mestre/data/errors';
-export interface Project { id: string; title: string; description: string; createdAt: string; updatedAt: string }
-export interface ProjectTask { id: string; projectId: string; title: string; completedAt: string | null; createdAt: string; updatedAt: string }
-export type ProjectTaskProgress = Pick<ProjectTask,'projectId'|'completedAt'>;
-export interface CreateTaskInput { id: string; projectId: string; title: string }
-export interface UpdateTaskInput extends CreateTaskInput { expectedUpdatedAt: string; completed: boolean }
-export interface CreateProjectInput { id: string; title: string; description: string }
+export type ProgressMode = 'tasks' | 'manual' | 'hybrid';
+export type ProgressStage = 'not_started' | 'started' | 'early_progress' | 'in_progress' | 'advanced' | 'finishing' | 'completed';
+export interface Project { id: string; title: string; description: string; progressMode: ProgressMode; manualProgressPercent: number; createdAt: string; updatedAt: string }
+export interface ProjectTask { id: string; projectId: string; title: string; parentTaskId: string | null; progressStage: ProgressStage; progressWeight: number; completedAt: string | null; createdAt: string; updatedAt: string }
+export type ProjectTaskProgress = Pick<ProjectTask,'id'|'projectId'|'parentTaskId'|'progressStage'|'progressWeight'|'completedAt'>;
+export interface CreateTaskInput { id: string; projectId: string; title: string; parentTaskId?: string | null; progressStage?: ProgressStage; progressWeight?: number }
+export interface UpdateTaskInput extends Omit<CreateTaskInput, 'parentTaskId'> { expectedUpdatedAt: string; completed: boolean }
+export interface CreateProjectInput { id: string; title: string; description: string; progressMode?: ProgressMode; manualProgressPercent?: number }
 export interface UpdateProjectInput extends CreateProjectInput { expectedUpdatedAt: string }
 export interface ProjectRepository {
   taskProgress(): Promise<ProjectTaskProgress[]>;

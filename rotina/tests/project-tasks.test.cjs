@@ -10,7 +10,7 @@ test('task validation rejects owner, audit fields, bad titles, missing completio
   for(const extra of [{user_id:id},{completed:true},{title:''},{title:'x'.repeat(201)},{projectId:'bad'},{title:'\0'}])assert.throws(()=>validation.createTaskInput({id,projectId,title:'Task',...extra}));
   for(const extra of [{completed:'true'},{expectedUpdatedAt:'bad'},{completed_at:null}])assert.throws(()=>validation.updateTaskInput({id,projectId,title:'Task',completed:false,expectedUpdatedAt:task.updatedAt,...extra}));
   assert.deepEqual(progress.projectProgress([]),{completed:0,total:0,percentage:0});
-  assert.equal(progress.projectProgress([task,{...task,completedAt:task.updatedAt}]).percentage,50);
+  assert.equal(progress.projectProgress([task,{...task,id:'second',completedAt:task.updatedAt}]).percentage,50);
 });
 test('task actions reject expired sessions/network errors, invalidate only confirmed saves',async()=>{
   for(const failure of [null,new PersistenceError('Unauthorized'),Error('private network details')]) {
@@ -24,14 +24,14 @@ test('task actions reject expired sessions/network errors, invalidate only confi
     if(!failure)assert((await actions.updateTask({id,projectId,title:'Task',completed:true,expectedUpdatedAt:task.updatedAt})).ok);
   }
 });
-function harness(name,actions) {
+function harness(name,actions,props={}) {
   const slots=[];let cursor=0;const callbacks=[];
   const react={useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
   const components=withStubs('components/projects/ProjectTasks.tsx',{
     react,'next/link':{default:'a'},'@/components/ui/button':{Button:'button'},'@/components/ui/input':{Input:'input'},'@/app/projetos/actions':actions,'@/lib/projects/progress':progress,
   });
   const nodes=(node,predicate)=>!node||typeof node!=='object'?[]:[...(predicate(node)?[node]:[]),...[node.props?.children].flat(Infinity).flatMap(child=>nodes(child,predicate))];
-  const render=()=>{cursor=0;return components[name](name==='TaskRow'?{task,onSaved:t=>callbacks.push(t)}:{projectId,initialTasks:[]});};
+  const render=()=>{cursor=0;return components[name](name==='TaskRow'?{task,onSaved:t=>callbacks.push(t),...props}:{projectId,initialTasks:[],...props});};
   const find=predicate=>nodes(render(),predicate)[0];
   return {find,callbacks,change:value=>find(n=>n.type==='input'&&n.props.type!=='checkbox').props.onChange({target:{value}}),submit:()=>find(n=>n.type==='form').props.onSubmit({preventDefault(){}})};
 }
@@ -44,6 +44,25 @@ test('task title and checkbox retain confirmed state and draft on network/sessio
     assert.equal(calls[0].expectedUpdatedAt,task.updatedAt);assert.equal(calls[0].completed,true);assert.equal(h.callbacks.length,0);assert(!h.find(n=>n.props?.role==='status'));
     const failure=h.find(n=>typeof n.type==='function'&&n.props.failure);assert.equal(failure.props.failure.kind,kind==='throw'?'Unknown':kind);
   }
+});
+
+test('V0.3 leaf slider has seven discrete keyboard stops, stages and weights persist only after save',async()=>{
+  const calls=[],h=harness('TaskRow',{updateTask:async input=>{calls.push(input);return {ok:true,task:{...task,...input,completedAt:input.completed?task.updatedAt:null,updatedAt:'2026-10-31T12:00:00Z'}};}});
+  const range=()=>h.find(n=>n.props?.type==='range');assert.equal(range().props.max,6);assert.equal(range().props.step,1);
+  range().props.onChange({target:{value:'3'}});
+  h.find(n=>n.type==='select').props.onChange({target:{value:'3'}});assert.equal(calls.length,0);
+  await h.submit();await new Promise(r=>setImmediate(r));assert.equal(calls[0].progressStage,'in_progress');assert.equal(calls[0].progressWeight,3);assert.equal(calls[0].completed,false);
+  range().props.onChange({target:{value:'6'}});await h.submit();await new Promise(r=>setImmediate(r));assert.equal(calls[1].completed,true);
+});
+
+test('V0.3 parent progress is read-only and native expand/collapse has no write handler',async()=>{
+  const calls=[],parent=harness('TaskRow',{updateTask:async input=>{calls.push(input);return {ok:true,task};}},{childrenCount:2,derivedPercent:52});
+  assert(!parent.find(n=>n.props?.type==='range'));assert(parent.find(n=>n.props?.type==='checkbox').props.disabled);
+  const tree=harness('ProjectTasks',{createTask:async input=>{calls.push(input);return {ok:true,task:{...task,id:input.id,parentTaskId:input.parentTaskId}};}},{initialTasks:[task]});
+  const details=tree.find(n=>n.type==='details');assert(details);assert.equal(details.props.onToggle,undefined);assert.equal(calls.length,0);
+  tree.find(n=>n.props?.['aria-label']==='Tarefa pai').props.onChange({target:{value:task.id}});
+  tree.change('Child');await tree.submit();assert.equal(calls[0].parentTaskId,task.id);
+  assert.equal(tree.find(n=>n.props?.['aria-label']==='Tarefa pai').props.value,'');
 });
 test('confirmed task completion adopts new snapshot; pending duplicate clicks are blocked',async()=>{
   let resolve;const calls=[],h=harness('TaskRow',{updateTask:async input=>{calls.push(input);return new Promise(r=>{resolve=r;});}});

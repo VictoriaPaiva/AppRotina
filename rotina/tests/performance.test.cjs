@@ -16,8 +16,8 @@ test('project detail starts independent reads together, retains errors and does 
   first.resolve({id:'fixture'});second.resolve([]);assert.equal((await pending).status,'ready');
   calls.length=0;await server.readProjects();assert.deepEqual(calls,['progress']);
 });
-test('project progress projection paginates 1000 tasks with only owner/project/completion fields',async()=>{
-  const result=await taskPayloadProbe();assert.equal(result.tasks,1000);assert.equal(result.queries,3);assert(result.bytes<130000);
+test('project progress projection paginates 1000 tasks with hierarchy/stages/weights without full text',async()=>{
+  const result=await taskPayloadProbe();assert.equal(result.tasks,1000);assert.equal(result.queries,3);assert(result.bytes<270000);
 });
 test('linear project grouping preserves 0/partial/100 percentages and separates projects',()=>{
   const {projectProgressById}=load('lib/projects/progress.ts');

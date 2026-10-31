@@ -2,11 +2,12 @@
 import type { Database } from '@/lib/banco-mestre/data/database.types';
 import { PersistenceError, toPersistenceError } from '@/lib/banco-mestre/data/errors';
 import { fail, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
-import type { Project, ProjectTask, ProjectRepository } from './contracts';
-import { createProjectInput, updateProjectInput, projectText, PROJECT_TITLE_LIMIT, PROJECT_DESCRIPTION_LIMIT } from './validation';
+import type { Project, ProjectTask, ProjectRepository, ProjectTaskProgress } from './contracts';
+import { createProjectInput, updateProjectInput, projectText, PROJECT_TITLE_LIMIT, PROJECT_DESCRIPTION_LIMIT, progressMode, progressStage, progressInteger } from './validation';
 import { createTaskInput, updateTaskInput } from './validation';
-const COLUMNS = 'id,user_id,title,description,created_at,updated_at';
-const TASK_COLUMNS = 'id,user_id,project_id,title,completed_at,created_at,updated_at';
+const COLUMNS = 'id,user_id,title,description,progress_mode,manual_progress_percent,created_at,updated_at';
+const PROGRESS_COLUMNS = 'id,user_id,project_id,parent_task_id,progress_stage,progress_weight,completed_at';
+const TASK_COLUMNS = PROGRESS_COLUMNS + ',title,created_at,updated_at';
 export function createProjectRepository(client: Pick<SupabaseClient<Database>, 'from'>, verifiedUserId: string): ProjectRepository {
   const owner = uuid(verifiedUserId, 'owner');
   async function operation<T>(fn: () => Promise<T>): Promise<T> {
@@ -21,6 +22,7 @@ export function createProjectRepository(client: Pick<SupabaseClient<Database>, '
       const v = record(value, 'project');
       if (uuid(v.user_id) !== owner) fail('project.owner');
       return {id: uuid(v.id), title: projectText(v.title, 'title', PROJECT_TITLE_LIMIT, true), description: projectText(v.description, 'description', PROJECT_DESCRIPTION_LIMIT),
+        progressMode: progressMode(v.progress_mode), manualProgressPercent: progressInteger(v.manual_progress_percent,100),
         createdAt: timestamp(v.created_at, 'createdAt'), updatedAt: timestamp(v.updated_at, 'updatedAt')};
     });
   }
@@ -37,22 +39,23 @@ export function createProjectRepository(client: Pick<SupabaseClient<Database>, '
       const v = record(value, 'task');
       if (uuid(v.user_id) !== owner) fail('task.owner');
       return {id: uuid(v.id), projectId: uuid(v.project_id), title: projectText(v.title, 'title', PROJECT_TITLE_LIMIT, true),
+        parentTaskId: v.parent_task_id === null ? null : uuid(v.parent_task_id), progressStage: progressStage(v.progress_stage), progressWeight: progressInteger(v.progress_weight,2147483647,1),
         completedAt: v.completed_at === null ? null : timestamp(v.completed_at, 'completedAt'),
         createdAt: timestamp(v.created_at, 'createdAt'), updatedAt: timestamp(v.updated_at, 'updatedAt')};
     });
   }
   return {
     taskProgress: () => operation(async () => {
-      const result: {projectId:string;completedAt:string|null}[] = [];
+      const result: ProjectTaskProgress[] = [];
       for(let offset=0;;offset+=500) {
-        const {data,error}=await client.from('project_tasks').select('user_id,project_id,completed_at').eq('user_id',owner)
+        const {data,error}=await client.from('project_tasks').select(PROGRESS_COLUMNS).eq('user_id',owner)
           .order('project_id').order('created_at').order('id').range(offset,offset+499);
         if(error) throw error;
         if(!Array.isArray(data)) fail('tasks.response');
         for(const value of data) {
           const v=record(value,'task');
           if(uuid(v.user_id)!==owner) fail('task.owner');
-          result.push({projectId:uuid(v.project_id),completedAt:v.completed_at===null?null:timestamp(v.completed_at,'completedAt')});
+          result.push({id:uuid(v.id),projectId:uuid(v.project_id),parentTaskId:v.parent_task_id===null?null:uuid(v.parent_task_id),progressStage:progressStage(v.progress_stage),progressWeight:progressInteger(v.progress_weight,2147483647,1),completedAt:v.completed_at===null?null:timestamp(v.completed_at,'completedAt')});
         }
         if(data.length<500) return result;
       }
@@ -71,7 +74,7 @@ export function createProjectRepository(client: Pick<SupabaseClient<Database>, '
     createTask: input => operation(async () => {
       const v = createTaskInput(input);
       await get(v.projectId);
-      const {data, error} = await client.from('project_tasks').insert({id: v.id, user_id: owner, project_id: v.projectId, title: v.title}).select(TASK_COLUMNS);
+      const {data, error} = await client.from('project_tasks').insert({id: v.id, user_id: owner, project_id: v.projectId, title: v.title, parent_task_id: v.parentTaskId, progress_stage: v.progressStage, progress_weight: v.progressWeight}).select(TASK_COLUMNS);
       if (error) throw error;
       const result = taskRows(data);
       if (result.length !== 1 || result[0].id !== v.id || result[0].projectId !== v.projectId) fail('task.create');
@@ -80,7 +83,7 @@ export function createProjectRepository(client: Pick<SupabaseClient<Database>, '
     updateTask: input => operation(async () => {
       const v = updateTaskInput(input);
       // Non-null is a completion request; the trigger assigns the actual database time.
-      const {data, error} = await client.from('project_tasks').update({title: v.title, completed_at: v.completed ? '2000-01-01T00:00:00Z' : null})
+      const {data, error} = await client.from('project_tasks').update({title: v.title, progress_stage: v.progressStage, progress_weight: v.progressWeight})
         .eq('user_id', owner).eq('project_id', v.projectId).eq('id', v.id).eq('updated_at', v.expectedUpdatedAt).select(TASK_COLUMNS);
       if (error) throw error;
       const result = taskRows(data);
@@ -103,7 +106,7 @@ export function createProjectRepository(client: Pick<SupabaseClient<Database>, '
     get: id => operation(() => get(id)),
     create: input => operation(async () => {
       const v = createProjectInput(input);
-      const {data, error} = await client.from('projects').insert({id: v.id, user_id: owner, title: v.title, description: v.description}).select(COLUMNS);
+      const {data, error} = await client.from('projects').insert({id: v.id, user_id: owner, title: v.title, description: v.description, progress_mode: v.progressMode, manual_progress_percent: v.manualProgressPercent}).select(COLUMNS);
       if (error) throw error;
       const result = rows(data);
       if (result.length !== 1 || result[0].id !== v.id) fail('projects.create');
@@ -111,7 +114,7 @@ export function createProjectRepository(client: Pick<SupabaseClient<Database>, '
     }),
     update: input => operation(async () => {
       const v = updateProjectInput(input);
-      const {data, error} = await client.from('projects').update({title: v.title, description: v.description})
+      const {data, error} = await client.from('projects').update({title: v.title, description: v.description, progress_mode: v.progressMode, manual_progress_percent: v.manualProgressPercent})
         .eq('id', v.id).eq('user_id', owner).eq('updated_at', v.expectedUpdatedAt).select(COLUMNS);
       if (error) throw error;
       const result = rows(data);

@@ -9,8 +9,9 @@ import { randomUUID } from 'node:crypto';
 
 const exec=promisify(execFile);
 const windows=process.platform==='win32';
-const testFile=process.argv[2]==='--account-deletion'?'tests/postgres/account-deletion.test.mjs':'tests/postgres/progress-concurrency.test.mjs';
-if(process.argv[2] && process.argv[2]!=='--account-deletion')throw Error('Unknown local suite.');
+const suites={'--account-deletion':'tests/postgres/account-deletion.test.mjs','--projects':'tests/postgres/projects-advanced.test.mjs'};
+const testFile=process.argv[2]?suites[process.argv[2]]:'tests/postgres/progress-concurrency.test.mjs';
+if(!testFile)throw Error('Unknown local suite.');
 const bin=resolve(process.env.ROTINA_PG_BIN ?? 'node_modules/.cache/rotina-pg17/pgsql/bin');
 const exe=name=>join(bin,name+(windows?'.exe':''));
 for(const name of ['postgres','pg_ctl','initdb']){
