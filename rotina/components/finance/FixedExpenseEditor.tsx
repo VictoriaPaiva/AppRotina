@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {useDraftProtection} from '@/lib/forms/draft-protection';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,22 @@ export function FixedExpenseEditor({expense}: {expense?: FixedExpense}) {
   const [dueDay,setDueDay] = useState(String(expense?.dueDay ?? 1)), [category,setCategory] = useState(expense?.category ?? 'Contas fixas'), [active,setActive] = useState(expense?.active ?? true);
   const [busy,setBusy] = useState(false), [success,setSuccess] = useState(false), [failure,setFailure] = useState<Extract<BillResult<FixedExpense>,{ok:false}> | null>(null);
   const saving = useRef(false), attemptId = useRef<string | null>(null), navigating = useRef(false);
+  useLayoutEffect(() => () => {
+    // Activity retains hidden routes. Preserve edits and unfinished drafts.
+    if (expense || !navigating.current) return;
+    navigating.current = false;
+    attemptId.current = null;
+    saving.current = false;
+    setSaved(undefined);
+    setName('');
+    setAmount('');
+    setDueDay('1');
+    setCategory('Contas fixas');
+    setActive(true);
+    setBusy(false);
+    setFailure(null);
+    setSuccess(false);
+  }, [expense]);
   let cents: number | null = null; try {cents = parseAmount(amount);} catch { /* Keep invalid draft. */ }
   const valid = !!name.trim() && Array.from(name).length<=200 && cents !== null && /^[0-9]+$/.test(dueDay) && Number(dueDay)>=1 && Number(dueDay)<=31 && !!category.trim() && Array.from(category).length<=100;
   const dirty=saved?name!==saved.name||cents!==saved.defaultAmountCents||dueDay!==String(saved.dueDay)||category!==saved.category||active!==saved.active:name!==''||amount!==''||dueDay!=='1'||category!=='Contas fixas';

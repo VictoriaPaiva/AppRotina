@@ -60,7 +60,7 @@ test('management renders active/inactive/empty/error states without exposing ord
 
 function harness(component,props={},overrides={}) {
   const slots=[];let cursor=0;let refreshes=0;
-  const react={useId(){cursor++;return 'test-row';},useRef(initial){const i=cursor++;slots[i]??={current:initial};return slots[i];},useState(initial){const i=cursor++;slots[i]??={value:typeof initial==='function'?initial():initial};return [slots[i].value,value=>{slots[i].value=typeof value==='function'?value(slots[i].value):value;}];}};
+  const react={useLayoutEffect(){cursor++;},useId(){cursor++;return 'test-row';},useRef(initial){const i=cursor++;slots[i]??={current:initial};return slots[i];},useState(initial){const i=cursor++;slots[i]??={value:typeof initial==='function'?initial():initial};return [slots[i].value,value=>{slots[i].value=typeof value==='function'?value(slots[i].value):value;}];}};
   const components=withStubs('components/banco-mestre/AreaManagement.tsx',stubs({react,'next/navigation':{useRouter:()=>({refresh(){refreshes++;}})},'@/app/banco-mestre/area-actions':{...actions,...overrides}}));
   function nodes(node,predicate){if(!node||typeof node!=='object')return [];if(typeof node.type==='function'&&node.type.name==='MutationError')return nodes(node.type(node.props),predicate);return [...(predicate(node)?[node]:[]),...[node.props?.children].flat(Infinity).flatMap(child=>nodes(child,predicate))];}
   const render=()=>{cursor=0;return components[component](props);};

@@ -66,7 +66,7 @@ test('real overview renders month form, empty states, totals, escaped rows and e
 });
 function editorHarness({initial=transaction,create,update}={}) {
   const slots=[],paths=[];let cursor=0,refreshes=0;
-  const react={useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
+  const react={useLayoutEffect(){cursor++;},useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
   const {TransactionEditor}=withStubs('components/finance/TransactionEditor.tsx',{
     react,'next/link':{default:'a'},'next/navigation':{useRouter:()=>({replace:p=>paths.push(p),refresh(){refreshes++;}})},
     '@/components/ui/button':{Button:'button'},'@/components/ui/input':{Input:'input'},'@/components/ui/label':{Label:'label'},
