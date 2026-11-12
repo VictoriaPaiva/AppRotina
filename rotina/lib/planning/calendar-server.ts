@@ -26,7 +26,7 @@ export async function readCalendarPage(requestedDate?: unknown) {
     const items: CalendarItem[] = plans.map(item => {
       const activity = activities.get(item.activityId);
       if (!activity) throw new PersistenceError('NotFound');
-      return {...item, name: activity.name, active: activity.status === 'active', areaName: areaNames.get(activity.areaId)};
+      return {...item, name: item.activityNameSnapshot??activity.name, active: activity.status === 'active', areaName: areaNames.get(activity.areaId),activityTypeSnapshot:item.activityTypeSnapshot??activity.type};
     });
     return {status: 'ready' as const, today, date, month, items};
   } catch (error) { return readFailure(error); }

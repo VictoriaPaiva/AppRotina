@@ -4,6 +4,7 @@
  * projects/project_tasks mirrored through migration 20261031000100; checked by SQL tests.
  * financial_transactions mirrored from migration 20261027000200; checked by SQL tests.
  * fixed_expenses/months and linked transactions mirrored from 20261027000300.
+ * activity_subitems and daily_plan snapshot fields mirrored from 20261031000200.
  * All public schema contracts compared; compatibility aliases appended at the end.
  * Numeric transport validation remains in mapper/validation.
  */
@@ -23,6 +24,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_subitems: {
+        Row: {id:string;user_id:string;root_activity_id:string;parent_id:string | null;name:string;duration_minutes:number;sort_order:number;active:boolean;default_selected:boolean}
+        Insert: {id:string;user_id:string;root_activity_id:string;parent_id?:string | null;name:string;duration_minutes:number;sort_order?:number;active?:boolean;default_selected?:boolean}
+        Update: {id?:string;user_id?:string;root_activity_id?:string;parent_id?:string | null;name?:string;duration_minutes?:number;sort_order?:number;active?:boolean;default_selected?:boolean}
+        Relationships: [{foreignKeyName:'activity_subitems_user_id_root_activity_id_fkey';columns:['user_id','root_activity_id'];isOneToOne:false;referencedRelation:'activities';referencedColumns:['user_id','id']},{foreignKeyName:'activity_subitems_user_id_root_activity_id_parent_id_fkey';columns:['user_id','root_activity_id','parent_id'];isOneToOne:false;referencedRelation:'activity_subitems';referencedColumns:['user_id','root_activity_id','id']}]
+      }
       fixed_expenses: {
         Row: { id: string; user_id: string; name: string; due_day: number; category: string; created_at: string; updated_at: string; default_amount_cents: number; active: boolean; starts_on: string }
         Insert: { id?: string; user_id: string; name: string; due_day: number; category?: string; created_at?: string; updated_at?: string; default_amount_cents: number; active?: boolean; starts_on: string }
@@ -63,6 +70,10 @@ export type Database = {
       }
       daily_plan_items: {
         Row: {
+          planned_time: string | null; sort_order: number; manual_order: boolean; activity_type_snapshot: string | null; goal_tracking_mode_snapshot: string | null; quantity_snapshot: Json | null; checklist_snapshot: Json | null
+          subitem_snapshot: Json | null
+          planned_duration_minutes: number | null
+          activity_name_snapshot: string | null
           activity_id: string
           completed_at: string | null
           created_at: string
@@ -72,6 +83,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          subitem_snapshot?: Json | null; planned_duration_minutes?: number | null; activity_name_snapshot?: string | null
+          planned_time?: string | null; sort_order?: number; manual_order?: boolean; activity_type_snapshot?: string | null; goal_tracking_mode_snapshot?: string | null; quantity_snapshot?: Json | null; checklist_snapshot?: Json | null
           activity_id: string
           completed_at?: string | null
           created_at?: string
@@ -81,6 +94,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          subitem_snapshot?: Json | null; planned_duration_minutes?: number | null; activity_name_snapshot?: string | null
+          planned_time?: string | null; sort_order?: number; manual_order?: boolean; activity_type_snapshot?: string | null; goal_tracking_mode_snapshot?: string | null; quantity_snapshot?: Json | null; checklist_snapshot?: Json | null
           activity_id?: string
           completed_at?: string | null
           created_at?: string
@@ -101,6 +116,9 @@ export type Database = {
       }
       activities: {
         Row: {
+          goal_tracking_mode: string
+          checklist_items: Json
+          child_selection_mode: string
           area_id: string
           created_at: string
           default_importance: string
@@ -118,6 +136,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          child_selection_mode?: string
+          goal_tracking_mode?: string
+          checklist_items?: Json
           area_id: string
           created_at?: string
           default_importance: string
@@ -135,6 +156,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          child_selection_mode?: string
+          goal_tracking_mode?: string
+          checklist_items?: Json
           area_id?: string
           created_at?: string
           default_importance?: string
@@ -562,6 +586,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      list_activity_subitems: {Args:{p_offset?:number};Returns:Json}
+      save_activity_subitems: {Args:{p_activity_id:string;p_expected_revision:number;p_tree:Json};Returns:undefined}
+      save_activity_with_subitems: {Args:{p_activity:Json;p_relations:Json;p_expected_revision:number|null;p_tree:Json};Returns:Json}
+      create_plan_with_subitems: {Args:{p_id:string;p_activity_id:string;p_planned_date:string;p_revision:number;p_configuration?:Json};Returns:Json}
+      change_plan_subitems: {Args:{p_id:string;p_expected:Json;p_configuration?:Json;p_subitem_id?:string;p_completed?:boolean};Returns:Json}
+      save_activity_with_subitem_deletions: {Args:{p_activity:Json;p_relations:Json;p_expected_revision:number;p_tree:Json;p_deleted_ids:string[]};Returns:Json}
+      delete_activity_subitem_branches: {Args:{p_activity_id:string;p_expected_revision:number;p_deleted_ids:string[]};Returns:number}
+      save_activity_checklist: {Args:{p_activity_id:string;p_expected_revision:number;p_items:Json};Returns:undefined}
+      save_activity_v05: {Args:{p_activity:Json;p_relations:Json;p_expected_revision:number|null;p_tree:Json;p_deleted_ids:string[];p_checklist:Json};Returns:Json}
+      create_daily_plan_v05: {Args:{p_id:string;p_activity_id:string;p_planned_date:string;p_planned_time:string|null;p_revision:number|null;p_configuration:Json};Returns:Json}
+      sync_open_activity_plans: {Args:{p_activity_id:string;p_expected_revision:number;p_expected_plans:Json};Returns:undefined}
+      change_daily_plan_v05: {Args:{p_id:string;p_expected:Json;p_operation:string;p_value:Json};Returns:Json}
+      reorder_plan_day: {Args:{p_date:string;p_items:Json};Returns:undefined}
       initialize_fixed_expense_month: { Args: { p_reference_month: string }; Returns: number }
       save_fixed_expense: { Args: { p_id: string; p_name: string; p_default_amount_cents: number; p_due_day: number; p_category: string; p_active: boolean; p_expected_updated_at?: string }; Returns: Json }
       save_fixed_expense_month: { Args: { p_id: string; p_amount_cents: number; p_paid: boolean; p_expected_updated_at: string }; Returns: Json }

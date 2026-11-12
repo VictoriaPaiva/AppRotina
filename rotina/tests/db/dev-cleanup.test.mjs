@@ -26,6 +26,7 @@ async function seed(id) {
   const variable=await save('variableActivity',areaId,{planning_context:{location:'Teste'},time_windows:[{kind:'timeRange',effect:'preferred',coverage:'startOnly',start_time:'14:00',end_time:'15:00',end_day_offset:0,starts_on:'2026-10-27'}]});
   await save('checklistGoal',areaId,{goals:[{metric:'count',unit:'execution',minimum_target:1,period:'day',starts_on:'2026-10-27'}]});
   await db.query('insert into daily_plan_items(user_id,activity_id,planned_date) values($1,$2,$3)',[id,variable.id,'2026-10-27']);
+  await db.query('select save_activity_subitems($1,$2,$3)',[variable.id,variable.revision,JSON.stringify({mode:'all',items:[{id:randomUUID(),parentId:null,name:'Subitem',durationMinutes:15,sortOrder:0,active:true,defaultSelected:true}]})]);
   await db.query('insert into ideas(user_id,title,content) values($1,$2,$3)',[id,'Ideia teste','Texto teste']);
   const project=randomUUID();await db.query('insert into projects(id,user_id,title) values($1,$2,$3)',[project,id,'Projeto teste']);await db.query('insert into project_tasks(user_id,project_id,title) values($1,$2,$3)',[id,project,'Tarefa teste']);
   await db.query("insert into financial_transactions(user_id,type,date,amount_cents,description,category) values($1,'expense','2026-10-27',12345,'Manual teste','Teste')",[id]);

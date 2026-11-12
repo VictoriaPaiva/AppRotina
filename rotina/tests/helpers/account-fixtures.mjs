@@ -1,5 +1,5 @@
 import {randomUUID} from 'node:crypto';
-export const OWNER_TABLES=['activities','areas','commitment_configs','daily_plan_items','financial_transactions','fixed_expense_months','fixed_expenses','fixed_schedules','goals','ideas','planning_contexts','project_tasks','projects','recurrence_rules','reminder_configs','time_windows'];
+export const OWNER_TABLES=['activities','activity_subitems','areas','commitment_configs','daily_plan_items','financial_transactions','fixed_expense_months','fixed_expenses','fixed_schedules','goals','ideas','planning_contexts','project_tasks','projects','recurrence_rules','reminder_configs','time_windows'];
 export const A='00000000-0000-4000-8000-000000000001',B='00000000-0000-4000-8000-000000000002';
 export const authFixture=`create role authenticated nologin;create role anon nologin;create schema auth;
 create table auth.users(id uuid primary key,email text,encrypted_password text);
@@ -17,8 +17,9 @@ export async function seedAccount(db,id) {
   await save('commitment',{commitment_config:{date:'2026-10-28',start_time:'10:00',end_time:'11:00'}});
   await save('fixedActivity',{fixed_schedules:[{weekdays:[1,3],start_time:'08:00',end_time:'09:00'}]});
   const activity=await save('variableActivity',{planning_context:{location:'Teste'},time_windows:[{kind:'timeRange',effect:'preferred',coverage:'startOnly',start_time:'14:00',end_time:'15:00',end_day_offset:0,starts_on:'2026-10-28'}]});
+  await db.query('select save_activity_subitems($1,$2,$3)',[activity.id,activity.revision,JSON.stringify({mode:'all',items:[{id:randomUUID(),parentId:null,name:'Subitem',durationMinutes:15,sortOrder:0,active:true,defaultSelected:true}]})]);
   await save('checklistGoal',{goals:[{metric:'count',unit:'execution',minimum_target:1,period:'day',starts_on:'2026-10-28'}]});
-  await db.query("insert into daily_plan_items(user_id,activity_id,planned_date) values($1,$2,'2026-10-28')",[id,activity.id]);
+  await db.query("select create_plan_with_subitems($1,$2,'2026-10-28',$3)",[randomUUID(),activity.id,activity.revision+1]);
   await db.query("insert into ideas(user_id,title) values($1,'Teste')",[id]);
   const project=randomUUID();await db.query("insert into projects(id,user_id,title) values($1,$2,'Teste')",[project,id]);await db.query("insert into project_tasks(user_id,project_id,title) values($1,$2,'Teste')",[id,project]);
   await db.query("insert into financial_transactions(user_id,type,date,amount_cents,description,category) values($1,'expense','2026-10-28',12345,'Teste','Teste')",[id]);

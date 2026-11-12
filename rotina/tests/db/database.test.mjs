@@ -51,8 +51,8 @@ test('nove tabelas com RLS, grants restritos e sem colunas JSON', async () => {
     const row = (await db.query("select has_table_privilege('anon',$1,'SELECT') as anon, has_table_privilege('authenticated',$1,'DELETE') as del",['public.'+t])).rows[0];
     assert.equal(row.anon,false); assert.equal(row.del,!['areas','activities'].includes(t));
   }
-  assert.equal((await db.query("select count(*)::int n from information_schema.columns where table_schema='public' and table_name=any($1) and data_type in ('json','jsonb')",[tables])).rows[0].n,0);
-  assert.deepEqual((await db.query("select proname from pg_proc where pronamespace='routine_private'::regnamespace and prosecdef order by proname")).rows,[{proname:'before_account_delete'}]);
+  assert.equal((await db.query("select count(*)::int n from information_schema.columns where table_schema='public' and table_name=any($1) and data_type in ('json','jsonb')",[tables])).rows[0].n,1);
+  assert.deepEqual((await db.query("select proname from pg_proc where pronamespace='routine_private'::regnamespace and prosecdef order by proname")).rows,[{proname:'before_account_delete'},{proname:'guard_daily_plan_item'},{proname:'organize_plan_day'}]);
 });
 test('salva atomicamente os cinco tipos e quantidade decimal', async () => {
   for (const [type,relations] of [
@@ -77,7 +77,7 @@ test('RLS isola A/B, rejeita ownership/FK cruzados e anon', async () => {
   await rejected(()=>db.query('delete from areas where id=$1',[areaA]),'42501');
 });
 test('integridade diferida rejeita mestre/config/grupos/metas incompletos no COMMIT', async () => {
-  for (const type of ['reminder','commitment','fixedActivity','checklistGoal']) {
+  for (const type of ['reminder','commitment','fixedActivity']) {
     await db.exec('begin');
     await db.query("insert into activities(user_id,name,area_id,type,default_importance) values ($1,'Incompleto',$2,$3,'important')",[A,areaA,type]);
     await rejected(()=>db.exec('commit'),'23514');
@@ -198,8 +198,11 @@ test('purge administrativo separado remove mestre/filhas antes da conta, sem ór
   for(const t of tables) assert.equal((await db.query('select count(*)::int n from '+t+' where user_id=$1',[C])).rows[0].n,0);
 });
 
-test('última meta/grupo não podem ser removidos; recorrência semanal de calendário é válida', async () => {
-  for(const [type,relations,table] of [['checklistGoal',{goals:[goal()]},'goals'],['fixedActivity',{fixed_schedules:[schedule]},'fixed_schedules']]) {
+test('checklist no longer needs a numeric goal; fixed schedules remain mandatory; weekly recurrence stays valid', async () => {
+  const legacy=await save(activity('checklistGoal'),{goals:[goal()]});
+  await db.query('delete from goals where activity_id=$1',[legacy.activity.id]);
+  assert.equal((await db.query('select count(*)::int n from goals where activity_id=$1',[legacy.activity.id])).rows[0].n,0);
+  for(const [type,relations,table] of [['fixedActivity',{fixed_schedules:[schedule]},'fixed_schedules']]) {
     const a=await save(activity(type),relations);
     await db.exec('begin');
     await db.query('delete from '+table+' where activity_id=$1',[a.activity.id]);

@@ -19,6 +19,25 @@ export class PersistenceError extends Error {
 export class MapperError extends Error {
   constructor(readonly field: string) { super('Invalid persistence field: ' + field); this.name = 'MapperError'; }
 }
+/** Only allowlisted technical metadata: never log payloads, SQL messages,
+ * details, hints, credentials, account IDs or the original Error object. */
+export function saveFailureDiagnostic(error:unknown) {
+  let cause=error;
+  for(let depth=0;depth<5&&cause instanceof PersistenceError&&cause.cause;depth++)cause=cause.cause;
+  const rawCode=typeof cause==='object'&&cause!==null&&'code' in cause?String(cause.code):'';
+  const code=/^(?:[A-Z0-9]{5}|PGRST\d{3}|ECONNRESET|ECONNREFUSED|ETIMEDOUT)$/.test(rawCode)?rawCode:undefined;
+  const missingRpc=code==='PGRST202'||code==='42883';
+  const category=missingRpc||code?.startsWith('PGRST20')?'rpc'
+    :['PT409','40001','40P01'].includes(code??'')?'conflict'
+    :code==='42501'?'permission'
+    :code?.startsWith('PGRST30')?'authentication'
+    :code?.startsWith('23')?'constraint'
+    :cause instanceof MapperError||code?.startsWith('22')?'validation'
+    :code?.startsWith('ECONN')||code==='ETIMEDOUT'||(cause instanceof TypeError&&cause.message==='fetch failed')?'network'
+    :'unexpected';
+  const field=cause instanceof MapperError&&/^[A-Za-z0-9_.\[\]]{1,80}$/.test(cause.field)?cause.field:undefined;
+  return {category,...(code?{code}:{}),...(field?{field}:{}),missingRpc};
+}
 export function toPersistenceError(error: unknown): PersistenceError {
   if (error instanceof PersistenceError) return error;
   if (error instanceof MapperError) return new PersistenceError('Validation', error);

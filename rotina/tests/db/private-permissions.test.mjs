@@ -69,7 +69,7 @@ test('authenticated sem USAGE/CREATE; apenas três EXECUTE técnicos para CHECKs
   assert.deepEqual(acl,{usage:false,create:false});
   const rows=(await db.query("select proname,has_function_privilege('authenticated',oid,'EXECUTE') as exec,has_function_privilege('anon',oid,'EXECUTE') as anon,prosecdef from pg_proc where pronamespace='routine_private'::regnamespace")).rows;
   assert.deepEqual(rows.filter(r=>r.exec).map(r=>r.proname).sort(),['valid_date','valid_days','valid_time']);
-  assert(rows.every(r=>!r.anon && r.prosecdef===(r.proname==='before_account_delete')));
+  assert(rows.every(r=>!r.anon && r.prosecdef===['before_account_delete','guard_daily_plan_item','organize_plan_day'].includes(r.proname)));
   assert.equal(rows.find(r=>r.proname==='before_account_delete').exec,false);
   for(const sql of ["select routine_private.valid_date(date '2026-10-12')","select routine_private.valid_time(time '09:00')","select routine_private.valid_days(array[1,2]::smallint[])"]) await denied(sql);
 });
@@ -120,11 +120,11 @@ test('triggers/constraints diretos e revision funcionam sem EXECUTE concedido à
   await db.query('update goals set minimum_target=2 where id=$1',[created.goals[0].id]);
   const revision=(await db.query('select revision from activities where id=$1',[created.activity.id])).rows[0].revision;
   assert(revision>created.activity.revision);
-  await db.exec('begin');await db.query('delete from goals where activity_id=$1',[created.activity.id]);
-  await assert.rejects(()=>db.exec('commit'),e=>e.code==='23514');await db.exec('rollback');
-  assert.equal((await db.query('select revision from activities where id=$1',[created.activity.id])).rows[0].revision,revision);
   await assert.rejects(()=>db.query("update goals set starts_on='2026-10-12',ends_on='2026-10-11' where id=$1",[created.goals[0].id]),e=>e.code==='23514');
-  await assert.rejects(()=>save('checklistGoal',{}, {...created.activity,revision}),e=>e.code==='23514');
+  await db.exec('begin');await db.query('delete from goals where activity_id=$1',[created.activity.id]);
+  await db.exec('commit');
+  const nextRevision=(await db.query('select revision from activities where id=$1',[created.activity.id])).rows[0].revision;
+  assert(nextRevision>revision);assert((await save('checklistGoal',{}, {...created.activity,revision:nextRevision})).activity);
   await assert.rejects(()=>save('checklistGoal',{goals:[goal]},{...created.activity,revision:created.activity.revision}),e=>e.code==='PT409');
 });
 test('CHECKs por OID precisam de EXECUTE técnico; revogação isolada falha e não altera o agregado',async()=>{

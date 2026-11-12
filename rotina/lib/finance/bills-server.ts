@@ -12,8 +12,9 @@ export async function billsRepositoryForSession() {
 }
 export async function readBills(value?: unknown) {
   try {
+    const repo = await billsRepositoryForSession();
     const currentMonth = billReferenceMonth(planToday()), month = financeMonth(value === undefined ? currentMonth : value);
-    const repo = await billsRepositoryForSession(); await repo.initialize(month);
+    await repo.initialize(month);
     const [items,definitions] = await Promise.all([repo.month(month),repo.definitions()]);
     return {status: 'ready' as const, month, currentMonth, items, definitions};
   } catch (error) {return readFailure(error);}

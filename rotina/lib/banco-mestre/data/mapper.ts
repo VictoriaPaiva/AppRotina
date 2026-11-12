@@ -1,5 +1,7 @@
 import type { Activity, Area, Duration, Goal, PlanningContext, RecurrenceRule, TimeWindow } from '@/types/banco-mestre';
 import type { Json } from './database.types';
+import { validateTree } from '@/lib/activities/subitems';
+import { checklistItems } from '@/lib/activities/checklist';
 import type { ActivityBundle, PersistedActivityBundle, PersistedActivitySummary, SaveActivityAggregateArgs } from './contracts';
 import { bool, choice, fail, fromIsoWeekdays, integer, INT_MAX, localDate, localTime, optionalText, parseDatabaseNumber, record, text, timestamp, toIsoWeekdays, uuid, weekdays } from './validation';
 
@@ -29,6 +31,7 @@ export function activitySummaryFromDatabase(value: unknown): PersistedActivitySu
     areaId:uuid(row.area_id,'area_id'), status:choice(row.status,['active','inactive'],'status'),
     type:choice(row.type,types,'type'), defaultImportance:choice(row.default_importance,['required','important','optional'],'default_importance'),
     duration:duration(row),createdAt:timestamp(row.created_at,'created_at'),updatedAt:timestamp(row.updated_at,'updated_at'),
+    ...(row.child_selection_mode!==undefined&&row.child_selection_mode!=='all'?{childSelectionMode:choice(row.child_selection_mode,['all','none','custom'] as const,'selectionMode')}:{}),
   }};
 }
 export function areaFromDatabase(value: unknown): Area {
@@ -147,7 +150,7 @@ export function aggregateFromDatabase(value: unknown): PersistedActivityBundle {
   const goals=children(data.goals,row,'goals').map(goal),rules=children(data.recurrence_rules,row,'rules').map(rule),windows=children(data.time_windows,row,'windows').map(timeWindowFromDatabase);
   if((base.type === 'reminder') !== (reminder !== null) || (base.type === 'commitment') !== (commitment !== null)) fail('aggregate.config');
   if((base.type === 'fixedActivity' && !schedules.length) || (base.type !== 'fixedActivity' && schedules.length)) fail('aggregate.schedules');
-  if((base.type === 'checklistGoal' && !goals.length) || (!['variableActivity','checklistGoal'].includes(base.type) && goals.length)) fail('aggregate.goals');
+  if(!['variableActivity','checklistGoal'].includes(base.type) && goals.length) fail('aggregate.goals');
   if(!['reminder','commitment'].includes(base.type) && rules.length) fail('aggregate.rules');
   if(context !== null && !['commitment','fixedActivity','variableActivity'].includes(base.type)) fail('aggregate.context');
   if(windows.length && (base.type !== 'variableActivity' || windows.some(w=>w.effect !== 'preferred' || w.kind === 'fixedStart' || w.recurrenceRuleId !== undefined))) fail('aggregate.windows');
@@ -167,7 +170,9 @@ export function aggregateFromDatabase(value: unknown): PersistedActivityBundle {
     case 'variableActivity': activity={...base,type:base.type,config:planning(context)}; break;
     case 'checklistGoal': activity={...base,type:base.type,config:{}}; break;
   }
-  return {bundle:{activity,goals,rules,windows},revision};
+  const tree=data.subitem_tree===undefined?undefined:validateTree(data.subitem_tree);
+  const checklist=row.checklist_items===undefined?[]:checklistItems(row.checklist_items);
+  return {bundle:{activity,goals,rules,windows,...(row.goal_tracking_mode===undefined||activity.type!=='checklistGoal'?{}:{trackingMode:choice(row.goal_tracking_mode,['quantity','checklist'] as const,'trackingMode')}),...(tree&&(tree.items.length||tree.mode!=='all')?{subitems:tree}:{}),...(checklist.length?{checklistItems:checklist}:{})},revision};
 }
 
 function json(v: unknown, f: string): Json {
@@ -216,7 +221,7 @@ export function aggregateToRpc(bundle: ActivityBundle, expectedRevision?: number
   }
   const mode=choice(d.mode,['unknown','fixed','minimumIdeal'],'duration.mode');
   ownKeys(record(d,'duration'),mode === 'unknown' ? ['mode'] : mode === 'fixed' ? ['mode','minutes'] : ['mode','minMinutes','idealMinutes'],'duration');
-  const p_activity={id:a.id,name:a.name,description:a.description ?? null,area_id:a.areaId,status:a.status,type:a.type,default_importance:a.defaultImportance,
+  const p_activity={...(bundle.trackingMode===undefined?{}:{goal_tracking_mode:choice(bundle.trackingMode,['quantity','checklist'] as const,'trackingMode')}),id:a.id,name:a.name,description:a.description ?? null,area_id:a.areaId,status:a.status,type:a.type,default_importance:a.defaultImportance,
     duration_mode:mode,duration_minutes:d.mode === 'fixed' ? d.minutes : null,min_duration_minutes:d.mode === 'minimumIdeal' ? d.minMinutes : null,ideal_duration_minutes:d.mode === 'minimumIdeal' ? d.idealMinutes : null};
   const isAgenda=a.type === 'commitment' || a.type === 'fixedActivity' || a.type === 'variableActivity';
   const common=isAgenda ? ['location','preparationMinutes','travel'] : [];

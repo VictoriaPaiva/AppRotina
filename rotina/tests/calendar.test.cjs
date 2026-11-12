@@ -27,7 +27,7 @@ assert.equal(calendarMonth('0001-01-01').previous,null);assert.equal(calendarMon
 });
 test('real items, counts, status, inactive history, selection, today, URLs and empty states',()=>{
 const {CalendarBoard}=withStubs('components/calendar/CalendarBoard.tsx',{'next/link':{default:'a'},'@/lib/planning/dates':load('lib/planning/dates.ts'),'@/components/ui/card':{Card:'div',CardContent:'div'},'@/components/ui/ReloadPageButton':{ReloadPageButton:()=>null},'@/components/ui/button':{Button:({children})=>children}});
-const item={id:'p',activityId:'a',plannedDate:'2026-10-26',completedAt:null,name:'Real',active:false,areaName:'Saúde'};
+const item={id:'p',activityId:'a',plannedDate:'2026-10-26',createdAt:'2026-10-26T12:00:00Z',updatedAt:'2026-10-26T12:00:00Z',completedAt:null,name:'Real',active:false,areaName:'Saúde'};
 const data={status:'ready',today:'2026-10-26',date:'2026-10-26',month:calendarMonth('2026-10-26'),items:[item,{...item,id:'p2',completedAt:'done'},{...item,id:'p3',plannedDate:'2026-10-27',name:'Tomorrow'}]};
 const render=data=>renderToStaticMarkup(React.createElement(CalendarBoard,{data})),html=render(data);
 for(const text of ['Pendente','Concluído','Saúde','Atividade desativada','aria-current="date"','2 itens planejados, selecionado','/banco-mestre/a','/planejamento?date=2026-10-26','/calendario?date=2026-09-01','/calendario?date=2026-11-01'])assert(html.includes(text),text);

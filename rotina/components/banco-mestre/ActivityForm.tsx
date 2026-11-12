@@ -16,6 +16,10 @@ import { toPersistenceError } from '@/lib/banco-mestre/data/errors';
 import { buildBundle, createDraft, changeItemType, hasSpecificData, type ActivityBundle, type ActivityDraft, type FieldErrors, type GoalDraft, type RuleDraft, type WindowDraft, type ScheduleDraft } from '@/lib/banco-mestre/editor';
 import { activityTypeLabels, itemTypeDescriptions, importanceLabels, statusLabels } from '@/lib/banco-mestre/presentation';
 import type { Weekday, MonthOrdinal, Area } from '@/types/banco-mestre';
+import { emptyTree, validateTree, initialSelection, subitemTotal } from '@/lib/activities/subitems';
+import { SubitemDefinitionEditor } from './SubitemDefinitionEditor';
+import {ChecklistDefinitionEditor} from './ChecklistDefinitionEditor';
+import {checklistItems as validateChecklist} from '@/lib/activities/checklist';
 
 const weekdays: Record<Weekday, string> = { monday: 'Segunda', tuesday: 'Terça', wednesday: 'Quarta', thursday: 'Quinta', friday: 'Sexta', saturday: 'Sábado', sunday: 'Domingo' };
 const ruleLabels = { annual: 'Anual', interval: 'A cada dias, semanas ou meses', weekdays: 'Dias da semana', monthDay: 'Dia do mês', monthWeekday: 'Dia e posição no mês', completion: 'Após a última realização' };
@@ -28,6 +32,19 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
   const [draft, setDraft] = useState<ActivityDraft>(() => createDraft(initial));
+  const [subitems,setSubitems]=useState(()=>initial?.subitems??emptyTree());
+  const [checklistItems,setChecklistItems]=useState(()=>initial?.checklistItems??[]);
+  const [checklistText,setChecklistText]=useState('');
+  const [trackingMode,setTrackingMode]=useState<'quantity'|'checklist'>(()=>initial?.trackingMode??(initial?.goals.length&&!initial?.checklistItems?.length?'quantity':'checklist'));
+  const originalMode=useRef(trackingMode);
+  const originalChecklist=useRef(JSON.stringify(checklistItems));
+  const originalSubitems=useRef(JSON.stringify(subitems));
+  function changeSubitems(next:typeof subitems){
+    // Once the last definition is removed, its old derived total is no longer
+    // a duration default. The now independent Activity can be timed again.
+    if(subitems.items.length&&!next.items.length)setDraft(current=>({...current,durationMode:'unknown',hours:'',minutes:''}));
+    setSubitems(next);
+  }
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [saving,setSaving]=useState(false);
@@ -43,6 +60,7 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
     if (initial || !completed.current) return;
     const fresh = createDraft();
     originalDraft.current = JSON.stringify(fresh);
+    originalChecklist.current='[]';setChecklistItems([]);setChecklistText('');setTrackingMode('checklist');originalMode.current='checklist';
     activityId.current = null;
     completed.current = false;
     inFlight.current = false;
@@ -52,8 +70,9 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
     setSaving(false);
     setSaveError(null);
     setSaved(null);
+    setSubitems(emptyTree());originalSubitems.current=JSON.stringify(emptyTree());
   }, [initial]);
-  const dirty=JSON.stringify(draft)!==originalDraft.current;
+  const dirty=Boolean(checklistText.trim())||trackingMode!==originalMode.current||JSON.stringify(draft)!==originalDraft.current||JSON.stringify(subitems)!==originalSubitems.current||JSON.stringify(checklistItems)!==originalChecklist.current;
   const allowNavigation=useDraftProtection(dirty&&!saved,saving);
   const change = <K extends keyof ActivityDraft>(key: K, value: ActivityDraft[K]) => setDraft(current => ({ ...current, [key]: value }));
   const patchGoal = (index: number, patch: Partial<GoalDraft>) => setDraft(current => ({ ...current, goals: current.goals.map((row, i) => i === index ? { ...row, ...patch } : row) }));
@@ -78,13 +97,27 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
     const type = value as ActivityDraft['type'];
     if (type === draft.type) return;
     if (hasSpecificData(draft) && !window.confirm('Trocar o tipo limpará metas, repetição, horários, local e tempos de preparação/transporte deste formulário. Nome, descrição, área, importância, duração e status serão preservados. Continuar?')) return;
-    setDraft(changeItemType(draft, type)); setErrors({}); setSubmitted(false);
+    setDraft(changeItemType(draft, type));if(type!=='checklistGoal')setChecklistItems([]);setErrors({}); setSubmitted(false);
   }
   async function submit(event: FormEvent) {
     event.preventDefault();
     if(inFlight.current || completed.current || saveError?.kind==='Conflict') return;
+    if(draft.type==='checklistGoal'&&trackingMode==='checklist'&&checklistText.trim()){setErrors({checklistItems:'Clique em Adicionar item para incluir o texto na lista antes de salvar.'});setSubmitted(true);return;}
+    try{validateTree(subitems);}catch{setErrors({subitems:'Revise os subitens: nome e minutos inteiros positivos são obrigatórios.'});setSubmitted(true);return;}
+    try{if(trackingMode==='checklist')validateChecklist(checklistItems);}catch{setErrors({checklistItems:'Preencha o texto de cada item da checklist (até 200 caracteres).'});setSubmitted(true);return;}
+    if(draft.type==='checklistGoal'&&trackingMode==='checklist'&&!checklistItems.length&&initial?.activity.type!=='checklistGoal'){setErrors({checklistItems:'Adicione pelo menos um item em Meta / Checklist.'});setSubmitted(true);return;}
+    if(draft.type==='checklistGoal'&&trackingMode==='quantity'&&!draft.goals.length){setErrors({goals:'Adicione pelo menos uma meta por quantidade.'});setSubmitted(true);return;}
     if(activityId.current===null) activityId.current=crypto.randomUUID();
-    const result = buildBundle(draft, areas, activityId.current, new Date().toISOString(), initial?.activity);
+    const derivedMinutes=subitems.items.length?subitemTotal(initialSelection({...subitems,mode:'all'})):null;
+    const source=derivedMinutes===null?draft:{...draft,durationMode:(derivedMinutes>0?'fixed':'unknown') as ActivityDraft['durationMode'],hours:String(Math.floor(derivedMinutes/60)),minutes:String(derivedMinutes%60)};
+    const writeSource=draft.type==='checklistGoal'&&trackingMode==='checklist'
+      ? {...source,goals:source.goals.filter(row=>row.minimum.trim()||row.minimumHours.trim())}:source;
+    const now=new Date().toISOString();
+    let result = buildBundle(writeSource, areas, activityId.current, now, initial?.activity);
+    // An unfinished hidden numeric draft must not become a second requirement.
+    // Keep its last persisted definition; the unsaved draft stays in local state.
+    if(!result.ok&&draft.type==='checklistGoal'&&trackingMode==='checklist'&&Object.keys(result.errors).some(key=>key.startsWith('goals')))
+      result=buildBundle({...writeSource,goals:createDraft(initial).goals},areas,activityId.current,now,initial?.activity);
     if (!result.ok) {
       setErrors(result.errors); setSubmitted(true);
       requestAnimationFrame(() => {
@@ -94,9 +127,14 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
       });
       return;
     }
+    if(draft.type==='checklistGoal')result.bundle.trackingMode=trackingMode;
     inFlight.current=true;setSaving(true);setSaveError(null);setErrors({});setSubmitted(false);
+    if(subitems.items.length||subitems.mode!=='all'||initial?.subitems)result.bundle.subitems=subitems;
+    if(draft.type==='checklistGoal'||initial?.checklistItems)result.bundle.checklistItems=draft.type==='checklistGoal'?(trackingMode==='quantity'?checklistItems.filter(item=>item.label.trim()):checklistItems):[];
     try {
-      const response=await saveMasterActivity(initial?{mode:'edit',bundle:result.bundle,expectedRevision}:{mode:'create',bundle:result.bundle});
+      const currentIds=new Set(subitems.items.map(n=>n.id));
+      const deletedSubitemIds=initial?.subitems?.items.filter(n=>!currentIds.has(n.id)).map(n=>n.id)??[];
+      const response=await saveMasterActivity(initial?{mode:'edit',bundle:result.bundle,expectedRevision,...(deletedSubitemIds.length?{deletedSubitemIds}:{})}:{mode:'create',bundle:result.bundle});
       if(!response.ok) {setSaveError(response);return;}
       completed.current=true;setSaved(response);
       // Navigate using the authoritative result, never an optimistic local item.
@@ -108,8 +146,19 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
       }
     } finally {inFlight.current=false;setSaving(false);}
   }
+  function quantityFields(){return <>
+      <p className="text-sm text-muted-foreground">Quanto você quer realizar no período. Uma meta semanal não define dias obrigatórios.</p>
+      {draft.goals.map((row, index) => { const key = 'goals.' + index; return <fieldset key={row.id} className="space-y-4 rounded-xl border p-4"><legend className="px-1 font-medium">Meta {index + 1}</legend>
+        <div className="grid gap-4 sm:grid-cols-2">{field(key + '.metric', 'O que será acompanhado?', row.metric, v => patchGoal(index, { metric: v as GoalDraft['metric'], unit: v === 'count' ? 'execution' : v === 'duration' ? 'minute' : '', minimum: '', ideal: '', minimumHours: v === 'duration' ? '0' : '', idealHours: '' }), { count: 'Vezes', quantity: 'Quantidade', duration: 'Tempo' })}{field(key + '.period', 'Frequência', row.period, v => patchGoal(index, { period: v as GoalDraft['period'] }), { day: 'Por dia', week: 'Por semana', month: 'Por mês' })}</div>
+        {row.metric === 'quantity' && field(key + '.unit', 'Unidade (ex.: garrafas, páginas)', row.unit, v => patchGoal(index, { unit: v }))}
+        <div className="grid gap-4 sm:grid-cols-2">{row.metric === 'duration' ? <>{timeFields('Mínimo', key + '.minimumHours', key + '.minimum', row.minimumHours, row.minimum, v => patchGoal(index, { minimumHours: v }), v => patchGoal(index, { minimum: v }))}{timeFields('Ideal (opcional)', key + '.idealHours', key + '.ideal', row.idealHours, row.ideal, v => patchGoal(index, { idealHours: v }), v => patchGoal(index, { ideal: v }))}</> : <>{field(key + '.minimum', draft.type==='checklistGoal'?'Quantidade':'Mínimo', row.minimum, v => patchGoal(index, { minimum: v }), undefined, 'number')}{field(key + '.ideal', 'Ideal (opcional)', row.ideal, v => patchGoal(index, { ideal: v }), undefined, 'number')}</>}</div>
+        <p className="text-xs text-muted-foreground">{row.metric === 'count' ? 'Quantas vezes você quer realizar.' : row.metric === 'quantity' ? 'Quanto quer acumular na unidade escolhida.' : 'Quanto tempo quer dedicar no período.'}</p>
+        {validity(key, row, patch => patchGoal(index, patch))}{enabled(key + '.enabled', row.enabled, v => patchGoal(index, { enabled: v }))}<Button type="button" variant="outline" onClick={() => change('goals', draft.goals.filter(goal => goal.id !== row.id))}>Remover meta {index + 1}</Button>
+      </fieldset>; })}
+      {errors.goals && <p className="text-sm text-destructive">{errors.goals}</p>}<Button type="button" variant="outline" data-field="goals" onClick={() => change('goals', [...draft.goals, { id: crypto.randomUUID(), enabled: true, metric: 'count', unit: 'execution', minimum: '', ideal: '', minimumHours: '', idealHours: '', period: 'week', startsOn: today(), endsOn: '' }])}>Adicionar meta</Button>
+    </>;}
   const agenda = ['commitment', 'fixedActivity', 'variableActivity'].includes(draft.type);
-  const metas = draft.type === 'variableActivity' || draft.type === 'checklistGoal';
+
   const repetition = draft.type === 'reminder' || draft.type === 'commitment';
 
   if(failure) return <Card><CardContent className="space-y-3 p-5"><h1 className="text-xl font-semibold">Não foi possível carregar o formulário</h1><p role="alert">{failure.message}</p>{failure.kind==='Unauthorized'?<Button asChild><Link href="/auth/login">Entrar</Link></Button>:<Button type="button" variant="outline" onClick={()=>router.refresh()}>Tentar novamente</Button>}</CardContent></Card>;
@@ -141,9 +190,20 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
       {initial && field('status', 'Status', draft.status, v => change('status', v as ActivityDraft['status']), statusLabels)}
     </>)}
     {section('Duração', <>
+      {subitems.items.length>0?<p>Duração derivada dos subitens ativos: {subitemTotal(initialSelection({...subitems,mode:'all'}))} min. A seleção da ocorrência pode reduzir esse total.</p>:<>
       {field('durationMode', 'Duração estimada', draft.durationMode, v => change('durationMode', v as ActivityDraft['durationMode']), durationLabels)}
       <div className="grid gap-4 sm:grid-cols-2">{draft.durationMode === 'fixed' && durationFields('Duração', 'hours', 'minutes')}{draft.durationMode === 'minimumIdeal' && <>{durationFields('Mínimo', 'minimumHours', 'minimum')}{durationFields('Ideal', 'idealHours', 'ideal')}</>}</div>
+      </>}
     </>)}
+    <SubitemDefinitionEditor value={subitems} onChange={changeSubitems} disabled={saving} />
+    {draft.type==='checklistGoal'&&section('Meta / Checklist',<>
+      {field('trackingMode','Como acompanhar esta meta?',trackingMode,v=>{setTrackingMode(v as 'quantity'|'checklist');setErrors({});},{quantity:'Por quantidade',checklist:'Checklist'})}
+      <p className="text-sm text-muted-foreground">Somente o modo escolhido será usado nos próximos planejamentos. Os dados do outro modo serão preservados.</p>
+      {trackingMode==='checklist'&&<ChecklistDefinitionEditor value={checklistItems} onChange={setChecklistItems} text={checklistText} onTextChange={setChecklistText} disabled={saving} embedded />}
+      {trackingMode==='quantity'&&quantityFields()}
+    </>)}
+    {errors.checklistItems&&<p role="alert" className="text-sm text-destructive">{errors.checklistItems}</p>}
+    {errors.subitems&&<p role="alert" className="text-sm text-destructive">{errors.subitems}</p>}
     {draft.type === 'reminder' && section('Data do lembrete', <>
       <div className="grid gap-4 sm:grid-cols-2">{field('referenceDate', 'Data / referência', draft.referenceDate, v => change('referenceDate', v), undefined, 'date')}{field('reminderTime', 'Hora do lembrete (opcional)', draft.reminderTime, v => change('reminderTime', v), undefined, 'time')}</div>
       <p className="text-sm text-muted-foreground">A hora de aviso não reserva tempo. Avisos reais serão implementados futuramente.</p>
@@ -154,17 +214,7 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
       {draft.schedules.map((row, index) => <fieldset key={row.id} className="space-y-4 rounded-xl border p-4"><legend className="px-1 font-medium">Grupo {index + 1}</legend>{days('schedules.' + index + '.weekdays', row.weekdays, v => patchSchedule(index, { weekdays: v }))}<div className="grid gap-4 sm:grid-cols-2">{field('schedules.' + index + '.startTime', 'Início', row.startTime, v => patchSchedule(index, { startTime: v }), undefined, 'time')}{field('schedules.' + index + '.endTime', 'Fim', row.endTime, v => patchSchedule(index, { endTime: v }), undefined, 'time')}</div><Button type="button" variant="outline" onClick={() => change('schedules', draft.schedules.filter(group => group.id !== row.id))}>Remover grupo {index + 1}</Button></fieldset>)}
       {errors.schedules && <p className="text-sm text-destructive">{errors.schedules}</p>}<Button type="button" variant="outline" data-field="schedules" onClick={() => change('schedules', [...draft.schedules, { id: crypto.randomUUID(), weekdays: [], startTime: '', endTime: '' }])}>Adicionar grupo de horários</Button>
     </>)}
-    {metas && section(draft.type === 'checklistGoal' ? 'Meta / Checklist' : 'Frequência / metas', <>
-      <p className="text-sm text-muted-foreground">{draft.type === 'checklistGoal' ? 'Acompanhamento por marcações ou contagem, fora da grade principal do Calendário.' : 'Quanto você quer realizar no período. Uma meta semanal não define dias obrigatórios.'}</p>
-      {draft.goals.map((row, index) => { const key = 'goals.' + index; return <fieldset key={row.id} className="space-y-4 rounded-xl border p-4"><legend className="px-1 font-medium">Meta {index + 1}</legend>
-        <div className="grid gap-4 sm:grid-cols-2">{field(key + '.metric', 'O que será acompanhado?', row.metric, v => patchGoal(index, { metric: v as GoalDraft['metric'], unit: v === 'count' ? 'execution' : v === 'duration' ? 'minute' : '', minimum: '', ideal: '', minimumHours: v === 'duration' ? '0' : '', idealHours: '' }), { count: 'Vezes', quantity: 'Quantidade', duration: 'Tempo' })}{field(key + '.period', 'Frequência', row.period, v => patchGoal(index, { period: v as GoalDraft['period'] }), { day: 'Por dia', week: 'Por semana', month: 'Por mês' })}</div>
-        {row.metric === 'quantity' && field(key + '.unit', 'Unidade (ex.: garrafas, páginas)', row.unit, v => patchGoal(index, { unit: v }))}
-        <div className="grid gap-4 sm:grid-cols-2">{row.metric === 'duration' ? <>{timeFields('Mínimo', key + '.minimumHours', key + '.minimum', row.minimumHours, row.minimum, v => patchGoal(index, { minimumHours: v }), v => patchGoal(index, { minimum: v }))}{timeFields('Ideal (opcional)', key + '.idealHours', key + '.ideal', row.idealHours, row.ideal, v => patchGoal(index, { idealHours: v }), v => patchGoal(index, { ideal: v }))}</> : <>{field(key + '.minimum', 'Mínimo', row.minimum, v => patchGoal(index, { minimum: v }), undefined, 'number')}{field(key + '.ideal', 'Ideal (opcional)', row.ideal, v => patchGoal(index, { ideal: v }), undefined, 'number')}</>}</div>
-        <p className="text-xs text-muted-foreground">{row.metric === 'count' ? 'Quantas vezes você quer realizar.' : row.metric === 'quantity' ? 'Quanto quer acumular na unidade escolhida.' : 'Quanto tempo quer dedicar no período.'}</p>
-        {validity(key, row, patch => patchGoal(index, patch))}{enabled(key + '.enabled', row.enabled, v => patchGoal(index, { enabled: v }))}<Button type="button" variant="outline" onClick={() => change('goals', draft.goals.filter(goal => goal.id !== row.id))}>Remover meta {index + 1}</Button>
-      </fieldset>; })}
-      {errors.goals && <p className="text-sm text-destructive">{errors.goals}</p>}<Button type="button" variant="outline" data-field="goals" onClick={() => change('goals', [...draft.goals, { id: crypto.randomUUID(), enabled: true, metric: 'count', unit: 'execution', minimum: '', ideal: '', minimumHours: '', idealHours: '', period: draft.type === 'checklistGoal' ? 'day' : 'week', startsOn: today(), endsOn: '' }])}>Adicionar meta</Button>
-    </>)}
+    {draft.type==='variableActivity'&&section('Frequ\u00eancia / metas',quantityFields())}
     {draft.type === 'variableActivity' && section('Janelas preferenciais', <>
       <p className="text-sm text-muted-foreground">Preferências, sem obrigar dias ou horários. O planejamento atual permite escolher a data, sem reservar horários.</p>
       {draft.windows.map((row, index) => { const key = 'windows.' + index; return <fieldset key={row.id} className="space-y-4 rounded-xl border p-4"><legend className="px-1 font-medium">Preferência {index + 1}</legend>{field(key + '.kind', 'Preferir', row.kind, v => patchWindow(index, { kind: v as WindowDraft['kind'], startTime: '', endTime: '' }), { weekdays: 'Dias da semana', timeRange: 'Dias e intervalo de horário' })}{days(key + '.weekdays', row.weekdays, v => patchWindow(index, { weekdays: v }))}{row.kind === 'timeRange' && <div className="grid gap-4 sm:grid-cols-2">{field(key + '.startTime', 'Horário inicial', row.startTime, v => patchWindow(index, { startTime: v }), undefined, 'time')}{field(key + '.endTime', 'Horário final', row.endTime, v => patchWindow(index, { endTime: v }), undefined, 'time')}{field(key + '.endDayOffset', 'Término', row.endDayOffset, v => patchWindow(index, { endDayOffset: v as WindowDraft['endDayOffset'] }), { '0': 'Mesmo dia', '1': 'Dia seguinte' })}</div>}<p className="text-xs text-muted-foreground">Sem dias selecionados, um intervalo vale para todos os dias.</p>{validity(key, row, patch => patchWindow(index, patch))}<Button type="button" variant="outline" onClick={() => change('windows', draft.windows.filter(window => window.id !== row.id))}>Remover preferência {index + 1}</Button></fieldset>; })}

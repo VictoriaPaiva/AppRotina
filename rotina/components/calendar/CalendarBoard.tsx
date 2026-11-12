@@ -4,13 +4,16 @@ import { formatPlanDate } from '@/lib/planning/dates';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ReloadPageButton } from '@/components/ui/ReloadPageButton';
+import { PlanSubitems } from '@/components/planning/PlanSubitems';
+import {PlanChecklist} from '@/components/planning/PlanChecklist';
+import {orderPlanItems} from '@/lib/planning/order';
 
 export function CalendarBoard({data}: {data: CalendarReadResult}) {
   if (data.status === 'error') return <div role="alert" className="space-y-4"><h1 className="text-2xl font-semibold">Calendário</h1><p>{data.message}</p>{data.kind !== 'Unauthorized' && <ReloadPageButton />}<Link className="block underline" href={data.kind === 'Unauthorized' ? '/auth/login' : '/calendario'}>{data.kind === 'Unauthorized' ? 'Entrar novamente' : 'Voltar ao calendário'}</Link></div>;
   const {month, date, today, items} = data;
   const counts = new Map<string, number>();
   for (const item of items) counts.set(item.plannedDate, (counts.get(item.plannedDate) ?? 0) + 1);
-  const selected = items.filter(item => item.plannedDate === date);
+  const selected = orderPlanItems(items.filter(item => item.plannedDate === date));
   return <div className="space-y-6">
     <div><h1 className="text-2xl font-semibold">Calendário</h1><p className="text-muted-foreground">Consulte seus itens planejados. Para concluir ou reagendar, acesse Hoje ou Planejamento.</p></div>
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,1fr)]">
@@ -37,7 +40,9 @@ export function CalendarBoard({data}: {data: CalendarReadResult}) {
         <Button asChild><Link href={`/planejamento?date=${date}`}>Planejar nesta data</Link></Button>
         {!selected.length && <p className="text-muted-foreground">Nenhum item planejado nesta data.</p>}
         <ul className="space-y-3">{selected.map(item => <li key={item.id}><Card><CardContent className="space-y-2 p-4">
-          <h3 className="break-words font-medium">{item.name}</h3>
+          <h3 className="break-words font-medium">{item.plannedTime&&<time dateTime={item.plannedTime}>{item.plannedTime} · </time>}{item.name}</h3>
+          {(item.checklist||item.activityTypeSnapshot==='checklistGoal')&&<PlanChecklist items={item.checklist??[]} />}
+          {item.subitems&&<PlanSubitems items={item.subitems} total={item.plannedDurationMinutes??0} />}
           {item.areaName && <p className="break-words text-sm text-muted-foreground">Área: {item.areaName}</p>}
           <p className={`inline-block rounded px-2 py-1 text-sm ${item.completedAt ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'}`}>{item.completedAt ? 'Concluído' : 'Pendente'}</p>
           {!item.active && <p className="text-sm text-muted-foreground">Atividade desativada</p>}

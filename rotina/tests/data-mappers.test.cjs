@@ -81,7 +81,7 @@ test('metadata, configs, ownership, UUIDs, cardinalidade e IDs duplicados rejeit
   const {bundle,data}=make('dentista');
   for(const patch of [{commitment_config:null},{reminder_config:{...data.commitment_config}},{planning_context:{...data.planning_context,user_id:randomUUID()}},{planning_context:{...data.planning_context,activity_id:randomUUID()}},{activity:{...data.activity,id:'dentista'}},{activity:{...data.activity,revision:0}},{activity:{...data.activity,type:'bad'}}]) assert.throws(()=>mapper.aggregateFromDatabase({...data,...patch}),MapperError);
   assert.throws(()=>mapper.aggregateToRpc({...bundle,activity:{...bundle.activity,id:'dentista'}}),MapperError);
-  const g=make('agua');assert.throws(()=>mapper.aggregateFromDatabase({...g.data,goals:[]}),MapperError);
+  const g=make('agua');assert.deepEqual(mapper.aggregateFromDatabase({...g.data,goals:[]}).bundle.goals,[]);
   assert.throws(()=>mapper.aggregateFromDatabase({...g.data,goals:[g.data.goals[0],g.data.goals[0]]}),MapperError);
   assert.throws(()=>mapper.aggregateToRpc({...g.bundle,goals:[{...g.bundle.goals[0],activityId:randomUUID()}]}),MapperError);
   assert.throws(()=>mapper.aggregateFromDatabase({...make('trabalho').data,fixed_schedules:[]}),MapperError);

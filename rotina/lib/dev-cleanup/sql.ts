@@ -1,7 +1,7 @@
 // Temporary, local development tool. No migration, installed function or permission change.
 export const CLEANUP_TABLES = [
   'daily_plan_items','ideas','project_tasks','projects','financial_transactions','fixed_expense_months','fixed_expenses',
-  'time_windows','reminder_configs','commitment_configs','planning_contexts','fixed_schedules','goals','recurrence_rules','activities','areas',
+  'time_windows','reminder_configs','commitment_configs','planning_contexts','fixed_schedules','goals','recurrence_rules','activity_subitems','activities','areas',
 ] as const;
 export const CLEANUP_PROJECT_REF = 'zkaufspoigruofdillts'; // Audited Rotina - Desenvolvimento only.
 export const CLEANUP_PHRASE = 'APAGAR MEUS DADOS DE TESTE';

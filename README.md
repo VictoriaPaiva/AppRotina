@@ -1,6 +1,24 @@
+**12/11/2026 — V0.5 validada em Development:** migration de sincronização `20261102000200_sync_open_goal_occurrences.sql` aplicada com sucesso em Development. A sincronização de checklists abertas foi validada: novos itens adicionados no Banco Mestre entram nas ocorrências abertas sem perder checks já marcados. Hoje mantém as seções Para hoje → Pendências → Concluídas, incluindo pendências antigas concluídas no dia e sem limite oculto de quantidade. Smoke manual aprovado. Production ainda não atualizada.
+
+**04/11/2026 — V0.5, checklist aberta e concluídos:** Development está sem a migration de sincronização `20261102000200` (confirmado somente por leitura). Hoje passa a incluir pendências antigas concluídas hoje, sem limite de quantidade. [Diagnóstico, testes e smoke](rotina/doc/V0.5-checklist-aberta-concluidas.md). Sem deploy ou alteração remota.
+
+**02/11/2026 — execução quantitativa V0.5 implementada localmente:** unidades diárias marcáveis e contador para alvos extensos/fracionários; semanal/mensal por contribuição da ocorrência e total civil do período, conforme regra confirmada. Snapshot separado da checklist textual e histórico preservado. Migration nova 20261102000100 somente local. [Decisões e smoke](rotina/doc/V0.5-execucao-quantitativa.md). Sem deploy/Production.
+
+**02/11/2026 — auditoria real de checklist em Development:** ‘agua 3’ está em modo quantitativo (2 garafas/dia), com definição textual vazia e snapshot quantitativo nulo correto. Fluxo real de checklist com três itens validado; mensagens distinguem os modos e preservam histórico. Migrations até 004 confirmadas aplicadas em Development. [Evidências e smoke](rotina/doc/V0.5-auditoria-checklist-development.md). Sem deploy/alteração em Production.
+
+**V0.5 — Meta / Checklist com dois modos:** edição quantitativa restaurada em goals; checklist textual com digitar → adicionar e Enter sem submit. Modo explícito, dados inativos e histórico preservados. Nova migration 004 somente local. [Decisões, testes e smoke](rotina/doc/V0.5-meta-checklist-dois-modos.md). Sem deploy/Production.
+
+**V0.5 — Meta / Checklist unificada:** fonte única em checklist_items, sem segunda lista ou meta numérica obrigatória; legado e snapshots preservados. Migration complementar 003 somente local. [Decisões e smoke](rotina/doc/V0.5-meta-checklist-fonte-unica.md). Sem deploy/Production.
+
+**V0.5 — correção local em 01/11/2026:** prioridade cronológica obrigatória; ordem manual somente entre itens sem horário. Checklist legada sem definições/snapshot identificada em Development; fluxo real de definição e checks validado localmente. A migration base 001 foi confirmada aplicada; complementar `20261101000200_chronological_day_order.sql` permanece local. [Diagnóstico, testes e smoke](rotina/doc/V0.5-correcao-checklist-ordem-cronologica.md). Sem deploy ou alteração em Production.
+
 **Estado atual — 29/10/2026:** MVP funcional, performance, UX desktop, responsividade e exclusão de conta concluídos/validados conforme confirmação da usuária. Preparação de publicação local concluída; novo Supabase Production, Vercel e smoke público ainda pendentes. Development preservado. Os registros antigos abaixo documentam a evolução, não o status vigente.
 
 # Rotina
+
+**31/10/2026 — V0.4 implementada localmente:** atividades com subitens multinível, seleção all/none/custom e snapshot independente por planejamento; duração e overrides por ocorrência; conclusão hierárquica em Hoje e detalhe compacto no Calendário. [Arquitetura, migration, testes e smoke pendente](rotina/doc/V0.4-atividades-hierarquicas-planejamento-subitens.md). Migration `20261031000200_activity_subitems.sql` não aplicada em Production; sem deploy. Projetos/Ideias/Finanças preservados e V0.2.5 pausada.
+
+**31/10/2026 — V0.3 Projetos avançados implementada localmente.** Modos por tarefas, manual e híbrido; progresso parcial em sete estágios; subtarefas multinível com pesos e cálculo recursivo. [Decisões, migration e validação](rotina/doc/V0.3-projetos-avancados.md). Migration nova `20261031000100_projects_advanced.sql` ainda não aplicada em Production. Sem deploy; smoke autenticado desktop/mobile pendente. V0.2.5 permanece pausada. Os registros anteriores abaixo são históricos.
 
 Aplicação pessoal de organização de rotina, planejamento, projetos, ideias e compromissos.
 

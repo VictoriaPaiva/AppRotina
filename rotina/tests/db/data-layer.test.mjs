@@ -29,7 +29,8 @@ const client={
   async rpc(name,args) {
     try {
       let result;
-      if(name==='get_activity_aggregate') result=await db.query('select public.get_activity_aggregate($1::uuid) result',[args.p_activity_id]);
+      if(name==='save_activity_v05')result=await db.query('select save_activity_v05($1,$2,$3,$4,$5::uuid[],$6) result',[JSON.stringify(args.p_activity),JSON.stringify(args.p_relations),args.p_expected_revision,JSON.stringify(args.p_tree),args.p_deleted_ids,JSON.stringify(args.p_checklist)]);
+      else if(name==='get_activity_aggregate') result=await db.query('select public.get_activity_aggregate($1::uuid) result',[args.p_activity_id]);
       else {
         assert.equal(name,'save_activity_aggregate');
         const values=[JSON.stringify(args.p_activity),JSON.stringify(args.p_relations)];
@@ -61,7 +62,7 @@ test('Official Database matches columns, defaults, nullable fields and public FK
   const literal=n=>ts.isLiteralTypeNode(n)?n.literal.text??(n.literal.kind===ts.SyntaxKind.TrueKeyword):null;
   const schema=property(dbtype,'public');
   const tables=property(schema,'Tables').members;
-  assert.deepEqual(tables.map(t=>t.name.getText(source)).sort(),['activities','areas','commitment_configs','daily_plan_items','financial_transactions','fixed_expense_months','fixed_expenses','fixed_schedules','goals','ideas','planning_contexts','project_tasks','projects','recurrence_rules','reminder_configs','time_windows']);
+  assert.deepEqual(tables.map(t=>t.name.getText(source)).sort(),['activities','activity_subitems','areas','commitment_configs','daily_plan_items','financial_transactions','fixed_expense_months','fixed_expenses','fixed_schedules','goals','ideas','planning_contexts','project_tasks','projects','recurrence_rules','reminder_configs','time_windows']);
   const sorted=rows=>rows.sort((a,b)=>a.conname.localeCompare(b.conname));
   for(const table of tables) {
     const name=table.name.getText(source);
@@ -75,7 +76,7 @@ test('Official Database matches columns, defaults, nullable fields and public FK
     assert(update.every(f=>f.questionToken),name+' Update optional');
     assert(actual.every(r=>r.is_generated==='NEVER'&&r.is_identity==='NO'),name+' no generated/identity columns');
     for(const column of actual) {
-      const expected=column.udt_name==='_int2'?'number[]':['int2','int4','numeric'].includes(column.udt_name)?'number':column.udt_name==='bool'?'boolean':'string';
+      const expected=column.udt_name==='jsonb'?'Json':column.udt_name==='_int2'?'number[]':['int2','int4','numeric'].includes(column.udt_name)?'number':column.udt_name==='bool'?'boolean':'string';
       for(const shape of [fields,insert,update]) {
         const field=shape.find(f=>f.name.getText(source)===column.column_name);
         const tokens=field.type.getText(source).split(' | ');
@@ -92,15 +93,17 @@ test('Official Database matches columns, defaults, nullable fields and public FK
     assert.deepEqual(ownerFk,[{conname:name+'_user_id_fkey'}]);
   }
   const functions=property(schema,'Functions').members;
-  assert.deepEqual(functions.map(f=>f.name.getText(source)).sort(),['get_activity_aggregate','initialize_fixed_expense_month','save_activity_aggregate','save_fixed_expense','save_fixed_expense_month']);
+  assert.deepEqual(functions.map(f=>f.name.getText(source)).sort(),['change_daily_plan_v05','change_plan_subitems','create_daily_plan_v05','create_plan_with_subitems','delete_activity_subitem_branches','get_activity_aggregate','initialize_fixed_expense_month','list_activity_subitems','reorder_plan_day','save_activity_aggregate','save_activity_checklist','save_activity_subitems','save_activity_v05','save_activity_with_subitem_deletions','save_activity_with_subitems','save_fixed_expense','save_fixed_expense_month','sync_open_activity_plans']);
   for(const fn of functions) {
     const name=fn.name.getText(source),args=property(fn.type,'Args').members;
     const sql=(await db.query("select proargnames,pronargs,pronargdefaults,pg_get_function_result(oid) result from pg_proc where pronamespace='public'::regnamespace and proname=$1",[name])).rows;
-    assert.equal(sql.length,1);assert.equal(sql[0].result,name==='initialize_fixed_expense_month'?'integer':'jsonb');
-    assert.equal(property(fn.type,'Returns').getText(source),name==='initialize_fixed_expense_month'?'number':'Json');
+    const returnsNumber=['initialize_fixed_expense_month','delete_activity_subitem_branches'].includes(name);
+    const returnsVoid=['save_activity_subitems','save_activity_checklist','reorder_plan_day','sync_open_activity_plans'].includes(name);
+    assert.equal(sql.length,1);assert.equal(sql[0].result,returnsVoid?'void':returnsNumber?'integer':'jsonb');
+    assert.equal(property(fn.type,'Returns').getText(source),returnsVoid?'undefined':returnsNumber?'number':'Json');
     assert.deepEqual(args.map(a=>a.name.getText(source)).sort(),[...sql[0].proargnames].sort());
     assert.equal(args.filter(a=>!a.questionToken).length,sql[0].pronargs-sql[0].pronargdefaults);
-    assert.equal(sql[0].pronargdefaults,name==='save_activity_aggregate'?2:name==='save_fixed_expense'?1:0);
+    assert.equal(sql[0].pronargdefaults,name==='change_plan_subitems'?3:['create_plan_with_subitems','list_activity_subitems'].includes(name)?1:name==='save_activity_aggregate'?2:name==='save_fixed_expense'?1:0);
   }
 });
 for(const name of ['aniversario-mae','dentista','trabalho','academia','faxina','agua','escovar','cabelo']) test('repository → RPC real → mapper preserva '+name,async()=>{
@@ -108,7 +111,7 @@ for(const name of ['aniversario-mae','dentista','trabalho','academia','faxina','
   await db.query('insert into public.areas(id,user_id,name) values ($1,$2,$3)',[bundle.activity.areaId,owner,'Área fictícia']);
   const saved=await repo.saveActivity(bundle);
   // Auditoria é gerada pelo banco; compara todos os demais valores do domínio.
-  assert.deepEqual(saved.bundle,{...bundle,activity:{...bundle.activity,createdAt:saved.bundle.activity.createdAt,updatedAt:saved.bundle.activity.updatedAt}});
+  assert.deepEqual(saved.bundle,{...bundle,...(bundle.activity.type==='checklistGoal'?{trackingMode:'checklist'}:{}),activity:{...bundle.activity,createdAt:saved.bundle.activity.createdAt,updatedAt:saved.bundle.activity.updatedAt}});
   assert.deepEqual(await repo.getActivity(saved.bundle.activity.id),saved);
 });
 test('leitura pública invoker preserva RLS/anon, NotFound e revisão sem writes',async()=>{

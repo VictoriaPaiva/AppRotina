@@ -31,7 +31,7 @@ test('SQL only scopes functional DML to auth.uid, contains no DDL/TRUNCATE/Auth 
   const preview=sql.cleanupSql(A),execute=sql.cleanupSql(A,report);
   assert(preview.includes('read only'));assert(!preview.includes('delete from public.%I'));assert(execute.includes('delete from public.%I where user_id=auth.uid()'));assert(execute.includes('CLEANUP_STALE_PREVIEW'));assert(execute.includes('set constraints all immediate'));
   assert(!/\b(?:create|alter|drop|truncate)\s+(?:table|function|policy|schema)?/i.test(execute));assert(!/\b(?:delete|update|insert)\s+(?:from\s+|into\s+)?auth\./i.test(execute));assert(!execute.includes('service_role'));
-  assert.throws(()=>sql.cleanupSql("x';delete from auth.users;--"));assert.equal(sql.CLEANUP_TABLES.length,16);
+  assert.throws(()=>sql.cleanupSql("x';delete from auth.users;--"));assert.equal(sql.CLEANUP_TABLES.length,17);
 });
 function handler({actor=A,authError=false,failure=false}={}) {
   const calls=[],store=createCleanupConfirmations();let authCalls=0;

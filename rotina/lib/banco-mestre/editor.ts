@@ -1,6 +1,6 @@
 import type { Activity, Area, Duration, Goal, RecurrenceRule, TimeWindow, Weekday, MonthOrdinal, InvalidDatePolicy } from '@/types/banco-mestre';
 
-export interface ActivityBundle { activity: Activity; goals: Goal[]; rules: RecurrenceRule[]; windows: TimeWindow[] }
+export interface ActivityBundle { trackingMode?: 'quantity' | 'checklist'; activity: Activity; goals: Goal[]; rules: RecurrenceRule[]; windows: TimeWindow[]; subitems?: import('@/lib/activities/subitems').ActivityTree; checklistItems?:import('@/lib/activities/checklist').ChecklistItem[] }
 export interface GoalDraft { id: string; enabled: boolean; metric: Goal['metric']; unit: string; minimum: string; ideal: string; minimumHours: string; idealHours: string; period: Goal['period']; startsOn: string; endsOn: string }
 export interface RuleDraft { id: string; enabled: boolean; label: string; kind: 'annual' | 'interval' | 'weekdays' | 'monthDay' | 'monthWeekday' | 'completion'; interval: string; unit: 'day' | 'week' | 'month'; anchorDate: string; weekdays: Weekday[]; dayOfMonth: string; ordinal: MonthOrdinal; weekday: Weekday; invalidDatePolicy: InvalidDatePolicy; startsOn: string; endsOn: string }
 export interface WindowDraft { id: string; recurrenceRuleId: string; kind: TimeWindow['kind']; effect: TimeWindow['effect']; coverage: TimeWindow['coverage']; weekdays: Weekday[]; startTime: string; endTime: string; endDayOffset: '0' | '1'; startsOn: string; endsOn: string }
@@ -97,7 +97,6 @@ export function buildBundle(draft: ActivityDraft, areas: readonly Area[], id: st
   if (!hasRules && draft.rules.length) errors.type = 'Este tipo não utiliza esta repetição. Revise a troca de tipo.';
   if (draft.type !== 'variableActivity' && draft.windows.length) errors.type = 'Este tipo não utiliza janelas preferenciais. Revise a troca de tipo.';
   if (draft.type !== 'fixedActivity' && draft.schedules.length) errors.type = 'Este tipo não utiliza grupos de horários. Revise a troca de tipo.';
-  if (draft.type === 'checklistGoal' && !draft.goals.length) errors.goals = 'Adicione pelo menos uma meta.';
   const goals: Goal[] = draft.goals.map((row, index) => {
     const key = 'goals.' + index;
     const minimumTarget = row.metric === 'duration' ? totalMinutes(row.minimumHours, row.minimum, key + '.minimumHours', key + '.minimum') : positive(row.minimum, key + '.minimum', row.metric === 'count');
