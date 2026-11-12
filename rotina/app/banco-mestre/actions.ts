@@ -19,6 +19,7 @@ export async function saveMasterActivity(input:unknown):Promise<SaveActivityResu
     revalidatePath('/banco-mestre/'+result.activityId);
     revalidatePath('/planejamento');
     revalidatePath('/hoje');
+    revalidatePath('/calendario');
   }
   return result;
 }

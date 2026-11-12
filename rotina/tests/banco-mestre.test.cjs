@@ -67,7 +67,7 @@ test('datas reais e intervalos de compromisso/grupos fixos são obrigatórios', 
 });
 test('metas de tempo usam horas/minutos; contagem e quantidade são distintas', () => {
   const base = { ...draft(), type: 'checklistGoal' };
-  assert(!build(base).ok);
+  assert(build(base).ok);
   const goal = { id: 'g', enabled: true, metric: 'duration', unit: 'minute', minimumHours: '1', minimum: '30', idealHours: '2', ideal: '0', period: 'week', startsOn: '2026-10-11', endsOn: '' };
   const r = build({ ...base, goals: [goal] }); assert(r.ok); assert.equal(r.bundle.goals[0].minimumTarget, 90); assert.equal(r.bundle.goals[0].idealTarget, 120);
   assert(!build({ ...base, goals: [{ ...goal, idealHours: '1', ideal: '0' }] }).ok);

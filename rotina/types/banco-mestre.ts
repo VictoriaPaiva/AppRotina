@@ -19,12 +19,13 @@ export interface TravelTime { outboundMinutes?: number; returnMinutes?: number }
 export interface PlanningContext { location?: string; preparationMinutes?: number; travel?: TravelTime }
 export interface FixedSchedule { id: string; weekdays: Weekday[]; startTime: LocalTime; endTime: LocalTime }
 interface ActivityBase {
+  childSelectionMode?: 'all'|'none'|'custom';
   id: string; name: string; description?: string; areaId: Area['id']; status: ActivityStatus;
   defaultImportance: ActivityImportance; duration: Duration; createdAt: string; updatedAt: string;
 }
 /** Configuração por tipo. Relações Goal/RecurrenceRule/TimeWindow continuam separadas.
  * reminder: data sem bloco; commitment: horário datado; fixedActivity: grupos semanais;
- * variableActivity: horário só após planejamento; checklistGoal: fora da grade principal.
+ * variableActivity: horário só após planejamento; checklistGoal: metas e lista de execução separadas.
  * Apenas cadastro local: não reserva tempo, gera ocorrências ou dispara avisos. */
 export type Activity = ActivityBase & (
   | { type: 'reminder'; config: { referenceDate: LocalDate; reminderTime?: LocalTime } }

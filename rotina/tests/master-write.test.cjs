@@ -7,6 +7,22 @@ const {fixture,owner}=require('./helpers/data-fixtures.cjs');
 const {saveBancoMestreActivity}=load('lib/banco-mestre/data/write-model.ts');
 const errors=load('lib/banco-mestre/data/errors.ts');
 
+test('safe server diagnostics distinguish causes and never serialize raw error, payload, SQL text or credentials',async()=>{
+  for(const [cause,category] of [
+    [{code:'PT409'},'conflict'],[{code:'40001'},'conflict'],[{code:'23514'},'constraint'],[{code:'42501'},'permission'],
+    [{code:'PGRST202'},'rpc'],[{code:'42883'},'rpc'],[{code:'PGRST301'},'authentication'],
+    [new errors.MapperError('duration.minutes'),'validation'],[new TypeError('fetch failed'),'network'],[Error('secret SQL'),'unexpected'],
+  ])assert.equal(errors.saveFailureDiagnostic(new errors.PersistenceError('Unknown',cause)).category,category);
+  const previous=process.env.NODE_ENV,logger=console.error,events=[];process.env.NODE_ENV='development';console.error=(...args)=>events.push(args);
+  try{
+    const raw={code:'PGRST202',message:'private SQL activity content',details:'token=secret',hint:'private account'};
+    const result=await saveBancoMestreActivity(async()=>({saveActivity:async()=>{throw new errors.PersistenceError('Unknown',raw);}}),{mode:'edit',bundle:fixture('academia'),expectedRevision:7});
+    assert.equal(result.ok,false);assert.match(result.message,/atualização do banco/);
+    assert.deepEqual(events,[['[BancoMestre/save]',JSON.stringify({category:'rpc',code:'PGRST202',missingRpc:true})]]);
+    assert(!JSON.stringify([events,result]).includes('private'));assert(!JSON.stringify([events,result]).includes('secret'));
+  }finally{console.error=logger;if(previous===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=previous;}
+});
+
 test('write boundary validates create/edit revision and payload before calling repository',async()=>{
   const bundle=fixture('academia');const calls=[];
   const factory=async()=>({saveActivity:async(...args)=>{const [b,r]=args;calls.push(args);return {bundle:b,revision:(r??0)+1};}});
@@ -18,6 +34,19 @@ test('write boundary validates create/edit revision and payload before calling r
     const result=await saveBancoMestreActivity(async()=>{throw Error('must not access repository');},input);
     assert.equal(result.ok,false);assert.equal(result.kind,'Validation');
   }
+});
+
+test('explicit deletion intent is validated before auth and forwarded with aggregate CAS only in edit',async()=>{
+  const bundle={...fixture('academia'),subitems:{mode:'custom',items:[]}},removed=crypto.randomUUID(),calls=[];
+  const factory=async()=>({saveActivity:async(...args)=>{calls.push(args);return {bundle,revision:8};}});
+  assert((await saveBancoMestreActivity(factory,{mode:'edit',bundle,expectedRevision:7,deletedSubitemIds:[removed]})).ok);
+  assert.deepEqual(calls[0],[bundle,7,[removed]]);
+  for(const input of [
+    {mode:'create',bundle,deletedSubitemIds:[removed]},
+    {mode:'edit',bundle,expectedRevision:7,deletedSubitemIds:[removed,removed]},
+    {mode:'edit',bundle,expectedRevision:7,deletedSubitemIds:['invalid']},
+    {mode:'edit',bundle:fixture('academia'),expectedRevision:7,deletedSubitemIds:[removed]},
+  ])assert.equal((await saveBancoMestreActivity(async()=>{throw Error('must not authenticate');},input)).kind,'Validation');
 });
 test('write errors preserve safe categories, without raw SQL/ownership/auth diagnostics',async()=>{
   const bundle=fixture('academia');
@@ -41,7 +70,7 @@ test('server action requires verified session and invalidates list/detail only a
   const bundle=fixture('academia');
   const denied=actionHarness({sub:null});assert.equal((await denied.saveMasterActivity({mode:'create',bundle})).kind,'Unauthorized');assert.deepEqual(denied.calls,['auth']);assert.deepEqual(denied.invalidated,[]);
   const conflict=actionHarness({code:'PT409'});assert.equal((await conflict.saveMasterActivity({mode:'edit',bundle,expectedRevision:3})).kind,'Conflict');assert.deepEqual(conflict.invalidated,[]);
-  const valid=actionHarness();const result=await valid.saveMasterActivity({mode:'create',bundle});assert.equal(result.ok,true);assert.deepEqual(valid.calls,['auth',['save',undefined]]);assert.deepEqual(valid.invalidated,['/banco-mestre','/banco-mestre/'+bundle.activity.id,'/planejamento','/hoje']);
+  const valid=actionHarness();const result=await valid.saveMasterActivity({mode:'create',bundle});assert.equal(result.ok,true);assert.deepEqual(valid.calls,['auth',['save',undefined]]);assert.deepEqual(valid.invalidated,['/banco-mestre','/banco-mestre/'+bundle.activity.id,'/planejamento','/hoje','/calendario']);
   assert.deepEqual(Object.keys(result).sort(),['activityId','ok','revision']);
 });
 test('new/edit pages load real areas and preserve the aggregate revision for the existing form',async()=>{
@@ -256,6 +285,61 @@ test('edit success uses original revision and redirects to the repository result
     assert(!/from\s+['"][^'"]*mock/i.test(source));
     assert(!/localStorage|useBancoMestre/.test(source));
   }
+});
+
+test('V0.4 new Activity resets subitem IDs/defaults after completed creation, preserving unfinished tree drafts',async()=>{
+  const area={id:crypto.randomUUID(),name:'Area',active:true},calls=[];
+  const h=formHarness({areas:[area]},async input=>{calls.push(input);return {ok:true,activityId:input.bundle.activity.id,revision:2};});
+  const editor=()=>h.nodes(h.render(),n=>n.props?.value?.items&&n.props?.onChange)[0];
+  const leaf={id:crypto.randomUUID(),parentId:null,name:'Leaf',durationMinutes:15,sortOrder:0,active:true,defaultSelected:true};
+  editor().props.onChange({mode:'custom',items:[leaf]});h.hide();assert.equal(editor().props.value.items[0].id,leaf.id);
+  let tree=h.render();h.field(tree,'name').props.onChange({target:{value:'A'}});h.field(tree,'areaId').props.onChange({target:{value:area.id}});
+  await h.render().props.onSubmit(h.event);assert.equal(calls[0].bundle.subitems.items[0].id,leaf.id);
+  h.hide();assert.deepEqual(editor().props.value,{mode:'all',items:[]});
+  tree=h.render();assert.equal(h.field(tree,'name').props.value,'');
+});
+
+test('V0.5 checklist definition draft survives hide; completed New item clears checks and never reuses their IDs',async()=>{
+  const area={id:crypto.randomUUID(),name:'Area',active:true},calls=[];
+  const h=formHarness({areas:[area]},async input=>{calls.push(input);return {ok:true,activityId:input.bundle.activity.id,revision:2};});
+  h.field(h.render(),'type').props.onChange({target:{value:'checklistGoal'}});
+  const checks=()=>h.nodes(h.render(),n=>Array.isArray(n.props?.value)&&n.props?.onChange)[0];
+  checks().props.onTextChange('Texto ainda no campo');h.hide();assert.equal(checks().props.text,'Texto ainda no campo');assert.equal(calls.length,0);checks().props.onTextChange('');
+  const definition=[{id:crypto.randomUUID(),label:'First check'}];checks().props.onChange(definition);
+  h.hide();assert.deepEqual(checks().props.value,definition);assert.equal(calls.length,0);
+  let tree=h.render();h.field(tree,'name').props.onChange({target:{value:'Checklist A'}});h.field(tree,'areaId').props.onChange({target:{value:area.id}});
+  assert(!h.nodes(h.render(),n=>n.props?.children==='Adicionar meta').length);
+  await h.render().props.onSubmit(h.event);assert.equal(calls.length,1);assert.deepEqual(calls[0].bundle.checklistItems,definition);
+  assert.deepEqual(calls[0].bundle.goals,[]);
+  h.hide();tree=h.render();assert.equal(h.field(tree,'name').props.value,'');
+  h.field(tree,'type').props.onChange({target:{value:'checklistGoal'}});assert.deepEqual(checks().props.value,[]);assert.equal(calls.length,1);
+});
+
+test('quantity mode restores numeric editing; switching modes retains data without duplicate controls',async()=>{
+ const initial=fixture('escovar'),calls=[];
+ const h=formHarness({initial,expectedRevision:7,areas:[{id:initial.activity.areaId,name:'Area',active:true}]},async input=>{calls.push(input);return {ok:true,activityId:initial.activity.id,revision:9};});
+ let tree=h.render();assert.equal(h.field(tree,'trackingMode').props.value,'quantity');assert(h.field(tree,'goals.0.minimum'));assert(h.field(tree,'goals.0.period'));assert(!h.nodes(tree,n=>Array.isArray(n.props?.value)&&n.props?.onChange).length);
+ h.field(tree,'goals.0.minimum').props.onChange({target:{value:'8'}});h.field(h.render(),'goals.0.ideal').props.onChange({target:{value:''}});
+ h.field(h.render(),'trackingMode').props.onChange({target:{value:'checklist'}});
+ tree=h.render();assert(!h.nodes(tree,n=>n.props?.['data-field']==='goals.0.minimum').length);
+ const definition=[{id:crypto.randomUUID(),label:'Texto revisado'}];h.nodes(tree,n=>Array.isArray(n.props?.value)&&n.props?.onChange)[0].props.onChange(definition);
+ h.field(h.render(),'trackingMode').props.onChange({target:{value:'quantity'}});assert.equal(h.field(h.render(),'goals.0.minimum').props.value,'8');
+ await h.render().props.onSubmit(h.event);assert.equal(calls.length,1);assert.equal(calls[0].bundle.trackingMode,'quantity');assert.equal(calls[0].bundle.goals[0].minimumTarget,8);assert.deepEqual(calls[0].bundle.checklistItems,definition);
+});
+
+test('removing persisted and local subitems stages only persisted IDs until save, retaining draft on conflict',async()=>{
+  const leaf={id:crypto.randomUUID(),parentId:null,name:'Persisted',durationMinutes:15,sortOrder:0,active:true,defaultSelected:true};
+  const initial={...fixture('academia'),subitems:{mode:'custom',items:[leaf]}},calls=[];
+  const h=formHarness({initial,expectedRevision:7,areas:[{id:initial.activity.areaId,name:'Area',active:true}]},async input=>{calls.push(input);return {ok:false,kind:'Conflict',message:'Recarregue os dados mais recentes'};});
+  const editor=()=>h.nodes(h.render(),n=>n.props?.value?.items&&n.props?.onChange)[0];
+  editor().props.onChange({mode:'custom',items:[leaf,{...leaf,id:crypto.randomUUID(),name:'Local'}]});
+  editor().props.onChange({mode:'custom',items:[leaf]});assert.equal(calls.length,0);
+  editor().props.onChange({mode:'custom',items:[]});h.hide();assert.deepEqual(editor().props.value.items,[]);assert.equal(calls.length,0);
+  await h.render().props.onSubmit(h.event);assert.equal(calls.length,1);
+  assert.deepEqual(calls[0].deletedSubitemIds,[leaf.id]);assert.equal(calls[0].expectedRevision,7);
+  assert.equal(calls[0].bundle.activity.duration.mode,'unknown');
+  assert(h.text(h.render()).includes('Recarregue'));assert.equal(h.navigations.length,0);
+  await h.render().props.onSubmit(h.event);assert.equal(calls.length,1);
 });
 
 test('logout in another tab: editor POST passes proxy, action denies write and form retains draft with login',async()=>{

@@ -2,6 +2,7 @@ import { requireSupabasePublicConfig } from './configuration';
 import type { Database } from '@/lib/banco-mestre/data/database.types';
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from 'next/server';
 
 /**
  * Especially important if using Fluid compute: Don't put this client in a
@@ -9,6 +10,9 @@ import { cookies } from "next/headers";
  * it.
  */
 export async function createClient() {
+  // Auth recovery/expiry checks in the SDK read Date.now(). Keep those reads
+  // out of speculative prerendering, including when request cookies are available.
+  await connection();
   const cookieStore = await cookies();
   const config = requireSupabasePublicConfig();
 

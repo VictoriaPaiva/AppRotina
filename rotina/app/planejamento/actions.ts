@@ -4,10 +4,10 @@ import { createClient } from '@/lib/supabase/server';
 import { PersistenceError } from '@/lib/banco-mestre/data/errors';
 import { readFailure } from '@/lib/banco-mestre/data/read-model';
 import { createPlanRepository } from '@/lib/planning/repository';
-import { createPlanInput, completePlanInput, reschedulePlanInput } from '@/lib/planning/validation';
+import { createPlanInput, completePlanInput, reschedulePlanInput, configurePlanInput, completeSubitemInput,quantityPlanInput,timePlanInput,checkPlanInput,reorderPlanInput } from '@/lib/planning/validation';
 import type { DailyPlanItem, PlanRepository, PlanResult } from '@/lib/planning/contracts';
 
-async function mutate<T>(input: unknown, validate: (input: unknown) => T, save: (repository: PlanRepository, input: T) => Promise<DailyPlanItem>): Promise<PlanResult> {
+async function mutate<T>(input: unknown, validate: (input: unknown) => T, save: (repository: PlanRepository, input: T) => Promise<DailyPlanItem|void>): Promise<PlanResult> {
   try {
     const value = validate(input), client = await createClient();
     const {data, error} = await client.auth.getClaims();
@@ -33,3 +33,10 @@ export async function setDailyPlanCompleted(input: unknown): Promise<PlanResult>
 export async function rescheduleDailyPlan(input: unknown): Promise<PlanResult> {
   return mutate(input, reschedulePlanInput, (repository, value) => repository.reschedule(value));
 }
+export async function configureDailyPlanSubitems(input:unknown):Promise<PlanResult>{return mutate(input,configurePlanInput,(repository,value)=>repository.configureSubitems(value));}
+export async function completeDailyPlanSubitem(input:unknown):Promise<PlanResult>{return mutate(input,completeSubitemInput,(repository,value)=>repository.completeSubitem(value));}
+export async function setDailyPlanTime(input:unknown):Promise<PlanResult>{return mutate(input,timePlanInput,(repository,value)=>repository.setTime(value));}
+export async function completeDailyPlanChecklist(input:unknown):Promise<PlanResult>{return mutate(input,checkPlanInput,(repository,value)=>repository.completeChecklist(value));}
+export async function reorderDailyPlan(input:unknown):Promise<PlanResult>{return mutate(input,reorderPlanInput,(repository,value)=>repository.reorder(value));}
+
+export async function setDailyPlanQuantity(input:unknown):Promise<PlanResult>{return mutate(input,quantityPlanInput,(repository,value)=>repository.setQuantity(value));}

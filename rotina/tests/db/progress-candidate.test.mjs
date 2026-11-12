@@ -28,7 +28,8 @@ before(async()=>{
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;
  insert into auth.users values('${A}'),('${B}');`);
- for(const f of (await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')).sort())await db.exec(await readFile('supabase/migrations/'+f,'utf8'));
+ // The paused candidate keeps its historical numeric-goal admission baseline.
+ for(const f of (await readdir('supabase/migrations')).filter(f=>f.endsWith('.sql')&&f<'20261101000300').sort())await db.exec(await readFile('supabase/migrations/'+f,'utf8'));
  await user();await query('insert into areas(id,user_id,name) values($1,$2,$3)',[area,A,'Technical area']);
  // Existing Goal must be captured by the migration baseline.
  await fixture();

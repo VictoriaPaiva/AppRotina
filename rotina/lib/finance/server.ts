@@ -11,8 +11,9 @@ export async function financeRepositoryForSession() {
 }
 export async function readFinance(month?: unknown) {
   try {
+    const repo = await financeRepositoryForSession();
     const selectedMonth = financeMonth(month === undefined ? planToday().slice(0,7) : month);
-    const transactions = await (await financeRepositoryForSession()).list(selectedMonth);
+    const transactions = await repo.list(selectedMonth);
     return {status: 'ready' as const, month: selectedMonth, transactions};
   } catch (error) {return readFailure(error);}
 }

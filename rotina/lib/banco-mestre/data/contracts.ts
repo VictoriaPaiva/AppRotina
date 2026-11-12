@@ -21,9 +21,10 @@ export type SaveActivityAggregateArgs = Database['public']['Functions']['save_ac
 /** Após validação; a assinatura SQL retorna Json e exige refinamento em runtime. */
 export type SaveActivityAggregateResult = DatabaseActivityAggregate;
 export interface BancoMestreRepository {
+  listSubitems():Promise<{rootActivityId:string;revision:number;mode:import('@/lib/activities/subitems').SelectionMode;item:import('@/lib/activities/subitems').ActivitySubitem}[]>;
   listActivities(): Promise<PersistedActivitySummary[]>;
   listAreas(): Promise<Area[]>;
   getActivity(id: string): Promise<PersistedActivityBundle>;
   /** NULL/ausente significa criação; edição exige revision retornada pelo servidor. */
-  saveActivity(bundle: ActivityBundle, expectedRevision?: number): Promise<PersistedActivityBundle>;
+  saveActivity(bundle: ActivityBundle, expectedRevision?: number, deletedSubitemIds?: string[]): Promise<PersistedActivityBundle>;
 }

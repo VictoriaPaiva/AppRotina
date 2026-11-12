@@ -10,10 +10,10 @@ before(async()=>{
   await seedAccount(db,A);await seedAccount(db,B);
 });
 after(()=>db.close());
-test('all 16 tables have data and owner CASCADE; restricted and circular FKs are deliberately present',async()=>{
+test('all reviewed owner tables have data and CASCADE; restricted and circular FKs are deliberately present',async()=>{
   for(const table of OWNER_TABLES)assert((await db.query('select count(*)::int n from '+table+' where user_id=$1',[A])).rows[0].n>0,table);
   const fks=(await db.query("select confdeltype from pg_constraint where contype='f' and confrelid='auth.users'::regclass and connamespace='public'::regnamespace")).rows;
-  assert.equal(fks.length,16);assert(fks.every(f=>f.confdeltype==='c'));
+  assert.equal(fks.length,OWNER_TABLES.length);assert(fks.every(f=>f.confdeltype==='c'));
   assert.equal((await db.query("select count(*)::int n from pg_constraint where contype='f' and confdeltype='r' and connamespace='public'::regnamespace")).rows[0].n,3);
 });
 test('any cascade failure atomically rolls back Auth, sessions, tokens and every functional row',async()=>{
