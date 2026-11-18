@@ -31,6 +31,7 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   const router = useRouter();
   const formId = useId();
   const formRef = useRef<HTMLFormElement>(null);
+  const fieldLabels = useRef<Record<string,string>>({});
   const [draft, setDraft] = useState<ActivityDraft>(() => createDraft(initial));
   const [subitems,setSubitems]=useState(()=>initial?.subitems??emptyTree());
   const [checklistItems,setChecklistItems]=useState(()=>initial?.checklistItems??[]);
@@ -49,6 +50,10 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   const [submitted, setSubmitted] = useState(false);
   const [saving,setSaving]=useState(false);
   const [saveError,setSaveError]=useState<Extract<SaveActivityResult,{ok:false}>|null>(null);
+  const saveErrorRef=useRef<HTMLDivElement>(null);
+  useLayoutEffect(()=>{
+    if(saveError){saveErrorRef.current?.focus({preventScroll:true});saveErrorRef.current?.scrollIntoView({block:'center'});}
+  },[saveError]);
   const [saved,setSaved]=useState<Extract<SaveActivityResult,{ok:true}>|null>(null);
   const inFlight=useRef(false);
   const completed=useRef(false);
@@ -81,15 +86,17 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   const patchSchedule = (index: number, patch: Partial<ScheduleDraft>) => setDraft(current => ({ ...current, schedules: current.schedules.map((row, i) => i === index ? { ...row, ...patch } : row) }));
 
   function field(key: string, label: string, value: string, onChange: (value: string) => void, options?: Record<string, string>, type = 'text') {
+    const group = /^(goals|rules|windows|schedules)\.(\d+)\./.exec(key);
+    fieldLabels.current[key] = (group ? (({goals:'Meta',rules:'Repetição',windows:'Preferência',schedules:'Grupo'} as Record<string,string>)[group[1]] + ' ' + (Number(group[2])+1) + ': ') : '') + label;
     const id = formId + '-' + key;
-    const props = { id, value, 'data-field': key, 'aria-invalid': Boolean(errors[key]), 'aria-describedby': errors[key] ? id + '-error' : undefined };
+    const props = { id, value, 'data-field': key, style: {scrollMarginBlock: 'calc(8rem + env(safe-area-inset-bottom))'}, 'aria-invalid': Boolean(errors[key]), 'aria-describedby': errors[key] ? id + '-error' : undefined };
     return <div key={key} className="min-w-0 space-y-2"><Label htmlFor={id}>{label}</Label>{options ? <select {...props} onChange={event => onChange(event.target.value)} className="min-h-10 w-full min-w-0 rounded-xl border border-input bg-surface px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{Object.entries(options).map(([option, text]) => <option key={option} value={option}>{text}</option>)}</select> : type === 'textarea' ? <textarea {...props} rows={3} onChange={event => onChange(event.target.value)} className="w-full rounded-xl border border-input bg-surface p-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /> : <Input {...props} type={type} min={type === 'number' ? 0 : undefined} step={type === 'number' ? 'any' : undefined} onChange={event => onChange(event.target.value)} className="min-h-10 rounded-xl" />}{errors[key] && <p id={id + '-error'} className="text-sm text-destructive">{errors[key]}</p>}</div>;
   }
   function days(key: string, values: Weekday[], onChange: (value: Weekday[]) => void) {
     return <fieldset className="space-y-2"><legend className="text-sm font-medium">Dias da semana</legend><div className="flex flex-wrap gap-x-4 gap-y-3">{Object.entries(weekdays).map(([day, label]) => { const value = day as Weekday; const id = formId + '-' + key + '-' + day; return <div key={day} className="flex items-center gap-2"><Checkbox id={id} data-field={key} data-day={day} checked={values.includes(value)} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? formId + '-' + key + '-error' : undefined} onCheckedChange={checked => onChange(checked === true ? [...values, value] : values.filter(item => item !== value))} /><Label htmlFor={id} className="cursor-pointer font-normal">{label}</Label></div>; })}</div>{errors[key] && <p id={formId + '-' + key + '-error'} className="text-sm text-destructive">{errors[key]}</p>}</fieldset>;
   }
   function enabled(key: string, value: boolean, onChange: (value: boolean) => void) { return <div className="flex items-center gap-2"><Checkbox id={formId + '-' + key} checked={value} onCheckedChange={checked => onChange(checked === true)} /><Label htmlFor={formId + '-' + key}>Ativa</Label></div>; }
-  function validity(key: string, row: { startsOn: string; endsOn: string }, onChange: (patch: { startsOn?: string; endsOn?: string }) => void) { return <details className="space-y-3"><summary className="cursor-pointer text-sm font-medium">Período de validade (opcional)</summary><div className="grid gap-4 pt-3 sm:grid-cols-2">{field(key + '.startsOn', 'Válida a partir de', row.startsOn, value => onChange({ startsOn: value }), undefined, 'date')}{field(key + '.endsOn', 'Válida até (opcional)', row.endsOn, value => onChange({ endsOn: value }), undefined, 'date')}</div></details>; }
+  function validity(key: string, row: { startsOn: string; endsOn: string }, onChange: (patch: { startsOn?: string; endsOn?: string }) => void) { return <details className="space-y-3"><summary className="cursor-pointer text-sm font-medium">Período de validade (data inicial obrigatória)</summary><div className="grid gap-4 pt-3 sm:grid-cols-2">{field(key + '.startsOn', 'Válida a partir de', row.startsOn, value => onChange({ startsOn: value }), undefined, 'date')}{field(key + '.endsOn', 'Válida até (opcional)', row.endsOn, value => onChange({ endsOn: value }), undefined, 'date')}</div></details>; }
   function timeFields(label: string, hoursKey: string, minutesKey: string, h: string, m: string, onHours: (v: string) => void, onMinutes: (v: string) => void) { return <fieldset className="min-w-0 space-y-2"><legend className="text-sm font-medium">{label}</legend><div className="grid grid-cols-2 gap-3">{field(hoursKey, 'Horas', h, onHours, undefined, 'number')}{field(minutesKey, 'Minutos', m, onMinutes, undefined, 'number')}</div></fieldset>; }
   function durationFields(label: string, h: 'hours' | 'minimumHours' | 'idealHours', m: 'minutes' | 'minimum' | 'ideal') { return timeFields(label, h, m, draft[h], draft[m], v => change(h, v), v => change(m, v)); }
   function section(title: string, children: ReactNode) { return <Card className="rounded-2xl"><CardContent className="space-y-4 p-5"><h2 className="font-semibold">{title}</h2>{children}</CardContent></Card>; }
@@ -99,14 +106,27 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
     if (hasSpecificData(draft) && !window.confirm('Trocar o tipo limpará metas, repetição, horários, local e tempos de preparação/transporte deste formulário. Nome, descrição, área, importância, duração e status serão preservados. Continuar?')) return;
     setDraft(changeItemType(draft, type));if(type!=='checklistGoal')setChecklistItems([]);setErrors({}); setSubmitted(false);
   }
+  function showValidation(next: FieldErrors) {
+    setErrors(next);setSubmitted(true);setSaveError(null);
+    requestAnimationFrame(() => {
+      const key=Object.keys(next)[0];
+      const container=Array.from(formRef.current?.querySelectorAll<HTMLElement>('[data-field]')??[]).find(node=>node.dataset.field===key);
+      for(let parent=container;parent;parent=parent.parentElement??undefined)if(parent instanceof HTMLDetailsElement)parent.open=true;
+      const field=container?.matches('input,select,textarea,button')?container:container?.querySelector<HTMLElement>('[aria-invalid="true"],input,select,textarea,button');
+      field?.focus({preventScroll:true});
+      (field??container)?.scrollIntoView({block:'center',behavior:'instant'});
+    });
+  }
+  const firstError=Object.entries(errors)[0];
+  const errorLabel=firstError&&(fieldLabels.current[firstError[0]]??(({goals:'Metas por quantidade',subitems:'Subitens',checklistItems:'Checklist',schedules:'Dias e horários'} as Record<string,string>)[firstError[0]]??'Dados do item'));
   async function submit(event: FormEvent) {
     event.preventDefault();
     if(inFlight.current || completed.current || saveError?.kind==='Conflict') return;
-    if(draft.type==='checklistGoal'&&trackingMode==='checklist'&&checklistText.trim()){setErrors({checklistItems:'Clique em Adicionar item para incluir o texto na lista antes de salvar.'});setSubmitted(true);return;}
-    try{validateTree(subitems);}catch{setErrors({subitems:'Revise os subitens: nome e minutos inteiros positivos são obrigatórios.'});setSubmitted(true);return;}
-    try{if(trackingMode==='checklist')validateChecklist(checklistItems);}catch{setErrors({checklistItems:'Preencha o texto de cada item da checklist (até 200 caracteres).'});setSubmitted(true);return;}
-    if(draft.type==='checklistGoal'&&trackingMode==='checklist'&&!checklistItems.length&&initial?.activity.type!=='checklistGoal'){setErrors({checklistItems:'Adicione pelo menos um item em Meta / Checklist.'});setSubmitted(true);return;}
-    if(draft.type==='checklistGoal'&&trackingMode==='quantity'&&!draft.goals.length){setErrors({goals:'Adicione pelo menos uma meta por quantidade.'});setSubmitted(true);return;}
+    if(draft.type==='checklistGoal'&&trackingMode==='checklist'&&checklistText.trim()){showValidation({checklistItems:'Clique em Adicionar item para incluir o texto na lista antes de salvar.'});return;}
+    try{validateTree(subitems);}catch{showValidation({subitems:'Revise os subitens: nome e minutos inteiros positivos são obrigatórios.'});return;}
+    try{if(trackingMode==='checklist')validateChecklist(checklistItems);}catch{showValidation({checklistItems:'Preencha o texto de cada item da checklist (até 200 caracteres).'});return;}
+    if(draft.type==='checklistGoal'&&trackingMode==='checklist'&&!checklistItems.length&&initial?.activity.type!=='checklistGoal'){showValidation({checklistItems:'Adicione pelo menos um item em Meta / Checklist.'});return;}
+    if(draft.type==='checklistGoal'&&trackingMode==='quantity'&&!draft.goals.length){showValidation({goals:'Adicione pelo menos uma meta por quantidade.'});return;}
     if(activityId.current===null) activityId.current=crypto.randomUUID();
     const derivedMinutes=subitems.items.length?subitemTotal(initialSelection({...subitems,mode:'all'})):null;
     const source=derivedMinutes===null?draft:{...draft,durationMode:(derivedMinutes>0?'fixed':'unknown') as ActivityDraft['durationMode'],hours:String(Math.floor(derivedMinutes/60)),minutes:String(derivedMinutes%60)};
@@ -119,12 +139,7 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
     if(!result.ok&&draft.type==='checklistGoal'&&trackingMode==='checklist'&&Object.keys(result.errors).some(key=>key.startsWith('goals')))
       result=buildBundle({...writeSource,goals:createDraft(initial).goals},areas,activityId.current,now,initial?.activity);
     if (!result.ok) {
-      setErrors(result.errors); setSubmitted(true);
-      requestAnimationFrame(() => {
-        const field = formRef.current?.querySelector<HTMLElement>('[data-field="' + Object.keys(result.errors)[0] + '"]');
-        for (let parent = field?.parentElement; parent; parent = parent.parentElement) if (parent instanceof HTMLDetailsElement) parent.open = true;
-        field?.focus();
-      });
+      showValidation(result.errors);
       return;
     }
     if(draft.type==='checklistGoal')result.bundle.trackingMode=trackingMode;
@@ -176,10 +191,10 @@ export function ActivityForm({initial,expectedRevision,areas,failure}:{initial?:
   return <form ref={formRef} onSubmit={submit} noValidate aria-busy={saving} className="mx-auto w-full max-w-4xl space-y-5">
     {dirty && <p aria-live="polite" className="text-sm text-muted-foreground">Alterações não salvas.</p>}
     {saving && <p role="status" aria-live="polite">Salvando item…</p>}
-    {saveError && <div role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm"><p>{saveError.message}</p>{saveError.kind==='Conflict' ? <><p>Suas alterações foram mantidas neste formulário. Confira a versão salva antes de continuar; recarregar descartará este rascunho.</p><Button type="button" variant="outline" onClick={()=>{if(window.confirm('Recarregar a versão salva e descartar as alterações deste formulário?')){allowNavigation();window.location.reload();}}}>Recarregar versão salva</Button><Button asChild variant="outline"><Link href={'/banco-mestre/'+activityId.current}>Verificar item salvo</Link></Button></> : saveError.kind==='Unauthorized'?<Button asChild variant="outline"><Link href="/auth/login" target="_blank" rel="noopener noreferrer">Entrar novamente em outra aba</Link></Button> : saveError.kind==='Unknown'?<p>Antes de tentar novamente, confira o Banco Mestre caso a conexão tenha sido interrompida durante o salvamento.</p>:null}</div>}
+    {saveError && <div ref={saveErrorRef} tabIndex={-1} role="alert" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm"><p>{saveError.message}</p>{saveError.kind==='Conflict' ? <><p>Suas alterações foram mantidas neste formulário. Confira a versão salva antes de continuar; recarregar descartará este rascunho.</p><Button type="button" variant="outline" onClick={()=>{if(window.confirm('Recarregar a versão salva e descartar as alterações deste formulário?')){allowNavigation();window.location.reload();}}}>Recarregar versão salva</Button><Button asChild variant="outline"><Link href={'/banco-mestre/'+activityId.current}>Verificar item salvo</Link></Button></> : saveError.kind==='Unauthorized'?<Button asChild variant="outline"><Link href="/auth/login" target="_blank" rel="noopener noreferrer">Entrar novamente em outra aba</Link></Button> : saveError.kind==='Unknown'?<p>Antes de tentar novamente, confira o Banco Mestre caso a conexão tenha sido interrompida durante o salvamento.</p>:null}</div>}
     <fieldset disabled={saving} className="min-w-0 space-y-5">
     <div className="space-y-2"><h1 className="text-xl font-semibold">{initial ? 'Editar item da rotina' : 'Novo item da rotina'}</h1><p className="text-sm text-muted-foreground">As alterações serão salvas na sua conta ao confirmar.</p></div>
-    {submitted && Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Revise os campos indicados antes de salvar.</p>}
+    {submitted && Object.keys(errors).length > 0 && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Não foi possível salvar: {errorLabel} — {firstError?.[1]}</p>}
     {section('Sobre o item', <>
       {field('name', 'Nome', draft.name, v => change('name', v))}
       {field('description', 'Descrição (opcional)', draft.description, v => change('description', v), undefined, 'textarea')}

@@ -39,11 +39,32 @@ const segment=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
 const token=[segment({alg:'HS256',typ:'JWT'}),segment({sub:user.id,exp:4102444800,iat:1700000000,aud:'authenticated',role:'authenticated'}),'fixture'].join('.');
 const session={access_token:token,refresh_token:'fixture',token_type:'bearer',expires_at:4102444800,user};
 const cookie='sb-127-auth-token=base64-'+segment(session);
-const child=spawn(process.execPath,['node_modules/next/dist/bin/next','dev',fixture,'--hostname','127.0.0.1','--port',String(port)],{
+let log='';
+function startNext(){
+ const processNext=spawn(process.execPath,['node_modules/next/dist/bin/next','dev',fixture,...(process.argv.includes('--webpack')?['--webpack']:[]),'--hostname','127.0.0.1','--port',String(port)],{
   env:{...process.env,NEXT_TELEMETRY_DISABLED:'1',NEXT_PUBLIC_SUPABASE_URL:apiUrl,NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture'},
   stdio:['ignore','pipe','pipe'],windowsHide:true,
 });
-let log='';child.stdout.on('data',v=>{log+=v;});child.stderr.on('data',v=>{log+=v;});
+ processNext.stdout.on('data',v=>{log+=v;});processNext.stderr.on('data',v=>{log+=v;});
+ return processNext;
+}
+let child=startNext();
+let retriedUpgradeReminder=false;
+async function fetchPage(url,options){
+ try{return await fetch(url,options);}catch(error){
+  // Next asks for one retry after its upgrade reminder. Keep the same fixture
+  // and retry receipt; do not suppress the reminder or change dependencies.
+  if(retriedUpgradeReminder||!log.includes('Retry the same command'))throw error;
+  retriedUpgradeReminder=true;
+  if(child.exitCode===null&&child.signalCode===null)await once(child,'exit');
+  const before=log.length;child=startNext();const until=Date.now()+60000;
+  while(!log.slice(before).includes('Ready in')){
+   assert(child.exitCode===null&&Date.now()<until,'Next retry startup');
+   await new Promise(resolve=>setTimeout(resolve,200));
+  }
+  return fetch(url,options);
+ }
+}
 try {
   const deadline=Date.now()+60000;
   while(!log.includes('Ready in')){
@@ -51,8 +72,8 @@ try {
     assert(Date.now()<deadline,'Next startup timeout');
     await new Promise(resolve=>setTimeout(resolve,200));
   }
-  for(const route of ['/hoje','/banco-mestre','/planejamento','/calendario','/projetos','/ideias','/financas','/conta']){
-    const response=await fetch(`http://127.0.0.1:${port}${route}`,{headers:{cookie},redirect:'manual',signal:AbortSignal.timeout(60000)});
+  for(const route of ['/hoje','/banco-mestre','/banco-mestre/nova','/planejamento','/calendario','/projetos','/ideias','/financas','/conta']){
+    const response=await fetchPage(`http://127.0.0.1:${port}${route}`,{headers:{cookie},redirect:'manual',signal:AbortSignal.timeout(60000)});
     const html=await response.text();
     assert.equal(response.status,200,`${route}: HTTP ${response.status}`);
     assert(!/unstable value|next-prerender-current-time|Date\.now\(\).*prerender|Switched to client rendering/i.test(html),`${route}: rendering error in response`);

@@ -19,6 +19,24 @@ export class PersistenceError extends Error {
 export class MapperError extends Error {
   constructor(readonly field: string) { super('Invalid persistence field: ' + field); this.name = 'MapperError'; }
 }
+/** Only fixed UI text is exposed; raw database messages and payloads stay private. */
+export function saveValidationMessage(error: unknown): string | undefined {
+  let cause=error;
+  for(let depth=0;depth<5&&cause instanceof PersistenceError&&cause.cause;depth++)cause=cause.cause;
+  if(cause instanceof MapperError) {
+    const field=cause.field;
+    if(field==='goal.starts_on')return 'Não foi possível salvar: Metas — informe uma data inicial válida.';
+    if(field==='goal.ends_on')return 'Não foi possível salvar: Metas — a data final deve ser válida e posterior ou igual à inicial.';
+    if(['goal.targets','goal.minimum_target','goal.ideal_target'].includes(field))return 'Não foi possível salvar: Metas — confira a quantidade mínima e o ideal; o ideal pode ficar vazio e, quando preenchido, deve ser igual ou maior que o mínimo.';
+    if(field==='goal.unit')return 'Não foi possível salvar: Metas — informe a unidade da quantidade.';
+    if(field==='trackingMode')return 'Não foi possível salvar: Meta / Checklist — selecione como acompanhar esta meta.';
+  }
+  const code=typeof cause==='object'&&cause!==null&&'code' in cause?String(cause.code):'';
+  if(code==='22007'||code==='22008')return 'Não foi possível salvar: confira as datas e os horários do item e das metas.';
+  if(code==='23503')return 'Não foi possível salvar: uma área ou relação não está disponível. Atualize as opções antes de tentar novamente; seu rascunho foi mantido.';
+  if(code==='23514')return 'Não foi possível salvar: os dados não atendem às regras do item. Confira duração, metas e períodos de validade; seu rascunho foi mantido.';
+  return undefined;
+}
 /** Only allowlisted technical metadata: never log payloads, SQL messages,
  * details, hints, credentials, account IDs or the original Error object. */
 export function saveFailureDiagnostic(error:unknown) {

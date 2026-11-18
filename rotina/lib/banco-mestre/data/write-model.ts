@@ -2,7 +2,7 @@ import type { ActivityBundle, BancoMestreRepository } from './contracts';
 import { aggregateToRpc } from './mapper';
 import { readFailure } from './read-model';
 import { choice, fail, integer, record } from './validation';
-import { saveFailureDiagnostic, type PersistenceErrorKind } from './errors';
+import { saveFailureDiagnostic, saveValidationMessage, type PersistenceErrorKind } from './errors';
 import { validateTree, validateSubitemDeletions } from '@/lib/activities/subitems';
 import { checklistItems } from '@/lib/activities/checklist';
 
@@ -36,8 +36,8 @@ export async function saveBancoMestreActivity(factory:()=>Promise<Pick<BancoMest
   } catch(error) {
     const failure=readFailure(error);
     const diagnostic=saveFailureDiagnostic(error);
-    if(process.env.NODE_ENV==='development')console.error('[BancoMestre/save]',JSON.stringify(diagnostic));
+    if(process.env.NODE_ENV==='development'||process.env.NODE_ENV==='production')console.error('[BancoMestre/save]',JSON.stringify(diagnostic));
     if(diagnostic.missingRpc)return {ok:false,kind:failure.kind,message:'O salvamento necessário não está disponível neste ambiente. Seu rascunho foi mantido; verifique a atualização do banco antes de tentar novamente.'};
-    return {ok:false,kind:failure.kind,message:failure.message};
+    return {ok:false,kind:failure.kind,message:saveValidationMessage(error)??failure.message};
   }
 }

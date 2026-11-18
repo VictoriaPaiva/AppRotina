@@ -41,6 +41,27 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
     async function input(selector,value){await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});if(!n)throw Error('Missing input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(n,${JSON.stringify(value)});n.dispatchEvent(new Event('input',{bubbles:true}));n.dispatchEvent(new Event('change',{bubbles:true}));})()`);await pause(100);}
     if(live){
       const labels=live.definition.map(n=>n.label);
+      await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+      await navigate('/banco-mestre/nova');await waitFor(hydrated('input[data-field="name"]'));
+      await input('input[data-field="name"]','Beber água');
+      async function selectField(field,value){await evaluate(`(()=>{const n=document.querySelector('select[data-field="'+${JSON.stringify(field)}+'"]');n.value=${JSON.stringify(value)};n.dispatchEvent(new Event('change',{bubbles:true}));})()`);await pause(150);}
+      await selectField('areaId',live.areaId);await selectField('type','checklistGoal');await selectField('trackingMode','quantity');
+      await evaluate(`Array.from(document.querySelectorAll('button')).find(n=>n.textContent.trim()==='Adicionar meta').click()`);
+      await waitFor(hydrated('input[data-field="goals.0.minimum"]'));
+      await selectField('goals.0.period','day');await input('input[data-field="goals.0.minimum"]','3');
+      await evaluate(`(()=>{const n=document.querySelector('input[data-field="goals.0.startsOn"]');n.closest('details').open=true;})()`);
+      await input('input[data-field="goals.0.startsOn"]','');
+      await evaluate(`document.querySelector('input[data-field="goals.0.startsOn"]').closest('details').open=false`);
+      const beforeInvalidPosts=posts.length;
+      await evaluate(`document.querySelector('form').requestSubmit()`);
+      await waitFor(`document.body.textContent.includes('Não foi possível salvar: Meta 1: Válida a partir de')`);
+      assert.equal(posts.length,beforeInvalidPosts,'invalid date must stop before Server Action');
+      assert(await evaluate(`(()=>{const n=document.querySelector('input[data-field="goals.0.startsOn"]');return n.closest('details').open&&document.activeElement===n&&n.getAttribute('aria-invalid')==='true'&&n.getBoundingClientRect().bottom<innerHeight-100;})()`),'invalid date opens, focuses and stays above mobile bottom bar');
+      await input('input[data-field="goals.0.startsOn"]',live.date);
+      await evaluate(`document.querySelector('form').requestSubmit()`);
+      await waitFor(`location.pathname.startsWith('/banco-mestre/')&&location.pathname!=='/banco-mestre/nova'`);
+      console.log('Mobile authenticated local: Beber água / count / day / 3 / unknown saved and detail opened');
+      await send('Emulation.clearDeviceMetricsOverride');
       await navigate('/banco-mestre/nova');await waitFor(hydrated('input[data-field="name"]'));
       await input('input[data-field="name"]','Meta quantitativa local');
       await evaluate(`(()=>{for(const [field,value] of [['areaId',${JSON.stringify(live.areaId)}],['type','checklistGoal']]){const n=document.querySelector('select[data-field='+field+']');n.value=value;n.dispatchEvent(new Event('change',{bubbles:true}));}})()`);
@@ -158,7 +179,7 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
       for(let i=0;i<20;i++){
         const name='Volume smoke '+String(i).padStart(2,'0');
         const row=`Array.from(document.querySelectorAll('a')).find(n=>n.textContent===${JSON.stringify(name)})?.closest('li')`;
-        await waitFor(`(()=>{const n=${row};return !!n&&[...n.querySelectorAll('button')].some(b=>/^Concluir/.test(b.textContent.trim())&&!b.disabled);})()`);
+        await waitFor(`(()=>{const n=${row};return !!n&&[...n.querySelectorAll('button')].some(b=>/^Concluir/.test(b.textContent.trim())&&!b.disabled&&Object.keys(b).some(k=>k.startsWith('__reactProps')));})()`);
         await evaluate(`Array.from((${row}).querySelectorAll('button')).find(b=>/^Concluir/.test(b.textContent.trim())).click()`);
         await waitFor(`(${row})?.closest('section').querySelector('h2').textContent==='Concluídas'`);
       }
