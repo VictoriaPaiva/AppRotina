@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createIdea, updateIdea } from '@/app/ideias/actions';
+import { createIdea, updateIdea, deleteIdea } from '@/app/ideias/actions';
 import type { Idea, IdeaResult } from '@/lib/ideas/contracts';
 import { IDEA_TITLE_LIMIT, IDEA_CONTENT_LIMIT } from '@/lib/ideas/validation';
 import { formatIdeaDate } from '@/lib/ideas/presentation';
@@ -17,6 +17,7 @@ export function IdeaEditor({idea}: {idea?: Idea}) {
   const [content, setContent] = useState(idea?.content ?? '');
   const [saved, setSaved] = useState(idea);
   const [busy, setBusy] = useState(false);
+  const [deleting,setDeleting]=useState(false);
   const [failure, setFailure] = useState<Extract<IdeaResult, {ok: false}> | null>(null);
   const [success, setSuccess] = useState(false);
   const saving = useRef(false), attemptId = useRef<string | null>(null), navigating = useRef(false);
@@ -57,6 +58,19 @@ export function IdeaEditor({idea}: {idea?: Idea}) {
   function reload() {
     if ((!dirty || window.confirm('Recarregar descarta o texto não salvo. Deseja continuar?'))) {allowNavigation();window.location.reload();}
   }
+  async function remove() {
+    if(!saved||saving.current||navigating.current)return;
+    if(!window.confirm('Excluir permanentemente esta ideia e todo o seu conteúdo? Esta ação não pode ser desfeita. Alterações não salvas também serão descartadas.'))return;
+    saving.current=true;setBusy(true);setDeleting(true);setFailure(null);setSuccess(false);
+    try {
+      const result=await deleteIdea({id:saved.id,expectedUpdatedAt:saved.updatedAt});
+      if(!result.ok){setFailure(result);return;}
+      navigating.current=true;allowNavigation();
+      router.replace('/ideias');router.refresh();
+    }catch{
+      setFailure({ok:false,kind:'Unknown',message:'Não foi possível confirmar a exclusão. Seu texto foi mantido. Consulte a lista de ideias antes de tentar novamente.'});
+    }finally{saving.current=false;setBusy(false);setDeleting(false);}
+  }
   return <div className="mx-auto max-w-4xl space-y-5">
     <Link href="/ideias" className="text-sm underline">Voltar às ideias</Link>
     <h1 className="text-2xl font-semibold">{saved ? 'Editar ideia' : 'Nova ideia'}</h1>
@@ -66,7 +80,12 @@ export function IdeaEditor({idea}: {idea?: Idea}) {
       <div className="space-y-2"><Label htmlFor="idea-content">Conteúdo</Label><textarea id="idea-content" value={content} disabled={busy || navigating.current} onChange={event => {setContent(event.target.value); setSuccess(false);}} rows={16} aria-describedby="content-limit" className="w-full resize-y rounded-md border border-input bg-background p-3 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" /><p id="content-limit" className="text-xs text-muted-foreground">Até {IDEA_CONTENT_LIMIT.toLocaleString('pt-BR')} caracteres. Conteúdo opcional.</p></div>
       {failure && <div role="alert" className="space-y-3"><p>{failure.message}</p><p className="text-sm">Seu texto foi mantido neste formulário.</p>{failure.kind === 'Unauthorized' && <Link className="block underline" href="/auth/login" target="_blank" rel="noopener noreferrer">Entrar novamente em outra aba</Link>}<Button type="button" variant="outline" onClick={reload}>Recarregar dados salvos</Button>{!saved && attemptId.current && <Link className="block underline" href={`/ideias/${attemptId.current}`} target="_blank" rel="noopener noreferrer">Consultar esta tentativa em outra aba</Link>}</div>}
       {success && <p role="status">Ideia salva.</p>}
-      <div className="flex flex-wrap items-center gap-4"><Button type="submit" disabled={busy || navigating.current || !title.trim() || Array.from(title).length > IDEA_TITLE_LIMIT || Array.from(content).length > IDEA_CONTENT_LIMIT || (!!saved && !dirty)}>{busy ? 'Salvando…' : 'Salvar ideia'}</Button>{saved && <p className="text-sm text-muted-foreground">Atualizada em {formatIdeaDate(saved.updatedAt)}</p>}</div>
+      <div className="flex flex-wrap items-center gap-4"><Button type="submit" disabled={busy || navigating.current || !title.trim() || Array.from(title).length > IDEA_TITLE_LIMIT || Array.from(content).length > IDEA_CONTENT_LIMIT || (!!saved && !dirty)}>{busy&&!deleting ? 'Salvando…' : 'Salvar ideia'}</Button>{saved && <p className="text-sm text-muted-foreground">Atualizada em {formatIdeaDate(saved.updatedAt)}</p>}</div>
     </form>
+    {saved&&<section className="space-y-3 rounded-xl border border-destructive/40 p-4">
+      <h2 className="font-semibold">Excluir ideia</h2>
+      <p className="text-sm text-muted-foreground">A ideia e todo o seu conteúdo serão excluídos permanentemente. Esta ação não pode ser desfeita.</p>
+      <Button type="button" variant="destructive" disabled={busy||navigating.current} onClick={remove}>{deleting?'Excluindo…':'Excluir ideia'}</Button>
+    </section>}
   </div>;
 }

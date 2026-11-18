@@ -26,7 +26,8 @@ export async function createV05LocalApi(){
     change_daily_plan_v05:a=>['select change_daily_plan_v05($1,$2,$3,$4) v',[a.p_id,json(a.p_expected),a.p_operation,json(a.p_value)]],
     reorder_plan_day:a=>['select reorder_plan_day($1,$2) v',[a.p_date,json(a.p_items)]],
   };
-  const allowedTables=new Set(['activities','areas','daily_plan_items','financial_transactions','fixed_expenses','fixed_expense_months']);
+  const allowedTables=new Set(['activities','areas','daily_plan_items','financial_transactions','fixed_expenses','fixed_expense_months','ideas']);
+  let failIdeaDelete=false;
   const ident=s=>{assert(/^[a-z_]+$/.test(s));return s;};
   async function handle(req,res){
     try{
@@ -47,8 +48,17 @@ export async function createV05LocalApi(){
           }
           const where=clauses.length?' where '+clauses.join(' and '):'';
           let sql;
-          if(req.method==='PATCH'){
-            const payload=await body();assert(table==='daily_plan_items');assert(Object.keys(payload).every(k=>['completed_at','planned_date'].includes(k)));
+          if(req.method==='POST'){
+            assert(table==='ideas');const payload=await body(),keys=Object.keys(payload);
+            assert(keys.every(k=>['id','user_id','title','content'].includes(k)));
+            sql='insert into ideas ('+keys.map(ident).join(',')+') values ('+keys.map(k=>param(payload[k])).join(',')+') returning '+columns;
+            sql='with q as ('+sql+') select coalesce(jsonb_agg(to_jsonb(q)),\'[]\'::jsonb) v from q';
+          }else if(req.method==='DELETE'){
+            assert(table==='ideas');assert(url.searchParams.has('id')&&url.searchParams.has('user_id'));
+            if(failIdeaDelete){failIdeaDelete=false;const failure=Error('Synthetic idea deletion failure');failure.code='XX000';throw failure;}
+            sql='with q as (delete from ideas'+where+' returning '+columns+') select coalesce(jsonb_agg(to_jsonb(q)),\'[]\'::jsonb) v from q';
+          }else if(req.method==='PATCH'){
+            const payload=await body();assert(table==='daily_plan_items'||table==='ideas');assert(Object.keys(payload).every(k=>(table==='ideas'?['title','content']:['completed_at','planned_date']).includes(k)));
             sql='update '+table+' set '+Object.entries(payload).map(([key,value])=>ident(key)+'='+param(value)).join(',')+where+' returning '+columns;
             sql='with q as ('+sql+') select coalesce(jsonb_agg(to_jsonb(q)),\'[]\'::jsonb) v from q';
           }else{
@@ -64,6 +74,8 @@ export async function createV05LocalApi(){
     }catch(error){res.statusCode=400;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({code:error.code??'LOCAL_TEST',message:'Local test persistence failure'}));console.error('Local API failure',error.code??error.name);return true;}
   }
   return {handle,areaId:area,get activityId(){return activityId;},date,nextDate:later(1),futureDate:later(2),get definition(){return definition;},
+    failNextIdeaDelete(){failIdeaDelete=true;},
+    async ideaExists(id){return (await db.query('select exists(select 1 from ideas where id=$1) v',[id])).rows[0].v;},
     async seedOpenChecklist(){
       const id=randomUUID(),items=['Smoke A','Smoke B'].map(label=>({id:randomUUID(),label}));
       await db.query("select save_activity_v05($1,'{}',null,null,'{}'::uuid[],$2)",[JSON.stringify({id,area_id:area,name:'Merge smoke',type:'checklistGoal',goal_tracking_mode:'checklist'}),JSON.stringify(items)]);

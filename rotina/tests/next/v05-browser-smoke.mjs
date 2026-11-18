@@ -21,7 +21,7 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
   assert(executable,'Set ROTINA_CHROME_BIN for the optional viewport smoke');
   const port=3195,profile=path.resolve('node_modules/.cache/v05-browser-profile-'+process.pid);
   const browser=spawn(executable,['--headless=new','--no-sandbox','--disable-gpu','--disable-extensions','--no-first-run','--no-default-browser-check','--disable-background-networking',`--remote-debugging-port=${port}`,`--user-data-dir=${profile}`,'about:blank'],{windowsHide:true,stdio:'ignore'});
-  let socket;const pending=new Map();let serial=0;const errors=[],posts=[];
+  let socket;const pending=new Map();let serial=0;const errors=[],posts=[],dialogDecisions=[];
   function send(method,params={}){const id=++serial;return new Promise((resolve,reject)=>{const timeout=setTimeout(()=>{pending.delete(id);reject(Error('CDP timeout: '+method));},method==='Page.navigate'||method==='Network.setCookie'?60000:15000);pending.set(id,{resolve:v=>{clearTimeout(timeout);resolve(v);},reject:e=>{clearTimeout(timeout);reject(e);}});socket.send(JSON.stringify({id,method,params}));});}
   try{
     const deadline=Date.now()+30000;let pages;
@@ -29,6 +29,10 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
     socket=new WebSocket(pages.find(n=>n.type==='page').webSocketDebuggerUrl);await new Promise((resolve,reject)=>{socket.addEventListener('open',resolve,{once:true});socket.addEventListener('error',reject,{once:true});});
     socket.addEventListener('message',event=>{const packet=JSON.parse(event.data);if(packet.id){const waiter=pending.get(packet.id);if(waiter){pending.delete(packet.id);if(packet.error)waiter.reject(Error(packet.error.message));else waiter.resolve(packet.result);}}
       else if(packet.method==='Runtime.exceptionThrown')errors.push(packet.params.exceptionDetails.text);
+      else if(packet.method==='Page.javascriptDialogOpening'){
+        const decision=dialogDecisions.shift();if(decision)decision.message=packet.params.message;else errors.push('Unexpected browser dialog');
+        send('Page.handleJavaScriptDialog',{accept:decision?.accept??false}).catch(error=>errors.push(error.message));
+      }
       else if(packet.method==='Network.requestWillBeSent'&&packet.params.request.method==='POST')posts.push(new URL(packet.params.request.url).pathname);
     });
     await send('Page.enable');await send('Runtime.enable');await send('Network.enable');
@@ -38,8 +42,36 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
       if(Date.now()>=until){const page=await evaluate(`({url:location.href,text:document.body?.innerText,alerts:[...document.querySelectorAll('[role=alert]')].map(n=>n.textContent)})`);writeFileSync('node_modules/.cache/v05-browser-failure.json',JSON.stringify({page,errors,posts,state:live?await live.inspect():null},null,2));throw Error('Browser condition timed out: '+expression);}await pause(200);}}
     const hydrated=selector=>`(()=>{const n=document.querySelector(${JSON.stringify(selector)});return !!n&&Object.keys(n).some(k=>k.startsWith('__reactProps'));})()`;
     async function navigate(route){await send('Page.navigate',{url:baseUrl+route});}
-    async function input(selector,value){await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});if(!n)throw Error('Missing input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(n,${JSON.stringify(value)});n.dispatchEvent(new Event('input',{bubbles:true}));n.dispatchEvent(new Event('change',{bubbles:true}));})()`);await pause(100);}
+    async function input(selector,value){await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});if(!n)throw Error('Missing input');Object.getOwnPropertyDescriptor(n instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(n,${JSON.stringify(value)});n.dispatchEvent(new Event('input',{bubbles:true}));n.dispatchEvent(new Event('change',{bubbles:true}));})()`);await pause(100);}
     if(live){
+      await navigate('/ideias/nova');await waitFor(hydrated('#idea-title'));
+      assert(!await evaluate(`Array.from(document.querySelectorAll('button')).some(n=>n.textContent==='Excluir ideia')`));
+      await input('#idea-title','Ideia de teste local');await input('#idea-content','Texto com linhas\nConteúdo preservado');
+      await evaluate(`document.querySelector('form').requestSubmit()`);
+      await waitFor(`location.pathname.startsWith('/ideias/')&&location.pathname!=='/ideias/nova'`);
+      const ideaPath=await evaluate('location.pathname'),ideaId=ideaPath.split('/').at(-1);
+      await waitFor(hydrated('#idea-title'));await input('#idea-title','Ideia local editada');
+      await evaluate(`document.querySelector('form').requestSubmit()`);await waitFor(`document.body.textContent.includes('Ideia salva.')`);
+      // Revalidation replaces the editor's timestamp key. Verify the persisted
+      // edit on a fresh detail before starting the independent deletion draft.
+      await navigate(ideaPath);await waitFor(hydrated('#idea-content'));
+      await waitFor(`document.querySelector('#idea-title').value==='Ideia local editada'`);
+      await input('#idea-content','Rascunho preservado no cancelamento e erro');
+      const deleteButton=`Array.from(document.querySelectorAll('button')).find(n=>n.textContent==='Excluir ideia')`;
+      async function clickDelete(accept){
+        await waitFor(`(()=>{const n=${deleteButton};return !!n&&!n.disabled&&Object.keys(n).some(k=>k.startsWith('__reactProps'));})()`);
+        const decision={accept};dialogDecisions.push(decision);await evaluate(`(${deleteButton}).click()`);await pause(150);
+        assert.match(decision.message,/permanentemente/);assert.match(decision.message,/não pode ser desfeita/);
+      }
+      const beforeCancel=posts.length;await clickDelete(false);assert.equal(posts.length,beforeCancel);assert(await live.ideaExists(ideaId));
+      assert.equal(await evaluate('location.pathname'),ideaPath);assert.equal(await evaluate(`document.querySelector('#idea-content').value`),'Rascunho preservado no cancelamento e erro');
+      live.failNextIdeaDelete();await clickDelete(true);await waitFor(`document.querySelector('[role=alert]')?.textContent.includes('Não foi possível confirmar a exclusão')`);
+      assert.equal(await evaluate('location.pathname'),ideaPath);assert(await live.ideaExists(ideaId));
+      assert.equal(await evaluate(`document.querySelector('#idea-content').value`),'Rascunho preservado no cancelamento e erro');
+      await clickDelete(true);await waitFor(`location.pathname==='/ideias'&&document.querySelector('h1')?.textContent==='Ideias'`);
+      assert.equal(await live.ideaExists(ideaId),false);assert(!await evaluate(`document.querySelector('a[href="${ideaPath}"]')`));
+      await navigate(ideaPath);await waitFor(`document.querySelector('[role=alert]')?.textContent.includes('Este item não está disponível')`);
+      console.log('Authenticated local Ideas: create/edit, native confirmation cancel, failure keeps draft, permanent delete redirects to /ideias and deleted detail is unavailable');
       const labels=live.definition.map(n=>n.label);
       await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
       await navigate('/banco-mestre/nova');await waitFor(hydrated('input[data-field="name"]'));

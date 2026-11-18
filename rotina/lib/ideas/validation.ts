@@ -1,5 +1,5 @@
 ﻿import { fail, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
-import type { CreateIdeaInput, UpdateIdeaInput } from './contracts';
+import type { CreateIdeaInput, UpdateIdeaInput, DeleteIdeaInput } from './contracts';
 export const IDEA_TITLE_LIMIT = 200;
 export const IDEA_CONTENT_LIMIT = 100000;
 export function ideaText(value: unknown, field: string, max: number, required = false): string {
@@ -19,4 +19,9 @@ export function createIdeaInput(input: unknown): CreateIdeaInput { return values
 export function updateIdeaInput(input: unknown): UpdateIdeaInput {
   const v = fields(input, true);
   return {...values(v), expectedUpdatedAt: timestamp(v.expectedUpdatedAt, 'expectedUpdatedAt')};
+}
+export function deleteIdeaInput(input: unknown): DeleteIdeaInput {
+  const v=record(input,'idea');
+  if(Object.keys(v).some(key=>!['id','expectedUpdatedAt'].includes(key)))fail('idea.input');
+  return {id:uuid(v.id),expectedUpdatedAt:timestamp(v.expectedUpdatedAt,'expectedUpdatedAt')};
 }

@@ -15,7 +15,7 @@ test('strict inputs: title required, content optional, Unicode length and immuta
 });
 function actionsHarness({failure,authFailure=false}={}) {
   const calls=[],paths=[];
-  const repo={create:async v=>{calls.push(v);if(failure)throw failure;return idea;},update:async v=>{calls.push(v);if(failure)throw failure;return idea;}};
+  const repo={create:async v=>{calls.push(v);if(failure)throw failure;return idea;},update:async v=>{calls.push(v);if(failure)throw failure;return idea;},delete:async v=>{calls.push(v);if(failure)throw failure;}};
   return {calls,paths,...withStubs('app/ideias/actions.ts',{
     'next/cache':{revalidatePath:p=>paths.push(p)},
     '@/lib/ideas/server':{ideaRepositoryForSession:async()=>{if(authFailure)throw new PersistenceError('Unauthorized');return repo;}},
@@ -50,13 +50,13 @@ test('real list has empty/multiple states, short escaped previews, dates and det
   for(const text of ['Ideia real','/ideias/'+id,'&lt;script&gt;','Atualizada em','…'])assert(html.includes(text));
   assert(!html.includes('x'.repeat(181)));assert.equal(presentation.ideaPreview('a\n  b'),'a b');
 });
-function editorHarness({initial=idea,create,update}={}) {
+function editorHarness({initial=idea,create,update,remove}={}) {
   const slots=[],paths=[];let cursor=0,refreshes=0,cleanup;
   const react={useLayoutEffect(setup){cursor++;cleanup??=setup();},useRef(value){const i=cursor++;slots[i]??={current:value};return slots[i];},useState(value){const i=cursor++;slots[i]??={value};return [slots[i].value,next=>{slots[i].value=typeof next==='function'?next(slots[i].value):next;}];}};
   const {IdeaEditor}=withStubs('components/ideas/IdeaEditor.tsx',{
     react,'next/link':{default:'a'},'next/navigation':{useRouter:()=>({replace:p=>paths.push(p),refresh(){refreshes++;}})},
     '@/components/ui/button':{Button:'button'},'@/components/ui/input':{Input:'input'},'@/components/ui/label':{Label:'label'},
-    '@/app/ideias/actions':{createIdea:create,updateIdea:update},'@/lib/ideas/validation':validation,'@/lib/ideas/presentation':presentation,
+    '@/app/ideias/actions':{createIdea:create,updateIdea:update,deleteIdea:remove},'@/lib/ideas/validation':validation,'@/lib/ideas/presentation':presentation,
   });
   const nodes=(node,predicate)=>!node||typeof node!=='object'?[]:[...(predicate(node)?[node]:[]),...[node.props?.children].flat(Infinity).flatMap(child=>nodes(child,predicate))];
   const render=()=>{cursor=0;return IdeaEditor({idea:initial});};
@@ -144,4 +144,57 @@ test('conflict reload requires consent before discarding local draft',async()=>{
     reload();assert.equal(reloads,0);assert.equal(h.find(n=>n.props?.id==='idea-title').props.value,'Rascunho');
     consent=true;reload();assert.equal(reloads,1);
   } finally {global.window=originalWindow;}
+});
+
+test('delete action validates snapshot/ownership input, authenticates and invalidates only confirmed deletion',async()=>{
+  const h=actionsHarness();const input={id,expectedUpdatedAt:idea.updatedAt};
+  assert.deepEqual(await h.deleteIdea(input),{ok:true});assert.deepEqual(h.calls,[input]);
+  assert.deepEqual(h.paths,['/ideias',`/ideias/${id}`]);
+  for(const invalid of [{id:'bad',expectedUpdatedAt:idea.updatedAt},{id},{...input,user_id:id},{...input,title:'extra'},{...input,expectedUpdatedAt:'yesterday'}]){
+    assert.equal((await h.deleteIdea(invalid)).kind,'Validation');
+  }assert.equal(h.calls.length,1);
+  for(const config of [{authFailure:true},{failure:Error('private SQL')},{failure:new PersistenceError('NotFound')},{failure:new PersistenceError('Conflict')}]){
+    const f=actionsHarness(config),result=await f.deleteIdea(input);
+    assert.equal(result.ok,false);assert.deepEqual(f.paths,[]);assert(!result.message.includes('private SQL'));
+  }
+});
+
+test('delete confirmation is permanent, cancellation preserves draft and never calls the action',async()=>{
+  const originalWindow=global.window;let calls=0,question;
+  global.window={confirm:message=>{question=message;return false;}};
+  try{
+    const h=editorHarness({remove:async()=>{calls++;return {ok:true};}});
+    h.change('idea-title','Keep draft');
+    await h.find(n=>n.type==='button'&&n.props.children==='Excluir ideia').props.onClick();
+    assert.match(question,/permanentemente/);assert.match(question,/não pode ser desfeita/);
+    assert.equal(calls,0);assert.deepEqual(h.paths,[]);assert.equal(h.find(n=>n.props?.id==='idea-title').props.value,'Keep draft');
+    const fresh=editorHarness({initial:null});assert(!fresh.find(n=>n.type==='button'&&n.props.children==='Excluir ideia'));
+  }finally{global.window=originalWindow;}
+});
+
+test('confirmed delete shares the mutation lock, sends saved CAS and redirects only after success',async()=>{
+  const originalWindow=global.window;global.window={confirm:()=>true};
+  try{
+    const calls=[];let finish;
+    const h=editorHarness({remove:input=>{calls.push(input);return new Promise(resolve=>{finish=resolve;});},update:()=>assert.fail('save must be locked during deletion')});
+    h.change('idea-title','Unsaved draft');
+    const deleting=h.find(n=>n.type==='button'&&n.props.children==='Excluir ideia').props.onClick();
+    await h.submit();await h.find(n=>n.type==='button'&&n.props.children==='Excluindo…').props.onClick();
+    assert.deepEqual(calls,[{id,expectedUpdatedAt:idea.updatedAt}]);assert.deepEqual(h.paths,[]);
+    finish({ok:true});await deleting;assert.deepEqual(h.paths,['/ideias']);assert.equal(h.refreshes(),1);
+    await h.find(n=>n.type==='button'&&n.props.children==='Excluir ideia').props.onClick();assert.equal(calls.length,1);
+  }finally{global.window=originalWindow;}
+});
+
+test('delete missing/foreign, expired session, conflict and network errors preserve draft on detail',async()=>{
+  const originalWindow=global.window;global.window={confirm:()=>true};
+  try{
+    for(const kind of ['NotFound','Unauthorized','Conflict','throw']){
+      const h=editorHarness({remove:async()=>{if(kind==='throw')throw Error('network');return {ok:false,kind,message:'Não foi possível excluir a ideia.'};}});
+      h.change('idea-content','Keep this text');await h.find(n=>n.type==='button'&&n.props.children==='Excluir ideia').props.onClick();
+      assert(h.find(n=>n.props?.role==='alert'));assert.equal(h.find(n=>n.props?.id==='idea-content').props.value,'Keep this text');
+      assert.deepEqual(h.paths,[]);assert.equal(h.refreshes(),0);
+      assert.equal(h.find(n=>n.type==='button'&&n.props.children==='Excluir ideia').props.disabled,false);
+    }
+  }finally{global.window=originalWindow;}
 });

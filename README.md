@@ -18,6 +18,8 @@
 
 # Rotina
 
+**18/11/2026 — Ideias: exclusão permanente implementada localmente.** O detalhe editável oferece Excluir ideia com confirmação explícita de permanência. Sucesso retorna a `/ideias`; erros mantêm a tela e o rascunho. Ownership/RLS e snapshot `updated_at` protegem a operação. Nova migration local `20261118000200_idea_deletion.sql` libera DELETE somente ao owner autenticado. [Arquitetura, testes e backlog da entrega](rotina/doc/MVP-ideias-exclusao.md). Sem migration remota, commit, push ou deploy; aplicação e validação manual em Development pendentes.
+
 **31/10/2026 — V0.4 implementada localmente:** atividades com subitens multinível, seleção all/none/custom e snapshot independente por planejamento; duração e overrides por ocorrência; conclusão hierárquica em Hoje e detalhe compacto no Calendário. [Arquitetura, migration, testes e smoke pendente](rotina/doc/V0.4-atividades-hierarquicas-planejamento-subitens.md). Migration `20261031000200_activity_subitems.sql` não aplicada em Production; sem deploy. Projetos/Ideias/Finanças preservados e V0.2.5 pausada.
 
 **31/10/2026 — V0.3 Projetos avançados implementada localmente.** Modos por tarefas, manual e híbrido; progresso parcial em sete estágios; subtarefas multinível com pesos e cálculo recursivo. [Decisões, migration e validação](rotina/doc/V0.3-projetos-avancados.md). Migration nova `20261031000100_projects_advanced.sql` ainda não aplicada em Production. Sem deploy; smoke autenticado desktop/mobile pendente. V0.2.5 permanece pausada. Os registros anteriores abaixo são históricos.

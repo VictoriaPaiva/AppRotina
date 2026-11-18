@@ -3,7 +3,7 @@ import type { Database } from '@/lib/banco-mestre/data/database.types';
 import { PersistenceError, toPersistenceError } from '@/lib/banco-mestre/data/errors';
 import { fail, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
 import type { Idea, IdeaRepository } from './contracts';
-import { createIdeaInput, updateIdeaInput, ideaText, IDEA_TITLE_LIMIT, IDEA_CONTENT_LIMIT } from './validation';
+import { createIdeaInput, updateIdeaInput, deleteIdeaInput, ideaText, IDEA_TITLE_LIMIT, IDEA_CONTENT_LIMIT } from './validation';
 const COLUMNS = 'id,user_id,title,content,created_at,updated_at';
 export function createIdeaRepository(client: Pick<SupabaseClient<Database>, 'from'>, verifiedUserId: string): IdeaRepository {
   const owner = uuid(verifiedUserId, 'owner');
@@ -57,6 +57,18 @@ export function createIdeaRepository(client: Pick<SupabaseClient<Database>, 'fro
       const result = rows(data);
       if (result.length === 1) return result[0];
       if (result.length !== 0) fail('ideas.update');
+      await get(v.id);
+      throw new PersistenceError('Conflict');
+    }),
+    delete: input => operation(async () => {
+      const v=deleteIdeaInput(input);
+      const {data,error}=await client.from('ideas').delete()
+        .eq('id',v.id).eq('user_id',owner).eq('updated_at',v.expectedUpdatedAt).select('id');
+      if(error)throw error;
+      if(!Array.isArray(data))fail('ideas.delete');
+      if(data.length===1&&uuid(record(data[0],'idea').id)===v.id)return;
+      if(data.length!==0)fail('ideas.delete');
+      // Missing and foreign IDs are indistinguishable under ownership + RLS.
       await get(v.id);
       throw new PersistenceError('Conflict');
     }),

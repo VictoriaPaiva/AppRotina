@@ -10,6 +10,7 @@ export function pgliteClient(db,tables) {
         select(value){columns=value.split(',').map(ident).join(',');return query;},
         insert(value){operation='insert';payload=value;return query;},
         update(value){operation='update';payload=value;return query;},
+        delete(){operation='delete';return query;},
         eq(key,value){filters.push([ident(key),'=',value]);return query;},
         gte(key,value){filters.push([ident(key),'>=',value]);return query;},
         lte(key,value){filters.push([ident(key),'<=',value]);return query;},
@@ -28,6 +29,7 @@ export function pgliteClient(db,tables) {
               const keys=Object.keys(payload).map(ident);
               sql=`insert into public.${table} (${keys.join(',')}) values (${keys.map(k=>param(payload[k])).join(',')})`;
             } else if(operation==='update') sql=`update public.${table} set ${Object.entries(payload).map(([k,v])=>ident(k)+'='+param(v)).join(',')}`;
+            else if(operation==='delete')sql=`delete from public.${table}`;
             else sql=`select ${columns} from public.${table}`;
             if(filters.length) sql+=' where '+filters.map(([k,op,v])=>op==='is'?k+' is null':k+op+param(v)).join(' and ');
             if(operation!=='select') sql+=' returning '+columns;
