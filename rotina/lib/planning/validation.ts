@@ -1,4 +1,4 @@
-import { parseDatabaseNumber, bool, fail, integer, localDate, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
+import { parseDatabaseNumber, bool, choice, text, fail, integer, localDate, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
 import type { CreatePlanInput, CompletePlanInput, ReschedulePlanInput, PlanSnapshot, ConfigurePlanInput, CompleteSubitemInput } from './contracts';
 import { validateSelection } from '@/lib/activities/subitems';
 import type {TimePlanInput,CheckPlanInput,ReorderPlanInput} from './contracts';
@@ -20,6 +20,16 @@ export function createPlanInput(input: unknown): CreatePlanInput {
   const v = fields(input, ['id', 'activityId', 'plannedDate','sourceRevision','configuration','plannedTime']);
   if(v.configuration!==undefined&&v.sourceRevision===undefined)fail('sourceRevision');
   return {id: uuid(v.id), activityId: uuid(v.activityId), plannedDate: localDate(v.plannedDate, 'date'),...(v.plannedTime===undefined?{}:{plannedTime:plannedTime(v.plannedTime)}),...(v.sourceRevision===undefined?{}:{sourceRevision:integer(v.sourceRevision,'revision',1)}),...(v.configuration===undefined?{}:{configuration:validateSelection(v.configuration)})};
+}
+export function createStandaloneInput(input:unknown):import('./contracts').CreateStandaloneInput {
+  const v=fields(input,['id','title','plannedDate','plannedTime','durationMinutes','importance','description']);
+  const title=text(v.title,'title').trim();if(Array.from(title).length>200)fail('title');
+  if(v.description!=null&&typeof v.description!=='string')fail('description');
+  const description=typeof v.description==='string'?v.description.trim()||null:null;
+  if(description!==null&&Array.from(description).length>2000)fail('description');
+  return {id:uuid(v.id),title,plannedDate:localDate(v.plannedDate,'date'),plannedTime:plannedTime(v.plannedTime??null),
+    durationMinutes:v.durationMinutes==null?null:integer(v.durationMinutes,'duration',1),
+    importance:choice(v.importance??'important',['required','important','optional'] as const,'importance'),description};
 }
 export function completePlanInput(input: unknown): CompletePlanInput {
   const v = fields(input, ['id', 'expected', 'completed']);

@@ -93,7 +93,7 @@ test('Official Database matches columns, defaults, nullable fields and public FK
     assert.deepEqual(ownerFk,[{conname:name+'_user_id_fkey'}]);
   }
   const functions=property(schema,'Functions').members;
-  assert.deepEqual(functions.map(f=>f.name.getText(source)).sort(),['change_daily_plan_v05','change_plan_subitems','create_daily_plan_v05','create_plan_with_subitems','delete_activity_subitem_branches','get_activity_aggregate','initialize_fixed_expense_month','list_activity_subitems','reorder_plan_day','save_activity_aggregate','save_activity_checklist','save_activity_subitems','save_activity_v05','save_activity_with_subitem_deletions','save_activity_with_subitems','save_fixed_expense','save_fixed_expense_month','sync_open_activity_plans']);
+  assert.deepEqual(functions.map(f=>f.name.getText(source)).sort(),['change_daily_plan_v05','change_plan_subitems','create_daily_plan_v05','create_plan_with_subitems','create_standalone_plan','delete_activity_subitem_branches','get_activity_aggregate','initialize_fixed_expense_month','list_activity_subitems','reorder_plan_day','save_activity_aggregate','save_activity_checklist','save_activity_subitems','save_activity_v05','save_activity_with_subitem_deletions','save_activity_with_subitems','save_fixed_expense','save_fixed_expense_month','sync_open_activity_plans']);
   for(const fn of functions) {
     const name=fn.name.getText(source),args=property(fn.type,'Args').members;
     const sql=(await db.query("select proargnames,pronargs,pronargdefaults,pg_get_function_result(oid) result from pg_proc where pronamespace='public'::regnamespace and proname=$1",[name])).rows;

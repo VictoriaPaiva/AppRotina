@@ -14,7 +14,7 @@ const create={id,activityId:A,plannedDate:data.date};
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 function actionHarness({sub=A,error=null,throws=false,saveError=null}={}) {
   const calls=[],invalidations=[];let auth=0,clients=0;
-  const repo={};for(const method of ['create','setCompleted','reschedule','setTime','completeChecklist','reorder','setQuantity'])repo[method]=async input=>{calls.push({method,input});if(saveError)throw saveError;return item;};
+  const repo={};for(const method of ['create','createStandalone','setCompleted','reschedule','setTime','completeChecklist','reorder','setQuantity'])repo[method]=async input=>{calls.push({method,input});if(saveError)throw saveError;return item;};
   const actions=withStubs('app/planejamento/actions.ts',{
     'next/cache':{revalidatePath:path=>invalidations.push(path)},
     '@/lib/supabase/server':{async createClient(){clients++;if(throws)throw Error('private network');return {auth:{async getClaims(){auth++;return {data:sub?{claims:{sub}}:null,error};}}};}},
@@ -31,12 +31,20 @@ test('civil dates use explicit MVP timezone and handle month/year boundaries wit
   assert.equal(dates.nextPlanDate('2026-12-31'),'2027-01-01');assert.equal(dates.nextPlanDate('2028-02-28'),'2028-02-29');
   assert.equal(dates.formatPlanDate(data.date),'22/10/2026');
 });
+test('standalone creation validates explicit fields before Auth, preserves UUID and invalidates all three views',async()=>{
+  const h=actionHarness();const input={id,title:'  Consulta pontual  ',plannedDate:data.date,plannedTime:null,durationMinutes:25,importance:'required',description:'Observação'};
+  assert((await h.actions.createStandalonePlan(input)).ok);
+  assert.equal(h.calls[0].method,'createStandalone');assert.equal(h.calls[0].input.title,'Consulta pontual');assert.equal(h.calls[0].input.id,id);
+  assert.deepEqual(h.invalidations,['/planejamento','/hoje','/calendario']);
+  for(const extra of [{activityId:A},{origin:'activity'},{user_id:A},{title:''},{plannedTime:'24:00'},{durationMinutes:0},{durationMinutes:1.5},{importance:'urgent'},{plannedDate:'2026-02-30'},{description:'x'.repeat(2001)}])assert.equal((await h.actions.createStandalonePlan({...input,...extra})).kind,'Validation');
+  assert.equal(h.calls.length,1);
+});
 test('actions validate strict inputs, verify claims and only then construct owner-scoped repository',async()=>{
   const h=actionHarness();assert.deepEqual(await h.actions.createDailyPlan(create),{ok:true});
   assert.deepEqual(h.calls,[{method:'create',input:create}]);assert.equal(h.auth(),1);
   assert.deepEqual(h.invalidations,['/planejamento','/hoje','/calendario']);
   for(const extra of [{user_id:A},{completed_at:'x'},{updated_at:'x'},{id:'invalid'},{plannedDate:'2026-02-30'}])assert.equal((await h.actions.createDailyPlan({...create,...extra})).kind,'Validation');
-  assert.equal(h.clients(),1);assert.deepEqual(Object.keys(h.actions).sort(),['completeDailyPlanChecklist','completeDailyPlanSubitem','configureDailyPlanSubitems','createDailyPlan','reorderDailyPlan','rescheduleDailyPlan','setDailyPlanCompleted','setDailyPlanQuantity','setDailyPlanTime']);
+  assert.equal(h.clients(),1);assert.deepEqual(Object.keys(h.actions).sort(),['completeDailyPlanChecklist','completeDailyPlanSubitem','configureDailyPlanSubitems','createDailyPlan','createStandalonePlan','reorderDailyPlan','rescheduleDailyPlan','setDailyPlanCompleted','setDailyPlanQuantity','setDailyPlanTime']);
 });
 test('missing/expired session and network/database failure never produce success or invalidation',async()=>{
   for(const config of [{sub:null},{error:{code:'expired'}},{throws:true},{saveError:Error('private SQL')}]) {
@@ -153,6 +161,15 @@ test('completion sends original snapshot; stale/rejected action leaves data/draf
     assert.deepEqual(calls,[{id,expected:contracts.planSnapshot(item),completed:true}]);assert.equal(h.refreshes(),0);
     assert(h.nodes(h.render(),n=>n.type==='button'&&n.props.children==='Concluir').length);
     if(kind==='Unauthorized')assert(h.nodes(h.render(),n=>n.props?.href==='/auth/login').length);
+  }
+});
+test('Calendar embedded panel reuses exactly the normal/standalone completion and reopen action with CAS',async()=>{
+  for(const standalone of [false,true])for(const done of [false,true]){
+    const value={...item,...(standalone?{origin:'standalone',activityId:null,standalone:{title:'Avulso',importance:'important'}}:{}),completedAt:done?'2026-10-22T13:00:00Z':null};
+    const calls=[],h=harness({data:{...data,items:[value]},embedded:true},{setDailyPlanCompleted:async input=>{calls.push(input);return {ok:true};}});
+    assert(!h.find(n=>n.props?.id==='plan-activity'));
+    h.find(n=>n.type==='button'&&n.props.children===(done?'Desfazer conclusão':'Concluir')).props.onClick();await tick();
+    assert.deepEqual(calls,[{id,expected:contracts.planSnapshot(value),completed:!done}]);assert.equal(h.refreshes(),1);
   }
 });
 test('rescheduling sends chosen date and original snapshot; reload is explicit and confirmed',async()=>{

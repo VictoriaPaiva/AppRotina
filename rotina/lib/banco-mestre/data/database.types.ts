@@ -5,6 +5,7 @@
  * financial_transactions mirrored from migration 20261027000200; checked by SQL tests.
  * fixed_expenses/months and linked transactions mirrored from 20261027000300.
  * activity_subitems and daily_plan snapshot fields mirrored from 20261031000200.
+ * Calendar standalone fields/RPC mirrored from 20261118000300; checked by SQL tests.
  * All public schema contracts compared; compatibility aliases appended at the end.
  * Numeric transport validation remains in mapper/validation.
  */
@@ -70,11 +71,12 @@ export type Database = {
       }
       daily_plan_items: {
         Row: {
+          origin:string; standalone_title:string | null; standalone_description:string | null; standalone_importance:string | null
           planned_time: string | null; sort_order: number; manual_order: boolean; activity_type_snapshot: string | null; goal_tracking_mode_snapshot: string | null; quantity_snapshot: Json | null; checklist_snapshot: Json | null
           subitem_snapshot: Json | null
           planned_duration_minutes: number | null
           activity_name_snapshot: string | null
-          activity_id: string
+          activity_id: string | null
           completed_at: string | null
           created_at: string
           id: string
@@ -83,9 +85,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          origin?:string; standalone_title?:string | null; standalone_description?:string | null; standalone_importance?:string | null
           subitem_snapshot?: Json | null; planned_duration_minutes?: number | null; activity_name_snapshot?: string | null
           planned_time?: string | null; sort_order?: number; manual_order?: boolean; activity_type_snapshot?: string | null; goal_tracking_mode_snapshot?: string | null; quantity_snapshot?: Json | null; checklist_snapshot?: Json | null
-          activity_id: string
+          activity_id?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
@@ -94,9 +97,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          origin?:string; standalone_title?:string | null; standalone_description?:string | null; standalone_importance?:string | null
           subitem_snapshot?: Json | null; planned_duration_minutes?: number | null; activity_name_snapshot?: string | null
           planned_time?: string | null; sort_order?: number; manual_order?: boolean; activity_type_snapshot?: string | null; goal_tracking_mode_snapshot?: string | null; quantity_snapshot?: Json | null; checklist_snapshot?: Json | null
-          activity_id?: string
+          activity_id?: string | null
           completed_at?: string | null
           created_at?: string
           id?: string
@@ -586,6 +590,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_standalone_plan: {Args:{p_item:Json};Returns:Json}
       list_activity_subitems: {Args:{p_offset?:number};Returns:Json}
       save_activity_subitems: {Args:{p_activity_id:string;p_expected_revision:number;p_tree:Json};Returns:undefined}
       save_activity_with_subitems: {Args:{p_activity:Json;p_relations:Json;p_expected_revision:number|null;p_tree:Json};Returns:Json}

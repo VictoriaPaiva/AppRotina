@@ -17,8 +17,9 @@ import {PlanChecklist} from './PlanChecklist';
 import {PlanTimeEditor} from './PlanTimeEditor';
 import {orderPlanItems} from '@/lib/planning/order';
 import { useDraftProtection, confirmPageLeave } from '@/lib/forms/draft-protection';
+import {importanceLabels} from '@/lib/banco-mestre/presentation';
 
-export function PlanningBoard({data, todayMode = false, initialActivityId = ''}: {data: PlanReadResult; todayMode?: boolean; initialActivityId?: string}) {
+export function PlanningBoard({data, todayMode = false, initialActivityId = '',embedded=false}: {data: PlanReadResult; todayMode?: boolean; initialActivityId?: string;embedded?:boolean}) {
   const router = useRouter();
   const [activityId, setActivityId] = useState(initialActivityId);
   const [plannedDate, setPlannedDate] = useState(data.status === 'ready' ? data.date : '');
@@ -78,7 +79,11 @@ export function PlanningBoard({data, todayMode = false, initialActivityId = ''}:
     function move(direction:-1|1){const neighbor=visible[position+direction];if(!neighbor)return;const from=day.findIndex(n=>n.id===item.id),to=day.findIndex(n=>n.id===neighbor.id);[day[from],day[to]]=[day[to],day[from]];void run(()=>reorderDailyPlan({plannedDate:item.plannedDate,items:day.map(n=>({id:n.id,expected:planSnapshot(n)}))}));}
     return <li key={item.id}><Card><CardContent className="space-y-3 p-4">
       {item.plannedTime&&<time className="block text-lg font-semibold tabular-nums" dateTime={item.plannedTime}>{item.plannedTime}</time>}
-      <div className="min-w-0 break-words"><Link className="font-medium underline" href={'/banco-mestre/' + item.activityId}>{item.name}</Link>
+      <div className="min-w-0 break-words">{item.origin==='standalone'?<span className="font-medium">{item.name}</span>:<Link className="font-medium underline" href={'/banco-mestre/' + item.activityId}>{item.name}</Link>}
+        {item.origin==='standalone'&&<p className="text-xs text-muted-foreground">Avulso · {importanceLabels[item.standalone!.importance]}{item.plannedDurationMinutes!==undefined?` · ${item.plannedDurationMinutes} min`:''}</p>}
+        {item.standalone?.description&&<p className="whitespace-pre-wrap text-sm">{item.standalone.description}</p>}
+        {item.areaName&&<p className="text-sm text-muted-foreground">Área: {item.areaName}</p>}
+        <p className="text-sm">{item.completedAt?'Concluído':'Pendente'}</p>
         <p className="text-sm text-muted-foreground">Planejado para {formatPlanDate(item.plannedDate)}{!item.active && ' · Atividade inativa no Banco Mestre'}</p></div>
       {item.subitems&&<PlanSubitems key={item.id+item.updatedAt} items={item.subitems} total={item.plannedDurationMinutes??0} disabled={disabled} onDraftChange={dirty=>{if(dirty)draftOwners.current.add(item.id);else draftOwners.current.delete(item.id);}} onConfigure={configuration=>void run(()=>configureDailyPlanSubitems({id:item.id,expected:planSnapshot(item),configuration}),undefined,item.id)} onComplete={(subitemId,completed)=>void run(()=>completeDailyPlanSubitem({id:item.id,expected:planSnapshot(item),subitemId,completed}))} />}
       {item.quantity?.length?<PlanQuantity key={'quantity'+item.id+item.updatedAt} goals={item.quantity} totals={item.quantityTotals} disabled={disabled} onDirty={(goalId,dirty)=>{const token=item.id+':quantity:'+goalId;if(dirty)draftOwners.current.add(token);else draftOwners.current.delete(token);}} onUnit={(goalId,unitIndex,completed)=>void run(()=>setDailyPlanQuantity({id:item.id,expected:planSnapshot(item),goalId,unitIndex,completed}),undefined,item.id+':quantity:'+goalId)} onAmount={(goalId,amount)=>void run(()=>setDailyPlanQuantity({id:item.id,expected:planSnapshot(item),goalId,amount}),undefined,item.id+':quantity:'+goalId)} />:item.goalTrackingModeSnapshot==='quantity'&&<p className="text-sm text-muted-foreground">Meta por quantidade · conclusão por ocorrência.</p>}
@@ -108,6 +113,7 @@ export function PlanningBoard({data, todayMode = false, initialActivityId = ''}:
   const visible=ordered.filter(item=>!todayMode||item.completedAt===null),timed=visible.filter(item=>item.plannedTime),untimed=visible.filter(item=>!item.plannedTime);
   const done=orderPlanItems([...new Map([...ordered.filter(item=>item.completedAt!==null),...(todayMode?data.completedToday??[]:[])].map(item=>[item.id,item])).values()]);
   return <div className="space-y-6">
+    {!embedded&&<>
     <h1 className="text-2xl font-semibold">{todayMode?'Hoje':'Planejamento'}</h1>
     <p className="text-sm text-muted-foreground">{formatPlanDate(data.date)} · Fuso: America/Sao_Paulo. Planejamento manual; metas e recorrências não são executadas automaticamente.</p>
     <nav className="flex flex-wrap gap-2" aria-label="Datas do planejamento">
@@ -116,7 +122,8 @@ export function PlanningBoard({data, todayMode = false, initialActivityId = ''}:
       <Button asChild variant="outline"><Link href="/banco-mestre">Banco Mestre</Link></Button>
       {todayMode && <Button asChild><Link href="/planejamento">Planejar atividades</Link></Button>}
     </nav>
-    {!todayMode && <>
+    </>}
+    {!todayMode && !embedded && <>
       <form action="/planejamento" method="get" className="flex flex-wrap items-end gap-2">
         <div className="space-y-1"><Label htmlFor="view-date">Consultar data</Label><Input id="view-date" name="date" type="date" defaultValue={data.date} required /></div>
         <Button type="submit" variant="outline">Ver data</Button>

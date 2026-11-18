@@ -15,6 +15,14 @@ function withStubs(file,stubs={}) {
     if(name==='./quantity-totals')return require('./load-typescript.cjs').load('lib/planning/quantity-totals.ts');
     if(name==='@/lib/activities/checklist')return require('./load-typescript.cjs').load('lib/activities/checklist.ts');
     if(name==='@/lib/planning/order')return require('./load-typescript.cjs').load('lib/planning/order.ts');
+    if(name==='@/components/planning/PlanningBoard')return withStubs('components/planning/PlanningBoard.tsx',{
+      'next/link':{default:'a'},'next/navigation':{useRouter:()=>({refresh(){},push(){}})},
+      '@/components/ui/button':{Button:'button'},'@/components/ui/card':{Card:'div',CardContent:'div'},
+      '@/components/ui/input':{Input:'input'},'@/components/ui/label':{Label:'label'},
+      '@/app/planejamento/actions':{},'@/lib/planning/contracts':require('./load-typescript.cjs').load('lib/planning/contracts.ts'),
+      '@/lib/planning/dates':require('./load-typescript.cjs').load('lib/planning/dates.ts'),
+    });
+    if(name==='./StandalonePlanForm')return {StandalonePlanForm:({date})=>require('react').createElement('button',{'data-date':date},'+ Item avulso')};
     if(name==='./ChecklistDefinitionEditor')return {ChecklistDefinitionEditor:()=>null};
     if(name==='./PlanChecklist'||name==='@/components/planning/PlanChecklist')return {PlanChecklist:()=>null};
     if(name==='./PlanTimeEditor')return {PlanTimeEditor:()=>null};

@@ -10,6 +10,7 @@ import { randomUUID } from 'node:crypto';
 const exec=promisify(execFile);
 const windows=process.platform==='win32';
 const suites={'--account-deletion':'tests/postgres/account-deletion.test.mjs','--projects':'tests/postgres/projects-advanced.test.mjs','--activities':'tests/postgres/activity-subitems.test.mjs','--day':'tests/postgres/day-v05.test.mjs','--save-v05':'tests/postgres/save-v05-repair.test.mjs'};
+suites['--calendar']='tests/postgres/calendar-standalone.test.mjs';
 const testFile=process.argv[2]?suites[process.argv[2]]:'tests/postgres/progress-concurrency.test.mjs';
 if(!testFile)throw Error('Unknown local suite.');
 const bin=resolve(process.env.ROTINA_PG_BIN ?? 'node_modules/.cache/rotina-pg17/pgsql/bin');

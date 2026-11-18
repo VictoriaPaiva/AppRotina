@@ -2,7 +2,9 @@ import type { PersistenceErrorKind } from '@/lib/banco-mestre/data/errors';
 
 export interface DailyPlanItem {
   id: string;
-  activityId: string;
+  activityId: string | null;
+  origin?: 'activity' | 'standalone';
+  standalone?: {title:string;description?:string;importance:'required'|'important'|'optional'};
   plannedDate: string;
   completedAt: string | null;
   createdAt: string;
@@ -20,6 +22,7 @@ export interface DailyPlanItem {
 }
 export type PlanSnapshot = Pick<DailyPlanItem, 'plannedDate' | 'completedAt' | 'updatedAt'>;
 export interface CreatePlanInput { id: string; activityId: string; plannedDate: string; plannedTime?:string|null; sourceRevision?:number; configuration?:import('@/lib/activities/subitems').SubitemSelection[] }
+export interface CreateStandaloneInput {id:string;title:string;plannedDate:string;plannedTime:string|null;durationMinutes:number|null;importance:'required'|'important'|'optional';description:string|null}
 export interface TimePlanInput extends ChangePlanInput {plannedTime:string|null}
 export interface QuantityPlanInput extends ChangePlanInput {goalId:string;amount?:number;unitIndex?:number;completed?:boolean}
 export interface CheckPlanInput extends ChangePlanInput {checklistItemId:string;completed:boolean}
@@ -30,6 +33,7 @@ export interface ChangePlanInput { id: string; expected: PlanSnapshot }
 export interface CompletePlanInput extends ChangePlanInput { completed: boolean }
 export interface ReschedulePlanInput extends ChangePlanInput { plannedDate: string }
 export interface PlanRepository {
+  createStandalone(input:CreateStandaloneInput):Promise<DailyPlanItem>;
   listCompletedOn(date:string):Promise<DailyPlanItem[]>;
   setQuantity(input:QuantityPlanInput):Promise<DailyPlanItem>;
   setTime(input:TimePlanInput):Promise<DailyPlanItem>;
@@ -46,7 +50,7 @@ export interface PlanRepository {
 }
 export type PlanResult = {ok: true} | {ok: false; kind: PersistenceErrorKind; message: string};
 export interface PlanActivity { id: string; name: string; active: boolean; type?:string; revision?:number; subitems?:import('@/lib/activities/subitems').ActivityTree }
-export type PlanViewItem = DailyPlanItem & {name: string; active: boolean;quantityTotals?:Record<string,number>};
+export type PlanViewItem = DailyPlanItem & {name: string; active: boolean;areaName?:string;quantityTotals?:Record<string,number>};
 export type PlanReadResult = {status: 'ready'; date: string; today: string; tomorrow: string; items: PlanViewItem[]; pending: PlanViewItem[]; completedToday?:PlanViewItem[]; activities: PlanActivity[]}
   | {status: 'error'; kind: PersistenceErrorKind; message: string};
 export const planSnapshot = ({plannedDate, completedAt, updatedAt}: DailyPlanItem): PlanSnapshot => ({plannedDate, completedAt, updatedAt});

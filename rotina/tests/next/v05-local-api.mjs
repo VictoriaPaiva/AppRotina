@@ -18,6 +18,7 @@ export async function createV05LocalApi(){
   for(let i=0;i<4;i++){const id=randomUUID();await db.query("select save_activity_aggregate($1,'{}',null)",[JSON.stringify({id,area_id:area,name:'Normal local '+i,type:'variableActivity'})]);await db.query('select create_daily_plan_v05($1,$2,$3,$4,null,null)',[randomUUID(),id,date,i===0?'10:30':null]);}
   const json=v=>v==null?null:JSON.stringify(v);
   const rpc={
+    create_standalone_plan:a=>['select create_standalone_plan($1) v',[json(a.p_item)]],
     list_activity_subitems:a=>['select list_activity_subitems($1) v',[a.p_offset??0]],
     get_activity_aggregate:a=>['select get_activity_aggregate($1) v',[a.p_activity_id]],
     save_activity_v05:a=>['select save_activity_v05($1,$2,$3,$4,$5::uuid[],$6) v',[json(a.p_activity),json(a.p_relations),a.p_expected_revision,json(a.p_tree),a.p_deleted_ids,json(a.p_checklist)]],
@@ -75,7 +76,9 @@ export async function createV05LocalApi(){
   }
   return {handle,areaId:area,get activityId(){return activityId;},date,nextDate:later(1),futureDate:later(2),get definition(){return definition;},
     failNextIdeaDelete(){failIdeaDelete=true;},
+    async activityCount(){return Number((await db.query('select count(*) n from activities')).rows[0].n);},
     async ideaExists(id){return (await db.query('select exists(select 1 from ideas where id=$1) v',[id])).rows[0].v;},
+    async ideaTitle(id){return (await db.query('select title from ideas where id=$1',[id])).rows[0]?.title;},
     async seedOpenChecklist(){
       const id=randomUUID(),items=['Smoke A','Smoke B'].map(label=>({id:randomUUID(),label}));
       await db.query("select save_activity_v05($1,'{}',null,null,'{}'::uuid[],$2)",[JSON.stringify({id,area_id:area,name:'Merge smoke',type:'checklistGoal',goal_tracking_mode:'checklist'}),JSON.stringify(items)]);

@@ -41,7 +41,11 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
     async function waitFor(expression){const until=Date.now()+60000;while(!await evaluate(expression)){
       if(Date.now()>=until){const page=await evaluate(`({url:location.href,text:document.body?.innerText,alerts:[...document.querySelectorAll('[role=alert]')].map(n=>n.textContent)})`);writeFileSync('node_modules/.cache/v05-browser-failure.json',JSON.stringify({page,errors,posts,state:live?await live.inspect():null},null,2));throw Error('Browser condition timed out: '+expression);}await pause(200);}}
     const hydrated=selector=>`(()=>{const n=document.querySelector(${JSON.stringify(selector)});return !!n&&Object.keys(n).some(k=>k.startsWith('__reactProps'));})()`;
-    async function navigate(route){await send('Page.navigate',{url:baseUrl+route});}
+    async function navigate(route){
+      const previous=await evaluate('performance.timeOrigin');
+      await send('Page.navigate',{url:baseUrl+route});
+      await waitFor(`performance.timeOrigin!==${previous}&&document.readyState==='complete'`);
+    }
     async function input(selector,value){await evaluate(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});if(!n)throw Error('Missing input');Object.getOwnPropertyDescriptor(n instanceof HTMLTextAreaElement?HTMLTextAreaElement.prototype:HTMLInputElement.prototype,'value').set.call(n,${JSON.stringify(value)});n.dispatchEvent(new Event('input',{bubbles:true}));n.dispatchEvent(new Event('change',{bubbles:true}));})()`);await pause(100);}
     if(live){
       await navigate('/ideias/nova');await waitFor(hydrated('#idea-title'));
@@ -50,8 +54,13 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
       await evaluate(`document.querySelector('form').requestSubmit()`);
       await waitFor(`location.pathname.startsWith('/ideias/')&&location.pathname!=='/ideias/nova'`);
       const ideaPath=await evaluate('location.pathname'),ideaId=ideaPath.split('/').at(-1);
+      // Finish creation revalidation before editing a fresh detail document.
+      await navigate(ideaPath);
       await waitFor(hydrated('#idea-title'));await input('#idea-title','Ideia local editada');
-      await evaluate(`document.querySelector('form').requestSubmit()`);await waitFor(`document.body.textContent.includes('Ideia salva.')`);
+      await evaluate(`document.querySelector('form').requestSubmit()`);
+      const editDeadline=Date.now()+60000;
+      while(await live.ideaTitle(ideaId)!=='Ideia local editada'){assert(Date.now()<editDeadline,'Idea edit must persist');await pause(200);}
+      await waitFor(`!!document.querySelector('#idea-title')&&!document.querySelector('#idea-title').disabled&&!document.body.textContent.includes('Alterações não salvas.')`);
       // Revalidation replaces the editor's timestamp key. Verify the persisted
       // edit on a fresh detail before starting the independent deletion draft.
       await navigate(ideaPath);await waitFor(hydrated('#idea-content'));
@@ -223,6 +232,33 @@ export async function runV05BrowserSmoke(baseUrl,{live,cookie}={}){
       await waitFor(`(${row})?.closest('section').querySelector('h2').textContent==='Para hoje'`);
       await evaluate(`Array.from((${row}).querySelectorAll('button')).find(b=>/^Concluir/.test(b.textContent.trim())).click()`);await waitFor(allDone);
       console.log('20 mixed occurrences: complete, all visible including backlog, refresh, reopen and complete again passed');
+      const masterCount=await live.activityCount();
+      await navigate('/calendario?date='+live.date);
+      const calendarRow=`Array.from(document.querySelectorAll('a')).find(n=>n.textContent==='Volume smoke 13')?.closest('li')`;
+      await waitFor(`Array.from((${calendarRow})?.querySelectorAll('button')??[]).some(b=>b.textContent.includes('Desfazer')&&!b.disabled&&Object.keys(b).some(k=>k.startsWith('__reactProps')))`);
+      await evaluate(`Array.from((${calendarRow}).querySelectorAll('button')).find(b=>b.textContent.includes('Desfazer')).click()`);
+      await waitFor(`Array.from((${calendarRow})?.querySelectorAll('button')??[]).some(b=>/^Concluir/.test(b.textContent.trim())&&!b.disabled)`);
+      await navigate('/hoje');await waitFor(`(${calendarRow})?.closest('section').querySelector('h2').textContent==='Para hoje'`);
+      await navigate('/calendario?date='+live.date);
+      await waitFor(hydrated('button[aria-label="Adicionar item avulso nesta data"]'));
+      await evaluate(`document.querySelector('button[aria-label="Adicionar item avulso nesta data"]').click()`);
+      await waitFor(hydrated('#standalone-title'));
+      assert.equal(await evaluate(`document.querySelector('#standalone-date').value`),live.date);
+      await input('#standalone-title','Dentista avulso smoke');await input('#standalone-time','09:15');await input('#standalone-duration','30');
+      await input('#standalone-description','Levar documento');
+      await evaluate(`document.querySelector('form[aria-label="Novo item avulso"]').requestSubmit()`);
+      const standaloneRow=`Array.from(document.querySelectorAll('li')).find(n=>n.textContent.includes('Dentista avulso smoke'))`;
+      await waitFor(`!!(${standaloneRow})&&!!document.querySelector('button[aria-label="Adicionar item avulso nesta data"]')`);
+      assert(await evaluate(`(${standaloneRow}).textContent.includes('30 min')&&(${standaloneRow}).textContent.includes('09:15')&&(${standaloneRow}).textContent.includes('Levar documento')&&!(${standaloneRow}).querySelector('a[href^="/banco-mestre/"]')`));
+      await waitFor(`Array.from((${standaloneRow}).querySelectorAll('button')).some(b=>b.textContent.trim()==='Concluir'&&!b.disabled)`);
+      await evaluate(`Array.from((${standaloneRow}).querySelectorAll('button')).find(b=>b.textContent.trim()==='Concluir').click()`);
+      await waitFor(`(${standaloneRow})?.textContent.includes('Desfazer conclusão')`);
+      await navigate('/hoje');await waitFor(`(${standaloneRow})?.closest('section').querySelector('h2').textContent==='Concluídas'`);
+      await waitFor(`Array.from((${standaloneRow}).querySelectorAll('button')).some(b=>b.textContent.includes('Desfazer')&&!b.disabled&&Object.keys(b).some(k=>k.startsWith('__reactProps')))`);
+      await evaluate(`Array.from((${standaloneRow}).querySelectorAll('button')).find(b=>b.textContent.includes('Desfazer')).click()`);
+      await waitFor(`(${standaloneRow})?.closest('section').querySelector('h2').textContent==='Para hoje'`);
+      assert.equal(await live.activityCount(),masterCount);
+      console.log('Calendar: reopen existing checklist, create timed standalone, complete, retained in Today, reopen; no master Activity created');
       assert(posts.includes('/hoje')&&posts.includes('/planejamento'));
     }else assert.deepEqual(posts,[]);
     assert.deepEqual(errors,[]);writeFileSync('node_modules/.cache/v05-browser-results.json',JSON.stringify({results,errors,posts},null,2));

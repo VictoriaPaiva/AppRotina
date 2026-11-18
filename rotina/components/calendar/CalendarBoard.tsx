@@ -4,8 +4,8 @@ import { formatPlanDate } from '@/lib/planning/dates';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ReloadPageButton } from '@/components/ui/ReloadPageButton';
-import { PlanSubitems } from '@/components/planning/PlanSubitems';
-import {PlanChecklist} from '@/components/planning/PlanChecklist';
+import {PlanningBoard} from '@/components/planning/PlanningBoard';
+import {StandalonePlanForm} from './StandalonePlanForm';
 import {orderPlanItems} from '@/lib/planning/order';
 
 export function CalendarBoard({data}: {data: CalendarReadResult}) {
@@ -15,7 +15,7 @@ export function CalendarBoard({data}: {data: CalendarReadResult}) {
   for (const item of items) counts.set(item.plannedDate, (counts.get(item.plannedDate) ?? 0) + 1);
   const selected = orderPlanItems(items.filter(item => item.plannedDate === date));
   return <div className="space-y-6">
-    <div><h1 className="text-2xl font-semibold">Calendário</h1><p className="text-muted-foreground">Consulte seus itens planejados. Para concluir ou reagendar, acesse Hoje ou Planejamento.</p></div>
+    <div><h1 className="text-2xl font-semibold">Calendário</h1><p className="text-muted-foreground">Consulte, conclua e reabra seus itens ou adicione um item avulso na data selecionada.</p></div>
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,1fr)]">
       <Card className="min-w-0"><CardContent className="space-y-4 p-3 sm:p-6">
         <nav aria-label="Navegação do mês" className="grid grid-cols-2 items-center gap-2 sm:flex sm:flex-wrap sm:justify-between sm:gap-3">
@@ -38,16 +38,9 @@ export function CalendarBoard({data}: {data: CalendarReadResult}) {
       <section aria-labelledby="selected-date" className="min-w-0 space-y-4">
         <h2 id="selected-date" className="text-lg font-semibold">Itens de {formatPlanDate(date)}</h2>
         <Button asChild><Link href={`/planejamento?date=${date}`}>Planejar nesta data</Link></Button>
+        <StandalonePlanForm key={date} date={date} />
         {!selected.length && <p className="text-muted-foreground">Nenhum item planejado nesta data.</p>}
-        <ul className="space-y-3">{selected.map(item => <li key={item.id}><Card><CardContent className="space-y-2 p-4">
-          <h3 className="break-words font-medium">{item.plannedTime&&<time dateTime={item.plannedTime}>{item.plannedTime} · </time>}{item.name}</h3>
-          {(item.checklist||item.activityTypeSnapshot==='checklistGoal')&&<PlanChecklist items={item.checklist??[]} />}
-          {item.subitems&&<PlanSubitems items={item.subitems} total={item.plannedDurationMinutes??0} />}
-          {item.areaName && <p className="break-words text-sm text-muted-foreground">Área: {item.areaName}</p>}
-          <p className={`inline-block rounded px-2 py-1 text-sm ${item.completedAt ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'}`}>{item.completedAt ? 'Concluído' : 'Pendente'}</p>
-          {!item.active && <p className="text-sm text-muted-foreground">Atividade desativada</p>}
-          <div><Link className="text-sm underline" href={`/banco-mestre/${item.activityId}`}>Abrir item<span className="sr-only">: {item.name}</span></Link></div>
-        </CardContent></Card></li>)}</ul>
+        <PlanningBoard key={date+'|'+selected.map(n=>n.id+n.updatedAt).join('|')} embedded data={{status:'ready',date,today,tomorrow:date,items:selected,pending:[],activities:[]}} />
       </section>
     </div>
   </div>;

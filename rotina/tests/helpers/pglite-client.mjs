@@ -48,6 +48,7 @@ export function pgliteClient(db,tables) {
       try {
         const json=v=>v==null?null:JSON.stringify(v);
         const extra={
+          create_standalone_plan:['select public.create_standalone_plan($1) result',[json(args.p_item)]],
           save_activity_checklist:['select public.save_activity_checklist($1,$2,$3) result',[args.p_activity_id,args.p_expected_revision,json(args.p_items)]],
           save_activity_v05:['select public.save_activity_v05($1,$2,$3,$4,$5::uuid[],$6) result',[json(args.p_activity),json(args.p_relations),args.p_expected_revision,json(args.p_tree),args.p_deleted_ids,json(args.p_checklist)]],
           create_daily_plan_v05:['select public.create_daily_plan_v05($1,$2,$3,$4,$5,$6) result',[args.p_id,args.p_activity_id,args.p_planned_date,args.p_planned_time,args.p_revision,json(args.p_configuration)]],

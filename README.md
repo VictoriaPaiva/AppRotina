@@ -18,6 +18,8 @@
 
 # Rotina
 
+**18/11/2026 — Calendário: execução e itens avulsos implementados localmente.** O dia selecionado reutiliza os controles de Hoje/Planejamento para concluir/reabrir atividades, checklist, quantidade e subitens. `+ Item avulso` cria um compromisso próprio, sem Activity no Banco Mestre, também visível em Hoje. Nova migration local `20261118000300_calendar_standalone_plans.sql`; nenhuma migration remota ou publicação realizada. [Arquitetura, validação e backlog](rotina/doc/MVP-calendario-avulsos.md).
+
 **18/11/2026 — Ideias: exclusão permanente implementada localmente.** O detalhe editável oferece Excluir ideia com confirmação explícita de permanência. Sucesso retorna a `/ideias`; erros mantêm a tela e o rascunho. Ownership/RLS e snapshot `updated_at` protegem a operação. Nova migration local `20261118000200_idea_deletion.sql` libera DELETE somente ao owner autenticado. [Arquitetura, testes e backlog da entrega](rotina/doc/MVP-ideias-exclusao.md). Sem migration remota, commit, push ou deploy; aplicação e validação manual em Development pendentes.
 
 **31/10/2026 — V0.4 implementada localmente:** atividades com subitens multinível, seleção all/none/custom e snapshot independente por planejamento; duração e overrides por ocorrência; conclusão hierárquica em Hoje e detalhe compacto no Calendário. [Arquitetura, migration, testes e smoke pendente](rotina/doc/V0.4-atividades-hierarquicas-planejamento-subitens.md). Migration `20261031000200_activity_subitems.sql` não aplicada em Production; sem deploy. Projetos/Ideias/Finanças preservados e V0.2.5 pausada.

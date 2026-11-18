@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/banco-mestre/data/database.types';
 import { PersistenceError, toPersistenceError } from '@/lib/banco-mestre/data/errors';
-import { choice, fail, integer, localDate, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
+import { choice, text, fail, integer, localDate, record, timestamp, uuid } from '@/lib/banco-mestre/data/validation';
 import type { DailyPlanItem, PlanRepository, ChangePlanInput } from './contracts';
-import { createPlanInput, completePlanInput, reschedulePlanInput, configurePlanInput, completeSubitemInput, timePlanInput,quantityPlanInput,checkPlanInput,reorderPlanInput,plannedTime } from './validation';
+import { createPlanInput, createStandaloneInput, completePlanInput, reschedulePlanInput, configurePlanInput, completeSubitemInput, timePlanInput,quantityPlanInput,checkPlanInput,reorderPlanInput,plannedTime } from './validation';
 import {quantitySnapshot} from '@/lib/activities/quantity';
 import { checklistSnapshot } from '@/lib/activities/checklist';
 import { orderPlanItems } from './order';
@@ -11,7 +11,7 @@ import { nextPlanDate, PLAN_TIME_ZONE } from './dates';
 import { snapshotSubitems } from '@/lib/activities/subitems';
 import type { Json } from '@/lib/banco-mestre/data/database.types';
 
-const COLUMNS = 'id,user_id,activity_id,planned_date,completed_at,created_at,updated_at,subitem_snapshot,planned_duration_minutes,activity_name_snapshot,planned_time,sort_order,manual_order,activity_type_snapshot,checklist_snapshot,goal_tracking_mode_snapshot,quantity_snapshot';
+const COLUMNS = 'id,user_id,activity_id,origin,standalone_title,standalone_description,standalone_importance,planned_date,completed_at,created_at,updated_at,subitem_snapshot,planned_duration_minutes,activity_name_snapshot,planned_time,sort_order,manual_order,activity_type_snapshot,checklist_snapshot,goal_tracking_mode_snapshot,quantity_snapshot';
 export function createPlanRepository(client: Pick<SupabaseClient<Database>, 'from'|'rpc'>, verifiedUserId: string): PlanRepository {
   const owner = uuid(verifiedUserId, 'owner');
   const operation = async <T>(fn: () => Promise<T>): Promise<T> => {
@@ -28,7 +28,11 @@ export function createPlanRepository(client: Pick<SupabaseClient<Database>, 'fro
     return data.map(value => {
       const v = record(value, 'plan');
       if (uuid(v.user_id) !== owner) fail('plan.owner');
-      return {id: uuid(v.id), activityId: uuid(v.activity_id), plannedDate: localDate(v.planned_date, 'date'),
+      const origin=v.origin===undefined?'activity':choice(v.origin,['activity','standalone'] as const,'origin');
+      if(origin==='standalone'&&(v.activity_id!==null||['subitem_snapshot','quantity_snapshot','checklist_snapshot','activity_name_snapshot','activity_type_snapshot','goal_tracking_mode_snapshot'].some(key=>v[key]!=null)))fail('standalone.shape');
+      return {id: uuid(v.id), activityId: origin==='standalone'?null:uuid(v.activity_id),
+        ...(origin==='standalone'?{origin,standalone:{title:text(v.standalone_title,'title'),importance:choice(v.standalone_importance,['required','important','optional'] as const,'importance'),...(v.standalone_description==null?{}:{description:text(v.standalone_description,'description')})}}:{}),plannedDate: localDate(v.planned_date, 'date'),
+        ...(v.planned_duration_minutes==null?{}:{plannedDurationMinutes:integer(v.planned_duration_minutes,'duration',0)}),
         completedAt: v.completed_at === null ? null : timestamp(v.completed_at, 'completedAt'),
         createdAt: timestamp(v.created_at, 'createdAt'), updatedAt: timestamp(v.updated_at, 'updatedAt'),
         ...(v.sort_order===undefined?{}:{sortOrder:integer(v.sort_order,'sortOrder',0),manualOrder:v.manual_order===true,plannedTime:v.planned_time===null?null:plannedTime(String(v.planned_time).slice(0,5))}),
@@ -66,6 +70,7 @@ export function createPlanRepository(client: Pick<SupabaseClient<Database>, 'fro
     throw new PersistenceError(visible.data.length ? 'Conflict' : 'NotFound');
   }
   return {
+    createStandalone:input=>operation(async()=>{const value=createStandaloneInput(input);const {data,error}=await client.rpc('create_standalone_plan',{p_item:value as unknown as Json});if(error)throw error;return rows([data])[0];}),
     listCompletedOn:date=>operation(async()=>{
       const valid=localDate(date,'date'),result:DailyPlanItem[]=[];
       // PostgreSQL interprets these civil midnights in the application's IANA

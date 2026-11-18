@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { PersistenceError } from '@/lib/banco-mestre/data/errors';
 import { readFailure } from '@/lib/banco-mestre/data/read-model';
 import { createPlanRepository } from '@/lib/planning/repository';
-import { createPlanInput, completePlanInput, reschedulePlanInput, configurePlanInput, completeSubitemInput,quantityPlanInput,timePlanInput,checkPlanInput,reorderPlanInput } from '@/lib/planning/validation';
+import { createPlanInput, createStandaloneInput, completePlanInput, reschedulePlanInput, configurePlanInput, completeSubitemInput,quantityPlanInput,timePlanInput,checkPlanInput,reorderPlanInput } from '@/lib/planning/validation';
 import type { DailyPlanItem, PlanRepository, PlanResult } from '@/lib/planning/contracts';
 
 async function mutate<T>(input: unknown, validate: (input: unknown) => T, save: (repository: PlanRepository, input: T) => Promise<DailyPlanItem|void>): Promise<PlanResult> {
@@ -27,6 +27,7 @@ async function mutate<T>(input: unknown, validate: (input: unknown) => T, save: 
 export async function createDailyPlan(input: unknown): Promise<PlanResult> {
   return mutate(input, createPlanInput, (repository, value) => repository.create(value));
 }
+export async function createStandalonePlan(input:unknown):Promise<PlanResult>{return mutate(input,createStandaloneInput,(repository,value)=>repository.createStandalone(value));}
 export async function setDailyPlanCompleted(input: unknown): Promise<PlanResult> {
   return mutate(input, completePlanInput, (repository, value) => repository.setCompleted(value));
 }

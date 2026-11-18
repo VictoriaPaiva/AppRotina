@@ -28,7 +28,8 @@ export async function readPlanPage(requestedDate?: unknown,todayMode=false): Pro
       ...(groups.has(activity.id)?{subitems:validateTree({mode:groups.get(activity.id)![0].mode,items:groups.get(activity.id)!.map(n=>n.item)})}:{})}));
     const names = new Map(activities.map(activity => [activity.id, activity]));
     const view = (item: DailyPlanItem) => {
-      const activity = names.get(item.activityId);
+      if(item.origin==='standalone'&&item.standalone)return {...item,name:item.standalone.title,active:true};
+      const activity = item.activityId?names.get(item.activityId):undefined;
       if (!activity) throw new PersistenceError('NotFound');
       return {...item, name: item.activityNameSnapshot??activity.name, active: activity.active,activityTypeSnapshot:item.activityTypeSnapshot??activity.type};
     };
